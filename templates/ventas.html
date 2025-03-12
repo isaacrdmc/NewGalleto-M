@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Módulo de Ventas</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Galleta de Chocolate</td>
+            <td>10 unidades</td>
+            <td>$100</td>
+            <td>
+                <a href="#" class="btn btn-warning btn-sm">Editar</a>
+                <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<a href="#" class="btn btn-success">Agregar Venta</a>
+{% endblock %}

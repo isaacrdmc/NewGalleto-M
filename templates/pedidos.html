@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Módulo de Pedidos</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Ana Gómez</td>
+            <td>Galleta de Chocolate</td>
+            <td>5 unidades</td>
+            <td>Pendiente</td>
+            <td>
+                <a href="#" class="btn btn-warning btn-sm">Editar</a>
+                <a href="#" class="btn btn-danger btn-sm">Cancelar</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<a href="#" class="btn btn-success">Agregar Pedido</a>
+{% endblock %}

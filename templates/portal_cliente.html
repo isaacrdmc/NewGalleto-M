@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Portal del Cliente</h1>
+<div class="row">
+    <div class="col-md-6">
+        <h2>Realizar Pedido</h2>
+        <form>
+            <div class="mb-3">
+                <label for="producto" class="form-label">Producto</label>
+                <select class="form-control" id="producto">
+                    <option>Galleta de Chocolate</option>
+                    <option>Galleta de Vainilla</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input type="number" class="form-control" id="cantidad">
+            </div>
+            <button type="submit" class="btn btn-primary">Realizar Pedido</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <h2>Historial de Compras</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Galleta de Chocolate</td>
+                    <td>10 unidades</td>
+                    <td>$100</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

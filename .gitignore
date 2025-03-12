@@ -1,0 +1,34 @@
+# Ignorar el entorno virtual
+venv/
+env/
+.venv/
+
+# Ignorar archivos de configuración de entornos virtuales
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignorar archivos de Python compilados
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar archivos de configuración de IDE
+.vscode/
+.idea/
+
+# Ignorar archivos de base de datos locales
+*.sqlite3
+*.db
+
+# Ignorar archivos de configuración sensible
+*.key
+*.pem
+*.crt
+
+# Ignorar archivos de dependencias (si usas requirements.txt)
+# Si usas Pipenv, no ignores Pipfile y Pipfile.lock
+# Si usas Poetry, no ignores poetry.lock y pyproject.toml
