@@ -1,0 +1,116 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E8C6A7;  /* Fondo cálido */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;  /* Centrar verticalmente */
+}
+
+/* Navbar */
+.navbar {
+    background-color: #2C2C2C;  /* Fondo oscuro */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;  /* Asegurar que esté por encima de otros elementos */
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand img {
+    width: 100px;  /* Tamaño del logo */
+    margin-right: 10px;  /* Espacio entre el logo y el texto */
+}
+
+.navbar-brand h3 {
+    color: white;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin-left: -30%;
+}
+
+/* Contenedor principal del login con pestañas */
+.login-container {
+    display: flex;
+    background-color: #603A1E;  /* Fondo marrón oscuro */
+    color: white;
+    width: 400px;
+    padding: 20px;
+    border-radius: 0 25px 25px 25px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 60px auto;  /* Espacio para el navbar */
+    font-style: bold;
+}
+
+/* Estilos de las pestañas dentro del login-container */
+.tabs {
+    display: flex;
+    justify-content: left;
+    position: absolute;
+    top: -14%;
+    left: 0;
+    size: 0cap;
+}
+
+.tab {
+    background-color: #3D2314;  /* Fondo marrón más oscuro */
+    color: white;
+    padding: 10px 30px;
+    border-radius: 10px 50px 0 0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;  /* Transición suave */
+}
+
+.tab.active {
+    background-color: #603A1E;  /* Fondo marrón oscuro para la pestaña activa */
+}
+
+.tab:hover {
+    background-color: #603A1E;  /* Fondo marrón más claro al pasar el mouse */
+}
+
+/* Estilos de los inputs */
+.input-box {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    background-color: #4A2D1A;  /* Fondo marrón más claro */
+    color: white;
+    font-size: 1em;
+}
+
+.input-box::placeholder {
+    color: #C4A484;  /* Color del placeholder */
+}
+
+/* Estilos del botón */
+.btn {
+    background-color: #C4A484;  /* Fondo beige */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 90%;
+    transition: background-color 0.3s ease;  /* Transición suave */
+}
+
+.btn:hover {
+    background-color: #B08B65;  /* Fondo beige más oscuro al pasar el mouse */
+}
