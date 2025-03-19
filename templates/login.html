@@ -1,31 +1,6 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <!-- Logo de la empresa a la izquierda -->
-        <a class="navbar-brand" href="{{ url_for('index') }}">
-            <img src="{{ url_for('static', filename='img/logo3.png') }}" alt="Logo" class="d-inline-block align-text-top">
-        </a>
-
-        {% if not 'username' in session %}
-        <div class="navbar-brand mx-auto text-center">
-            <h3 class="mb-0">Iniciar Sesión</h3>
-        </div>
-        {% endif %}
-
-        {% if 'username' in session %}
-        <div class="navbar-nav ms-auto">
-            <span class="navbar-text me-3">
-                Bienvenido, {{ session['username'] }}
-            </span>
-            <a class="btn btn-outline-light" href="{{ url_for('logout') }}">Cerrar Sesión</a>
-        </div>
-        {% endif %}
-    </div>
-</nav>
-
 <div class="login-container">
     <!-- Pestañas -->
     <div class="tabs">
@@ -36,8 +11,9 @@
 
     <!-- Contenedor de Login -->
     <div class="login-box">
-        <h2 id="tab-title">Producción</h2>
+        <h3 id="tab-title">Producción</h3>
         <form method="POST" action="{{ url_for('login') }}">
+            <input type="hidden" name="active_tab" id="active_tab" value="Producción"> <!-- Campo oculto -->
             <label for="username">Usuario:</label>
             <input type="text" name="username" placeholder="Usuario" class="input-box" required>
             <label for="password">Contraseña:</label>
@@ -53,16 +29,19 @@
     // Cambia la pestaña activa
     function changeTab(tabName, element) {
         activeTab = tabName; // Actualiza la pestaña activa
+        document.getElementById('active_tab').value = tabName; // Actualiza el campo oculto
+
         const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active')); // Elimina la clase "active" de todas las pestañas
-        tabs.forEach(tab => tab.classList.add('inactive')); // Agrega la clase "inactive" a todas las pestañas
-        element.classList.remove('inactive'); // Elimina la clase "inactive" de la pestaña seleccionada
-        element.classList.add('active'); // Agrega la clase "active" a la pestaña seleccionada
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabs.forEach(tab => tab.classList.add('inactive'));
+        element.classList.remove('inactive');
+        element.classList.add('active');
         document.getElementById('tab-title').innerText = tabName; // Cambia el título del formulario
     }
 
+
     // Verifica si se puede iniciar sesión según la pestaña activa
-    document.querySelector('form').addEventListener('submit', function(event) {
+    document.querySelector('form').addEventListener('submit', function (event) {
         const usernameInput = document.querySelector('input[name="username"]');
         const passwordInput = document.querySelector('input[name="password"]');
 

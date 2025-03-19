@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Encabezado del Dashboard -->
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="my-4 text-center fw-bold">🍪 Módulo de Ventas - Don Galleto 🍪</h1>
+        </div>
+    </div>
+    <!-- Fila de tarjetas con estadísticas -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary mb-3">
+                <div class="card-header text-white">Ventas Totales</div>
+                <div class="card-body">
+                    <h5 class="card-title">$5000</h5>
+                    <p class="card-text">Total de ventas en el mes.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success mb-3">
+                <div class="card-header text-white">Productos Vendidos</div>
+                <div class="card-body">
+                    <h5 class="card-title">1500 unidades</h5>
+                    <p class="card-text">Cantidad total de productos vendidos en el mes.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning mb-3">
+                <div class="card-header text-white">Clientes Nuevos</div>
+                <div class="card-body">
+                    <h5 class="card-title">120 nuevos</h5>
+                    <p class="card-text">Clientes nuevos adquiridos este mes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Ventas -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h3 class="text-center">Gráfico de Ventas por Producto</h3>
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tabla de Ventas -->
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="mb-4">Ventas Recientes</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Galleta de Chocolate</td>
+                        <td>10 unidades</td>
+                        <td>$100</td>
+                        <td>2025-03-19</td>
+                        <td>
+                            <a href="#" class="btn btn-warning btn-sm">Editar</a>
+                            <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Galleta de Vainilla</td>
+                        <td>20 unidades</td>
+                        <td>$200</td>
+                        <td>2025-03-18</td>
+                        <td>
+                            <a href="#" class="btn btn-warning btn-sm">Editar</a>
+                            <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <a href="#" class="btn btn-success">Agregar Venta</a>
+        </div>
+    </div>
+</div>
+
+<!-- Script para el gráfico de ventas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('salesChart').getContext('2d');
+    var salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Galleta de Chocolate', 'Galleta de Vainilla', 'Galleta de Fresa'],
+            datasets: [{
+                label: 'Ventas en el Mes',
+                data: [1000, 2000, 1500], // Estos valores deben ser dinámicos según los datos reales
+                backgroundColor: ['#007bff', '#28a745', '#ffc107'],
+                borderColor: ['#0056b3', '#218838', '#e0a800'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

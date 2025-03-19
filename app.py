@@ -15,7 +15,7 @@ users = {
         'role': 'produccion'
     },
     'user_ventas': {
-        'password': generate_password_hash('ventaspas'),
+        'password': generate_password_hash('ventaspass'),
         'role': 'ventas'
     },
     'user_cliente': {
@@ -47,59 +47,64 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        active_tab = request.form.get('active_tab',
-                                      'Producción')  # Obtén la pestaña activa
+        active_tab = request.form.get('active_tab', 'Producción')  # Obtén la pestaña activa
 
         user = users.get(username)
 
         if user and check_password_hash(user['password'], password):
+            # Bloquear admin si intenta entrar desde Cliente
             if active_tab == 'Cliente' and username == 'admin':
-                flash(
-                    'No se puede iniciar sesión como administrador en la pestaña de Cliente.',
-                    'danger')
+                flash('No se puede iniciar sesión como administrador en la pestaña de Cliente.', 'danger')
                 return redirect(url_for('login'))
 
-            # Iniciar sesión si las credenciales son correctas y está en la pestaña correcta
-            session['username'] = username
-            session['role'] = user['role']
-            flash('¡Has iniciado sesión correctamente!', 'success')
-            return redirect(url_for('index'))  # Redirige a la página principal
+            # Validar si el rol coincide con la pestaña seleccionada
+            if (user['role'] == 'produccion' and active_tab == 'Producción') or \
+                (user['role'] == 'ventas' and active_tab == 'Ventas') or \
+                (user['role'] == 'cliente' and active_tab == 'Cliente') or \
+                (username == 'admin'):
+            
+                session['username'] = username
+                session['role'] = user['role']
+                flash('¡Has iniciado sesión correctamente!', 'success')
+                return redirect(url_for('index'))  # Redirige al dashboard correcto
+
+            flash('No tienes permisos para acceder a esta pestaña.', 'danger')
+            return redirect(url_for('login'))
 
         flash('Nombre de usuario o contraseña incorrectos', 'danger')
 
     return render_template('login.html')
-
 
 # Ruta para el dashboard del administrador
 @app.route('/dashboard_admin')
 def dashboard_admin():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+    return render_template('modules/admin/dashboard.html')
 
 
 # Ruta para el dashboard de producción
 @app.route('/produccion')
-def dashboard_produccion():
+def produccion():
     if 'username' not in session or session['role'] != 'produccion':
         return redirect(url_for('login'))
-    return render_template('produccion.html')
+    return render_template('modules/produccion/produccion.html')
 
 
 # Ruta para el dashboard de ventas
 @app.route('/ventas')
-def dashboard_ventas():
+def ventas():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('login'))
-    return render_template('ventas.html')
+    return render_template('modules/ventas/ventas.html')
 
 
 # Ruta para el dashboard del cliente
-@app.route('/portal_compras')
-def dashboard_cliente():
+@app.route('/portal_cliente')
+def portal_cliente():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('login'))
-    return render_template('portal_cliente.html')
+    return render_template('modules/client/portal_cliente.html')
 
 
 # Ruta para cerrar sesión
@@ -115,57 +120,49 @@ def logout():
 def usuarios():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('usuarios.html')
+    return render_template('modules/admin/usuarios.html')
 
 
 @app.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('proveedores.html')
+    return render_template('modules/admin/proveedores.html')
 
 
 @app.route('/clientes')
 def clientes():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('clientes.html')
+    return render_template('modules/admin/clientes.html')
 
 
 @app.route('/recetas')
 def recetas():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('recetas.html')
+    return render_template('modules/admin/recetas.html')
 
 
-@app.route('/inventario_materias_primas')
-def inventario_materias_primas():
-    if 'username' not in session or session['role'] != 'admin':
+@app.route('/inventario_insumos')
+def inventario_insumos():
+    if 'username' not in session or session['role'] != 'produccion':
         return redirect(url_for('login'))
-    return render_template('mat_prim.html')
+    return render_template('modules/produccion/mat_prim.html')
 
 
-@app.route('/inventario_productos_terminados')
-def inventario_productos_terminados():
-    if 'username' not in session or session['role'] != 'admin':
+@app.route('/inventario_galletas')
+def inventario_galletas():
+    if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('login'))
-    return render_template('prod_term.html')
+    return render_template('modules/ventas/prod_term.html')
 
 
-@app.route('/pedidos')
-def pedidos():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    return render_template('pedidos.html')
-
-
-@app.route('/portal_cliente')
-def portal_cliente():
+@app.route('/perfil')
+def perfil():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('login'))
-    return render_template('portal_cliente.html')
-
+    return render_template('modules/client/perfil_cliente.html')
 
 # Ejecutar la aplicación
 if __name__ == '__main__':

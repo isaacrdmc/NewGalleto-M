@@ -1,23 +1,20 @@
 /* Estilos generales */
 body {
     font-family: Arial, sans-serif;
-    background-color: #E8C6A7;  /* Fondo cálido */
+    background-color: #E8C6A7; /* Fondo cálido */
     margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;  /* Centrar verticalmente */
+    padding-top: 70px; /* Ajuste para no tapar el contenido */
 }
 
 /* Navbar */
 .navbar {
-    background-color: #2C2C2C;  /* Fondo oscuro */
+    background-color: #2C2C2C; /* Fondo oscuro */
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;  /* Asegurar que esté por encima de otros elementos */
+    z-index: 1050; /* Asegurar que esté sobre otros elementos */
+    height: 70px;
 }
 
 .navbar-brand {
@@ -26,16 +23,23 @@ body {
 }
 
 .navbar-brand img {
-    display: flex;
-    width: 100px;  /* Tamaño del logo */
+    width: 80px;
+    height: auto;
 }
 
 .navbar-brand h3 {
     color: white;
     font-weight: bold;
-    font-size: 1.5em;
+    font-size: 1.4em;
     margin-left: -30%;
 }
+
+.navbar-brand h2 {
+    color: white;
+    font-weight: bold;
+    font-size: 1.4em;
+}
+
 
 /* Contenedor principal del login con pestañas */
 .login-container {
@@ -51,17 +55,17 @@ body {
     position: relative;
     margin: auto;  /* Espacio para el navbar */
     font-style: bold;
-    top: 30px;
+    top: 60px;
 }
 
 /* Estilos de las pestañas dentro del login-container */
 .tabs {
     display: flex;
-    justify-content: flex-start;  /* Alinear a la izquierda */
+    justify-content: flex-start;
     position: absolute;
     top: -8%;
     left: -10px;
-    width: 100%;  /* Asegurar que las pestañas ocupen todo el ancho */
+    width: 100%;
     padding: 0 10px;
 }
 
@@ -94,11 +98,11 @@ body {
 }
 
 .tab-tittle {
-    font-size: 1.2em;  /* Reducir el tamaño de la fuente */
+    font-size: 1.4em;
     font-weight: bold;
 }
 
-.login-box h2 {
+.login-box h3 {
     text-align: center;
     margin-bottom: 10%;
     font-weight: bold;
@@ -157,7 +161,7 @@ body {
     }
 
     .tabs {
-        left: -18.2% !important;  /* Ajustar la posición de las pestañas */;
+        left: -18.2% !important;  /* Ajustar la posición de las pestañas */ ;
         top: -10%;  /* Ajustar la posición de las pestañas */
         flex-direction: row;
         justify-content: center;
@@ -241,35 +245,6 @@ body {
         font-size: 1em;
         padding: 10px;
     }
-}
-
-/* Sidebar - Barra lateral */
-#sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 250px;
-    background-color: #603A1E;
-    padding-top: 20px;
-}
-
-#sidebar .nav-link {
-    background-color: #FFFFFF;
-    color: black;
-    padding: 7px 20px;
-    font-size: 1em;
-    font-weight: 500;
-    font-weight: bold;
-}
-
-#sidebar .nav-link:hover {
-    background-color: #DBD99D;
-}
-
-/* Estilo para los items activos */
-#sidebar .nav-link.active {
-    background-color: #DBD99D;
 }
 
 main {

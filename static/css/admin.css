@@ -1,0 +1,107 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #2C2C2C; /* Fondo oscuro */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: flex-start; /* Cambio aquí para asegurar que el contenido se alinee correctamente */
+    align-items: flex-start;
+    min-height: 100vh;  /* Asegurando que el contenido no se solape con el sidebar */
+    padding: 20px 20px 20px 20px; /* Ajuste para no tapar el contenido */
+}
+
+/* Sidebar - Barra lateral */
+#sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 250px;
+    background-color: #603A1E;
+    padding-top: 20px;
+    z-index: 1050; /* Asegurando que la barra lateral esté por encima del contenido */
+}
+
+#sidebar .nav-link {
+    background-color: #FFFFFF;
+    color: black;
+    padding: 7px 20px;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+#sidebar .nav-link:hover {
+    background-color: #DBD99D;
+}
+
+/* Estilo para los items activos */
+#sidebar .nav-link.active {
+    background-color: #DBD99D;
+}
+
+main {
+    margin-left: 250px;  /* Para dejar espacio para la barra lateral */
+    padding-top: 20px;
+    background-color: #E8C6A7; /* Fondo cálido */
+    flex-grow: 1;  /* Asegura que el contenido crezca y ocupe el espacio restante */
+}
+
+/* Estilos del contenido */
+.content {
+    padding: 20px;
+    background-color: #E8C6A7; /* Fondo cálido */
+}
+
+/* Estilo de las tarjetas en el dashboard */
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.card-body {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.card-text {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* Margen para los elementos del dashboard */
+.my-4 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Estilo del dashboard en el administrador */
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.dashboard-card {
+    width: 30%;
+    margin-bottom: 20px;
+}
+
+.dashboard-card .card-body {
+    background-color: #E8C6A7;
+}
+
+.dashboard-card .card-title {
+    color: #2C2C2C;
+}
+
+.dashboard-card .card-text {
+    color: #333;
+}
