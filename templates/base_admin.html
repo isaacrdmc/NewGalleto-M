@@ -6,10 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Don Galleto</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo3.png') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Carga de Bootstrap y Font Awesome desde un CDN confiable -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <!-- Estilos personalizados -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    
+    <!-- Cargar Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -25,135 +32,63 @@
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %} rounded-3"
-                                href="{{ url_for('dashboard_admin') }}">
+                            <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %} rounded-3" href="{{ url_for('dashboard_admin') }}">
                                 Reportes
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'usuarios' %}active{% endif %} rounded-3"
-                                href="{{ url_for('usuarios') }}">
+                            <a class="nav-link {% if request.endpoint == 'usuarios' %}active{% endif %} rounded-3" href="{{ url_for('usuarios') }}">
                                 Gestión de Usuarios
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'clientes' %}active{% endif %} rounded-3"
-                                href="{{ url_for('clientes') }}">
+                            <a class="nav-link {% if request.endpoint == 'clientes' %}active{% endif %} rounded-3" href="{{ url_for('clientes') }}">
                                 Gestión de Clientes
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3"
-                                href="{{ url_for('proveedores') }}">
+                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3" href="{{ url_for('proveedores') }}">
                                 Gestión de Proveedores
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3"
-                                href="{{ url_for('recetas') }}">
+                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3" href="{{ url_for('recetas') }}">
                                 Gestión de Recetas
+                            </a>
+                        </li>
+                        <li class="nav-item my-1">
+                            <a class="nav-link {% if request.endpoint == 'insumos' %}active{% endif %} rounded-3" href="{{ url_for('insumos') }}">
+                                Gestión de Inventario
                             </a>
                         </li>
                         <li class="nav-item my-4 text-center">
                             <a class="nav-link" href="#" style="background-color: #603A1E;">
-                                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones"
-                                    width="30">
+                                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="30">
                             </a>
                         </li>
                         <li class="nav-item mt-1">
-                            <a class="nav-link rounded-5 py-3" style="background-color: #b88277;"
-                                href="{{ url_for('logout') }}">
-                                <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión"
-                                    width="50" class="me-2">
+                            <a class="nav-link rounded-5 py-2" style="background-color: #b88277;" href="{{ url_for('logout') }}">
+                                <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50" class="me-2">
                                 Cerrar Sesión
                             </a>
                         </li>
                     </ul>
                 </div>
             </nav>
-            {% block content %}
-            {% endblock %}
+
+            <!-- Contenido principal -->
+            <div class="container">
+                {% block content %}
+                {% endblock %}
+            </div>
+
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts al final para no bloquear el renderizado -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-
-    <script>
-        // Script para cambiar la clase activa al hacer clic
-        document.querySelectorAll('.nav-link').forEach(function (link) {
-            link.addEventListener('click', function () {
-                // Remover la clase 'active' de todos los enlaces
-                document.querySelectorAll('.nav-link').forEach(function (link) {
-                    link.classList.remove('active');
-                });
-                // Agregar la clase 'active' al enlace clickeado
-                link.classList.add('active');
-            });
-        });
-
-        // Simular datos aleatorios para la gráfica de barras
-        function generarDatosAleatorios() {
-            const labels = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'];
-            const data = labels.map(() => Math.floor(Math.random() * 100)); // Generar valores aleatorios entre 0 y 100
-
-            return {
-                labels: labels,
-                datasets: [{
-                    label: 'Ventas Simuladas',
-                    data: data,
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            };
-        }
-
-        // Crear gráfico de barras con Chart.js (Gráfico 1)
-        const ctxBarra = document.getElementById('miGrafica').getContext('2d');
-        const miGrafica = new Chart(ctxBarra, {
-            type: 'bar', // Tipo de gráfica
-            data: generarDatosAleatorios(),
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Crear gráfico de línea con Chart.js (Gráfico 2)
-        const ctxLinea = document.getElementById('ventasChart').getContext('2d');
-        const ventasChart = new Chart(ctxLinea, {
-            type: 'line', // Tipo de gráfica
-            data: {
-                labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'], // Meses
-                datasets: [{
-                    label: 'Ventas en $',
-                    data: [12000, 15000, 13000, 18000, 17000, 19000], // Ventas de cada mes
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
