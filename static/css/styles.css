@@ -51,6 +51,7 @@ body {
     position: relative;
     margin: auto;  /* Espacio para el navbar */
     font-style: bold;
+    top: 30px;
 }
 
 /* Estilos de las pestañas dentro del login-container */

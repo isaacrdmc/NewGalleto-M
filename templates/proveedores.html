@@ -4,6 +4,50 @@
 
 {% block content %}
 <div class="container mt-3">
+    <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar">
+        <div class="position-sticky pt-3 mb-5">
+            <a class="sidebar-img" href="{{ url_for('dashboard_admin') }}">
+                <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="Logo" width="100%">
+            </a>
+        </div>
+        <div class="position-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item my-1">
+                    <a class="nav-link active rounded-3" href="{{ url_for('dashboard_admin') }}">
+                        Reportes
+                    </a>
+                </li>
+                <li class="nav-item my-1">
+                    <a class="nav-link rounded-3" href="{{ url_for('usuarios') }}">
+                        Gestión de Usuarios
+                    </a>
+                </li>
+                <li class="nav-item my-1">
+                    <a class="nav-link rounded-3" href="{{ url_for('clientes') }}">
+                        Gestión de Clientes 
+                    </a>
+                </li>
+                <li class="nav-item my-1">
+                    <a class="nav-link rounded-3" href="{{ url_for('proveedores') }}">
+                        Gestión de Proveedores
+                    </a>
+                </li>
+                <li class="nav-item my-1">
+                    <a class="nav-link rounded-3" href="{{ url_for('recetas') }}">
+                        Gestión de Recetas
+                    </a>
+                </li>
+                <li class="nav-item mt-5">
+                    <!-- Link de Cerrar Sesión con un ícono de Font Awesome -->
+                    <a class="nav-link rounded-5 py-3" href="{{ url_for('logout') }}">
+                        <i class="fas fa-sign-out-alt"></i>  <!-- Ícono de Cerrar Sesión -->
+                        Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
     <div class="text-dark mb-3 fw-normal fs-6">
         Home/Administrador/Gestionar Proveedores
     </div>
