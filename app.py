@@ -90,14 +90,14 @@ def login():
 
         flash('Nombre de usuario o contraseña incorrectos', 'danger')
 
-    return render_template('login.html')
+    return render_template('shared/login.html')
 
 # Ruta para el dashboard del administrador
 @app.route('/dashboard_admin')
 def dashboard_admin():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/dashboard.html')
+    return render_template('admin/dashboard.html')
 
 
 # Ruta para el dashboard de producción
@@ -105,7 +105,7 @@ def dashboard_admin():
 def produccion():
     if 'username' not in session or session['role'] != 'produccion':
         return redirect(url_for('login'))
-    return render_template('modules/produccion/produccion.html')
+    return render_template('produccion/produccion.html')
 
 
 # Ruta para el dashboard de ventas
@@ -113,7 +113,7 @@ def produccion():
 def ventas():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('login'))
-    return render_template('modules/ventas/ventas.html')
+    return render_template('ventas/ventas.html')
 
 
 # Ruta para el dashboard del cliente
@@ -121,7 +121,7 @@ def ventas():
 def portal_cliente():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('login'))
-    return render_template('modules/client/portal_cliente.html')
+    return render_template('client/portal_cliente.html')
 
 
 # Ruta para cerrar sesión
@@ -136,13 +136,13 @@ def logout():
 def usuarios():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/usuarios.html')
+    return render_template('admin/usuarios.html')
 
 @app.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/proveedores.html', proveedor=proveedor)
+    return render_template('admin/proveedores.html', proveedor=proveedor)
 
 @app.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
@@ -194,35 +194,35 @@ def eliminar_proveedor(id):
 def clientes():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/clientes.html')
+    return render_template('admin/clientes.html')
 
 
 @app.route('/recetas')
 def recetas():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/recetas.html')
+    return render_template('admin/recetas.html')
 
 
 @app.route('/inventario_insumos')
 def inventario_insumos():
     if 'username' not in session or session['role'] != 'produccion':
         return redirect(url_for('login'))
-    return render_template('modules/produccion/mat_prim.html')
+    return render_template('produccion/mat_prim.html')
 
 
 @app.route('/inventario_galletas')
 def inventario_galletas():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('login'))
-    return render_template('modules/ventas/prod_term.html')
+    return render_template('ventas/prod_term.html')
 
 # Ruta para gestionar insumos
 @app.route('/insumos')
 def insumos():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('modules/admin/insumos.html', insumo=insumo)
+    return render_template('admin/insumos.html', insumo=insumo)
 
 @app.route('/insumos/agregar', methods=['POST'])
 def agregar_insumo():
@@ -274,7 +274,7 @@ def eliminar_insumo(id):
 def perfil():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('login'))
-    return render_template('modules/client/perfil_cliente.html')
+    return render_template('client/perfil_cliente.html')
 
 
 
