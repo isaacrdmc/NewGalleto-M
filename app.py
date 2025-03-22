@@ -276,7 +276,12 @@ def perfil():
         return redirect(url_for('login'))
     return render_template('modules/client/perfil_cliente.html')
 
+
+
+
+
+
+
 # Ejecutar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)
->>>>>>> origin/andres
