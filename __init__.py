@@ -5,6 +5,8 @@ from io import StringIO
 from datetime import datetime, timedelta
 
 
+# TODO __init__.py principal de la app, es odnde creamos y configuramos la APP de flask
+
 # ? Definimos una función que es donde iran todos los brueprint del sistio
 
 def crearApp():

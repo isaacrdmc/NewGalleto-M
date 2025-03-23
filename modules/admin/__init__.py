@@ -18,6 +18,7 @@ modules/
     ├── __init__.py        # Define el Blueprint
     ├── routes.py          # Define las rutas HTTP
     ├── models.py          # Define los modelos de datos
+    
     ├── forms.py           # Define formularios WTForms
     ├── utils.py           # Funciones de utilidad específicas para ventas
     ├── validators.py      # Validaciones personalizadas
