@@ -49,7 +49,7 @@ insumo = [
 @bp_ventas.route('/ventas')
 def ventas():
     if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('login'))
+        return redirect(url_for('ventas.login'))
     return render_template('ventas/ventas.html')
 
 @bp_ventas.route('/insumos/agregar', methods=['POST'])

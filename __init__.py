@@ -18,11 +18,11 @@ def create_app():
     from modules.shared import bp_shared
  
     # ? Registramos los bluebrints de cada módulo importado
-    app.register_blueprint(bp_admistracion, url_prefix='/admin')
-    app.register_blueprint(bp_clientes, url_prefix='/cliente')
-    app.register_blueprint(bp_production, url_prefix='/production')
-    app.register_blueprint(bp_ventas, url_prefix='/ventas')
-    app.register_blueprint(bp_shared, url_prefix='/shared')
+    app.register_blueprint(bp_admistracion, url_prefix='/admin')    # Nombre de la ruta:  admin
+    app.register_blueprint(bp_clientes, url_prefix='/cliente')    # Nombre de la ruta:  cliente
+    app.register_blueprint(bp_production, url_prefix='/production')    # Nombre de la ruta:  production
+    app.register_blueprint(bp_ventas, url_prefix='/ventas')    # Nombre de la ruta:  ventas
+    app.register_blueprint(bp_shared, url_prefix='/shared')    # Nombre de la ruta:  shared
 
 
     # * Ejecutamos la app

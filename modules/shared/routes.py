@@ -32,21 +32,6 @@ users = {
     },
 }
 
-proveedor = [
-    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
-     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
-     "productos": "Leche y queso"},
-    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
-     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
-     "productos": "Bebidas"}
-]
-
-insumo = [
-    {"id": 1, "lote": 1, "producto": "Huevo", "cantidad": 100, "fechaCaducidad": "2024-11-20", "mermas": 5},
-    {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
-]
-
-
 
 # TODO Esta es la ruta que cargara por defecto
 @bp_shared.route('/')
@@ -54,14 +39,14 @@ def index():
     if 'username' in session:
         # Redirige al dashboard correspondiente según el rol
         if session['role'] == 'admin':
-            return redirect(url_for('dashboard_admin'))
+            return redirect(url_for('admin.dashboard_admin'))
         elif session['role'] == 'produccion':
-            return redirect(url_for('produccion'))
+            return redirect(url_for('shared.produccion'))
         elif session['role'] == 'ventas':
-            return redirect(url_for('ventas'))
+            return redirect(url_for('shared.ventas'))
         elif session['role'] == 'cliente':
-            return redirect(url_for('portal_cliente'))
-    return redirect(url_for('/login'))
+            return redirect(url_for('shared.portal_cliente'))
+    return redirect(url_for('shared.login'))
 
 
 # Ruta para el login
@@ -78,7 +63,7 @@ def login():
             # Bloquear admin si intenta entrar desde Cliente
             if active_tab == 'Cliente' and username == 'admin':
                 flash('No se puede iniciar sesión como administrador en la pestaña de Cliente.', 'danger')
-                return redirect(url_for('login'))
+                return redirect(url_for('shared.login'))
 
             # Validar si el rol coincide con la pestaña seleccionada
             if (user['role'] == 'produccion' and active_tab == 'Producción') or \
@@ -89,10 +74,10 @@ def login():
                 session['username'] = username
                 session['role'] = user['role']
                 flash('¡Has iniciado sesión correctamente!', 'success')
-                return redirect(url_for('index'))  # Redirige al dashboard correcto
+                return redirect(url_for('shared.index'))  # Redirige al dashboard correcto
 
             flash('No tienes permisos para acceder a esta pestaña.', 'danger')
-            return redirect(url_for('login'))
+            return redirect(url_for('shared.login'))
 
         flash('Nombre de usuario o contraseña incorrectos', 'danger')
 
@@ -104,5 +89,5 @@ def login():
 def logout():
     session.clear()  # Elimina la sesión del usuario
     flash('Has cerrado sesión correctamente', 'success')
-    return redirect(url_for('login'))
+    return redirect(url_for('shared.login'))
 

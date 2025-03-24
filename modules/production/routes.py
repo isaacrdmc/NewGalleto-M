@@ -9,17 +9,32 @@ from . import bp_production
 
 # ^ Sección de producción
 
+proveedor = [
+    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
+     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
+     "productos": "Leche y queso"},
+    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
+     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
+     "productos": "Bebidas"}
+]
+
+insumo = [
+    {"id": 1, "lote": 1, "producto": "Huevo", "cantidad": 100, "fechaCaducidad": "2024-11-20", "mermas": 5},
+    {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
+]
+
+
 # Ruta para el dashboard de producción
 @bp_production.route('/produccion')
 def produccion():
     if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('produccion/produccion.html')
 
 @bp_production.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('admin/proveedores.html', proveedor=proveedor)
 
 @bp_production.route('/proveedores/agregar', methods=['POST'])
@@ -71,26 +86,60 @@ def eliminar_proveedor(id):
 @bp_production.route('/recetas')
 def recetas():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('admin/recetas.html')
 
-# Ruta para gestionar insumos
+# Ruta para gestionar insumos dentro del archivo rutas de la carpeta producción
 @bp_production.route('/insumos')
 def insumos():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('admin/insumos.html', insumo=insumo)
+
+
+@bp_production.route('/insumos/eliminar/<id>', methods=['DELETE'])
+def eliminar_insumo(id):
+    global insumo
+    insumo = [i for i in insumo if i['id'] != id]
+    return jsonify({"mensaje": "Insumo eliminado"})
+
 
 @bp_production.route('/inventario_insumos')
 def inventario_insumos():
     if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('produccion/mat_prim.html')
 
 @bp_production.route('/inventario_galletas')
 def inventario_galletas():
     if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('login'))
+        return redirect(url_for('production.login'))
     return render_template('ventas/prod_term.html')
 
 
+
+@bp_production.route('/insumos/<id>', methods=['GET'])
+def obtener_insumo(id):
+    for i in insumo:
+        if i['id'] == id:
+            return jsonify(i)
+    return jsonify({"error": "Insumo no encontrado"}), 404
+
+@bp_production.route('/insumos/editar/<id>', methods=['POST'])
+def editar_insumo(id):
+    if request.is_json:
+        datos = request.get_json()  # Obtener los datos JSON del cuerpo de la solicitud
+        for i in insumo:  # Asegúrate de que el nombre de la lista sea "insumos"
+            if i['id'] == id:
+                # Usar los datos del JSON recibido para actualizar el insumo
+                i['lote'] = datos['lote']
+                i['producto'] = datos['producto']
+                i['cantidad'] = datos['cantidad']
+                i['fechaCaducidad'] = datos['fechaCaducidad']
+                i['mermas'] = datos['mermas']
+                # Retornar el mensaje de éxito junto con el insumo actualizado
+                return jsonify({"mensaje": "Insumo actualizado correctamente", "insumo": i})
+        # Si no se encontró el insumo
+        return jsonify({"error": "Insumo no encontrado"}), 404
+    else:
+        return jsonify({"error": "Tipo de contenido no soportado"}), 415

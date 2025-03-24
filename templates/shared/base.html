@@ -17,7 +17,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
                 <!-- Logo de la empresa a la izquierda -->
-                <a class="navbar-brand" href="{{ url_for('index') }}">
+                <a class="navbar-brand" href="{{ url_for('shared.index') }}">
                     <img src="{{ url_for('static', filename='img/logo3.png') }}" alt="Logo"
                         class="d-inline-block align-text-top">
                 </a>
@@ -31,7 +31,7 @@
                 {% if 'username' in session %}
                 {% if session['role'] != 'cliente' %}
                 <div class="navbar-brand text-left">
-                    <a href="{{ url_for('index') }}" class="text-decoration-none">
+                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
                         <h2 class="mb-0">Don Galleto</h2>
                     </a>
                 </div>
@@ -41,19 +41,19 @@
                     </span>
                     {% if session['role'] == 'produccion' %}
                     <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('inventario_insumos') }}"
+                        href="{{ url_for('production.inventario_insumos') }}"
                         style="margin-right: 20px; background-color: #ffd47ed5;">
                         <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos" width="40">
                     </a>
                     {% endif %}
                     {% if session['role'] == 'ventas' %}
                     <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('inventario_galletas') }}"
+                        href="{{ url_for('production.inventario_galletas') }}"
                         style="margin-right: 20px; background-color: #ffd47ed5;">
                         <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas" width="40">
                     </a>
                     {% endif %}
-                    <a class="submit" href="{{ url_for('logout') }}">
+                    <a class="submit" href="{{ url_for('shared.logout') }}">
                         <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión"
                             class="me-2 rounded-circle" width="50">
                     </a>
@@ -61,7 +61,7 @@
                 {% endif %}
                 {% if session['role'] == 'cliente' %}
                 <div class="navbar-brand mx-auto text-center">
-                    <a href="{{ url_for('index') }}" class="text-decoration-none">
+                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
                         <h2 class="mb-0">Don Galleto</h2>
                     </a>
                 </div>
@@ -72,8 +72,8 @@
                         <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="Perfil" width="40">
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{{ url_for('perfil') }}">Ver perfil</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.perfil') }}">Ver perfil</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('shared.logout') }}">Cerrar sesión</a></li>
                     </ul>
                 </div>
                 <!-- Menú lateral (Sidemenu) para el carrito -->

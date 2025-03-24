@@ -12,21 +12,21 @@ from . import bp_clientes
 @bp_clientes.route('/portal_cliente')
 def portal_cliente():
     if 'username' not in session or session['role'] != 'cliente':
-        return redirect(url_for('login'))
+        return redirect(url_for('cliente.login'))
     return render_template('client/portal_cliente.html')
 
 # Otras rutas...
 @bp_clientes.route('/usuarios')
 def usuarios():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('cliente.login'))
     return render_template('admin/usuarios.html')
 
 
 @bp_clientes.route('/clientes')
 def clientes():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('cliente.login'))
     return render_template('admin/clientes.html')
 
 
