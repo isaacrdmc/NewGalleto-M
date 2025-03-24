@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 """
 
 # TODO archvio de ejecución de la APP
-from app import create_app         # ? De la acrpeta de APP importamos la carpeta app
+from __init__ import create_app         # ? De la acrpeta de APP importamos la carpeta app
 
 app = create_app()
 

@@ -14,6 +14,9 @@ from . import bp_admistracion
 def dashboard():
     return 
 
+@bp_admistracion.route('/usuarios')
+def usuarios():
+    return render_template('admin/usuarios.html')
 
 # Ruta para el dashboard del administrador
 @bp_admistracion.route('/dashboard_admin')
