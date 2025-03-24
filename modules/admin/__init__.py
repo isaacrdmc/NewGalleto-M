@@ -1,13 +1,9 @@
 
-from flask import Blueprint, render_template
+from flask import Blueprint
+from . import routes
 
 # ? Vamos a crear lo blue prints para las rutas dentro de la sección de adminstración
 bp_admistracion = Blueprint('admin', __name__)
-
-# ? Ahora vamos a definir las rutas necesarias para el bluprint
-@bp_admistracion.route('/adminstrador/DashBoad')
-def dashboard():
-    return 
 
 
 

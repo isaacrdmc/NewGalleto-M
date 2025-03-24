@@ -1,15 +1,25 @@
 
 # TODO archvio de ejecución de la APP
-from app import app         # ? De la acrpeta de APP importamos la carpeta app
+from app import create_app         # ? De la acrpeta de APP importamos la carpeta app
 
-
+app = create_app()
 
 # * Ejecutar la aplicación en su totalidad
 if __name__ == '__main__':
     app.run(debug=True)
 
 
-
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 import csv
