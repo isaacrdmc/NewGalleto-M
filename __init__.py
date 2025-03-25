@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from config import Config   # * Es para poder crea run archivo de configuración para datos importantes del sistema
 # TODO __init__.py principal de la app, es donde creamos y configuramos la APP de flask
 
@@ -23,6 +23,14 @@ def create_app():
     app.register_blueprint(bp_production, url_prefix='/production')    # Nombre de la ruta:  production
     app.register_blueprint(bp_ventas, url_prefix='/ventas')    # Nombre de la ruta:  ventas
     app.register_blueprint(bp_shared, url_prefix='/shared')    # Nombre de la ruta:  shared
+
+
+    
+    # ? Cuando la app se ejecute nos enviara a la ruta del login 
+    @app.route('/')
+    def index():
+        return redirect(url_for('shared.login'))  # Asegúrate de que 'login' es el nombre correcto de la vista
+
 
 
     # * Ejecutamos la app
