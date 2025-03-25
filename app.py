@@ -41,10 +41,10 @@ insumo = [
     {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
 ]
 
-
+ 
 # Ruta principal (puede redirigir al login o al dashboard)
 
-
+ 
 # ^ Comprtido
 @app.route('/')
 def index():
@@ -102,7 +102,6 @@ def logout():
     session.clear()  # Elimina la sesión del usuario
     flash('Has cerrado sesión correctamente', 'success')
     return redirect(url_for('login'))
-
 
 
 

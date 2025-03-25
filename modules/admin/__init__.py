@@ -9,7 +9,7 @@ bp_admistracion = Blueprint('admin', __name__)
 def dashboard():
     return 
 
-
+ 
 
 
 """
