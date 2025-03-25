@@ -1,13 +1,19 @@
 
+# TODO __init__.py principal de la app, es donde creamos y configuramos la APP de flask
+
+
 from flask import Flask, redirect, url_for
 from config import Config   # * Es para poder crea run archivo de configuración para datos importantes del sistema
-# TODO __init__.py principal de la app, es donde creamos y configuramos la APP de flask
+from database.conexion import db
 
 
 # ? Definimos una función que es donde iran todos los brueprint del sistio
 def create_app():
     app = Flask(__name__)   # * Creamos una variable para instanciar Flask
     app.config.from_object(Config)  # ^ Configuración de la app
+
+    # ^ Inicializmos la conexión con la BD
+    db.init_app(app)
 
 
     # ? Importamos los Blueprints de cada módulo
