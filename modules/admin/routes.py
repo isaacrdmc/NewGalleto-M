@@ -1,56 +1,41 @@
 
 
-# ? Acá es donde crearemos las rutas necesarias para la sección de adminstación 
+from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from .services import agregar_proveedor, obtener_proveedores
+#  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from . import bp_admistracion
 
 
+# ? Ahora vamos a definir las rutas necesarias para el bluprint
 
 
+# ^ Sección del adminstrador
+
+@bp_admistracion.route('/adminstrador/DashBoad')
+def dashboard():
+    return 
+
+@bp_admistracion.route('/usuarios')
+def usuarios():
+    return render_template('admin/usuarios.html')
+
+# Ruta para el dashboard del administrador
+@bp_admistracion.route('/dashboard_admin')
+def dashboard_admin():
+    if 'username' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin.login'))
+    return render_template('admin/dashboard.html')
 
 
+@bp_admistracion.route('/perfil')
+def perfil():
+    if 'username' not in session or session['role'] != 'cliente':
+        return redirect(url_for('admin.login'))
+    return render_template('client/perfil_cliente.html')
 
 
-"""
-# ? COmo ejemplo vamos a crear una ruta falsa para un CREATE usuario admin
-
-
-
-
-# ^ Este seria el ejemplo para crear una API con la que podrimos revisarla en postman
-
-@admin.route('/admin/create', methods=['POST'])
-def create_admin():
-    data = request.get_json()
-    new_admin = AdminUser(username=data['username'], email=data['email'], password=data['password'])
-    db.session.add(new_admin)
-    db.session.commit()
-    return jsonify({"message": "Administrador creado"}), 201
-
-
-
-
-# ^ Este seria el ejemplo para crear des hacer la API de la misma ruta y poderla utilizar dentro dle sistema
-
-
-from flask import render_template, redirect, url_for, request
-
-@admin.route('/admin/create', methods=['GET', 'POST'])
-def create_admin():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-
-        new_admin = AdminUser(username=username, email=email, password=password)
-        db.session.add(new_admin)
-        db.session.commit()
-
-        return redirect(url_for('admin.get_admins'))  # Redirigir a la lista de admins
-
-    return render_template('admin/create_admin.html')
-
-"""
-
-
-
-
-
+# TODO nueva ruta,
+@bp_admistracion.route('/agregarProveedor')
+def agregarProv():
+    proveedoresNuevos=agregar_proveedor()
+    return render_template('admin/index.html', proveedores=proveedoresNuevos)

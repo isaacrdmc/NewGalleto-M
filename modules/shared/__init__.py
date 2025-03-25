@@ -1,9 +1,8 @@
 
 from flask import Blueprint
 
-
 # ? Vamos a crear lo blue prints para las rutas dentro de la sección de adminstración
-bp_production = Blueprint('production', __name__)
+bp_shared = Blueprint('shared', __name__)
 
 
 # * Archivo con las rutas de la sección

@@ -25,39 +25,39 @@
             <!-- Barra de navegación lateral -->
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar">
                 <div class="position-sticky pt-3 mb-5">
-                    <a class="sidebar-img" href="{{ url_for('dashboard_admin') }}">
+                    <a class="sidebar-img" href="{{ url_for('admin.dashboard_admin') }}">
                         <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="Logo" width="100%">
                     </a>
                 </div>
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %} rounded-3" href="{{ url_for('dashboard_admin') }}">
+                            <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %} rounded-3" href="{{ url_for('admin.dashboard_admin') }}">
                                 Reportes
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'usuarios' %}active{% endif %} rounded-3" href="{{ url_for('usuarios') }}">
+                            <a class="nav-link {% if request.endpoint == 'usuarios' %}active{% endif %} rounded-3" href="{{ url_for('admin.usuarios') }}">
                                 Gestión de Usuarios
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'clientes' %}active{% endif %} rounded-3" href="{{ url_for('clientes') }}">
+                            <a class="nav-link {% if request.endpoint == 'clientes' %}active{% endif %} rounded-3" href="{{ url_for('cliente.clientes') }}">
                                 Gestión de Clientes
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3" href="{{ url_for('proveedores') }}">
+                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3" href="{{ url_for('production.proveedores') }}">
                                 Gestión de Proveedores
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3" href="{{ url_for('recetas') }}">
+                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3" href="{{ url_for('production.recetas') }}">
                                 Gestión de Recetas
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'insumos' %}active{% endif %} rounded-3" href="{{ url_for('insumos') }}">
+                            <a class="nav-link {% if request.endpoint == 'insumos' %}active{% endif %} rounded-3" href="{{ url_for('production.insumos') }}">
                                 Gestión de Inventario
                             </a>
                         </li>
@@ -67,7 +67,7 @@
                             </a>
                         </li>
                         <li class="nav-item mt-1">
-                            <a class="nav-link rounded-5 py-2" style="background-color: #b88277;" href="{{ url_for('logout') }}">
+                            <a class="nav-link rounded-5 py-2" style="background-color: #b88277;" href="{{ url_for('shared.logout') }}">
                                 <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50" class="me-2">
                                 Cerrar Sesión
                             </a>
