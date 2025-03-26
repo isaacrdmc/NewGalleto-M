@@ -1,7 +1,7 @@
 
 # ? Acá es donde estaremos realizando la soperaciónes lógicas del sistema, como las consultas con la BD
 
-from admin.models import Proveedores
+from modules.admin.models import Proveedores
 from database.conexion import db
 
 # ~ Seccion de proveedores
@@ -24,3 +24,20 @@ def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, t
 # ^ Vemos todos los datos de la tabla
 def obtener_proveedores():
     return Proveedores.query.all()
+
+# ^ Modificamos un proveedor
+def modificar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
+    modificar_proveedor = Proveedores(
+        nombre=nombre,
+        telefono=telefono,
+        correo=correo,
+        direccion=direccion,
+        productosProveedor=productosProveedor,
+        tipoProveedor=tipoProveedor
+    )
+    # * 
+
+
+
+# ^ Eliminamos un proveedor
+
