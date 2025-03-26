@@ -37,21 +37,21 @@ def perfil():
 # TODO nueva ruta,
 @bp_admistracion.route('/agregarProveedor', methots=['POST'])
 def agregarProv():
-    if request.method == 'POST':
-        # * Recibimos los datos del formulario
-        nombre = request.form['nombre']
-        telefono = request.form['telefono']
-        correo = request.form['correo']
-        direccion = request.form['direccion']
-        productosProveedor = request.form['productosProveedor']
-        tipoProveedor = request.form['tipoProveedor']
+    # Recibimos los datos del formulario
+    nombre = request.form.get('nombre')
+    telefono = request.form.get('telefono')
+    correo = request.form.get('correo')
+    direccion = request.form.get('direccion')
+    productosProveedor = request.form.get('productosProveedor')
+    tipoProveedor = request.form.get('tipoProveedor')
 
-        # * Llamamos a la función para poder agregar un proveedor
-        agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor)
 
-        # * Obtenemos los proveedores
-        proveedoresNuevos=obtener_proveedores()
+    # * Llamamos a la función para poder agregar un proveedor
+    agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor)
 
+    # * Obtenemos los proveedores
+    proveedoresNuevos=obtener_proveedores()
+    
     proveedoresNuevos=agregar_proveedor()
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
 
