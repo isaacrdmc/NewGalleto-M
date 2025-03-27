@@ -11,6 +11,17 @@ from . import bp_admistracion
 
 # ^ Sección del adminstrador
 
+proveedor = [
+    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
+     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
+     "productos": "Leche y queso"},
+    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
+     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
+     "productos": "Bebidas"}
+]
+
+
+
 @bp_admistracion.route('/adminstrador/DashBoad')
 def dashboard():
     return 
@@ -32,6 +43,10 @@ def perfil():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('admin.login'))
     return render_template('client/perfil_cliente.html')
+
+
+
+# ~ Sección para el porveedores
 
 
 # TODO nueva ruta, ruta para un CRUD

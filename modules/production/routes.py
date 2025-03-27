@@ -1,4 +1,6 @@
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+
+from modules.admin.services import obtener_proveedores
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from . import bp_production
 
@@ -18,6 +20,7 @@ proveedor = [
      "productos": "Bebidas"}
 ]
 
+
 insumo = [
     {"id": 1, "lote": 1, "producto": "Huevo", "cantidad": 100, "fechaCaducidad": "2024-11-20", "mermas": 5},
     {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
@@ -31,12 +34,22 @@ def produccion():
         return redirect(url_for('production.login'))
     return render_template('produccion/produccion.html')
 
+
+
+
+
+# * Renderiza la página y trae los datos del arreglo
 @bp_production.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('production.login'))
-    return render_template('admin/proveedores.html', proveedor=proveedor)
+    
+    # ~ Obtenemos los datos de la tabla de 'proveedores' de la BD
+    proveedores = obtener_proveedores()
 
+    return render_template('admin/proveedores.html', proveedor=proveedores)
+
+# * Agregamos un nuevo porveedor
 @bp_production.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
     datos = request.get_json()
@@ -51,13 +64,7 @@ def agregar_proveedor():
     proveedor.append(nuevo_proveedor)
     return jsonify({"mensaje": "Proveedor agregado", "proveedor": nuevo_proveedor})
 
-@bp_production.route('/proveedores/<id>', methods=['GET'])
-def obtener_proveedor(id):
-    for p in proveedor:
-        if p['id'] == id:
-            return jsonify(p)
-    return jsonify({"error": "Proveedor no encontrado"}), 404
-
+# * Edita los datos del porveedor
 @bp_production.route('/proveedores/editar/<id>', methods=['POST'])
 def editar_proveedor(id):
     if request.is_json:
@@ -77,11 +84,32 @@ def editar_proveedor(id):
     else:
         return jsonify({"error": "Tipo de contenido no soportado"}), 415
 
+# * Eliminamos un proveedor
 @bp_production.route('/proveedores/eliminar/<id>', methods=['DELETE'])
 def eliminar_proveedor(id):
     global proveedor
     proveedor = [p for p in proveedor if p['id'] != id]
     return jsonify({"mensaje": "Proveedor eliminado"})
+
+# * Buscar un proveedor
+@bp_production.route('/proveedores/<id>', methods=['GET'])
+def obtener_proveedor(id):
+    for p in proveedor:
+        if p['id'] == id:
+            return jsonify(p)
+    return jsonify({"error": "Proveedor no encontrado"}), 404
+
+
+
+
+
+
+
+
+
+
+
+
 
 @bp_production.route('/recetas')
 def recetas():
