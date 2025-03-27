@@ -6,7 +6,7 @@ from . import bp_production
 
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
-
+ 
 
 
 # ^ Sección de producción
