@@ -1,7 +1,7 @@
 
 # ? Acá es donde estaremos realizando la soperaciónes lógicas del sistema, como las consultas con la BD
 
-from admin.models import Proveedores
+from .models import Proveedores
 from database.conexion import db
 
 # ~ Seccion de proveedores

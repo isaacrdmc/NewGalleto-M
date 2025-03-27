@@ -34,7 +34,7 @@ def perfil():
     return render_template('client/perfil_cliente.html')
 
 
-# TODO nueva ruta,
+# TODO nueva ruta, ruta para un CRUD
 @bp_admistracion.route('/agregarProveedor')
 def agregarProv():
     proveedoresNuevos=agregar_proveedor()
