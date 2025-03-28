@@ -10,9 +10,9 @@ from database.conexion import db
 def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
     nuevo_proveedor = Proveedores(
         nombre=nombre,
-        telefono=telefono,
-        correo=correo,
-        direccion=direccion,
+        telefono=telefono,  # * --------
+        correo=correo,  # * --------
+        direccion=direccion,  # * --------
         productosProveedor=productosProveedor,
         tipoProveedor=tipoProveedor
     )

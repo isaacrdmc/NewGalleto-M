@@ -25,14 +25,14 @@
                     <thead>
                         <tr>
                             <th>Acción</th>
-                            <th>ID</th>
+                            <!-- <th>ID</th> -->
                             <th>Empresa</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
                             <th>Dirección</th>
                             <th>Productos</th>
                         </tr>
-                    </thead>
+                    </thead> 
                     <tbody id="tablapes">
                         {% for p in proveedor %}
                         <tr id="row-{{ p.id }}">
@@ -40,12 +40,12 @@
                                 <button class="btn btn-warning btn-sm" onclick="editarp('{{ p.id }}')">✏️</button>
                                 <button class="btn btn-danger btn-sm" onclick="eliminarp('{{ p.id }}')">❌</button>
                             </td>
-                            <td>{{ p.id }}</td>
-                            <td>{{ p.empresa }}</td>
-                            <td>{{ p.telefono }}</td>
-                            <td>{{ p.correo }}</td>
-                            <td>{{ p.direccion }}</td>
-                            <td>{{ p.productos }}</td>
+                            <!-- <td>{{ p.id }}</td> -->
+                            <td>{{ p.nombre }}</td>
+                            <td>{{ p.telefono }}</td>    <!-- * -------- -->
+                            <td>{{ p.correo }}</td>    <!-- * -------- -->
+                            <td>{{ p.direccion }}</td>    <!-- * -------- -->
+                            <td>{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
