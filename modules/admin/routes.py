@@ -11,25 +11,20 @@ from . import bp_admistracion
 
 # ^ Sección del adminstrador
 
-proveedor = [
-    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
-     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
-     "productos": "Leche y queso"},
-    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
-     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
-     "productos": "Bebidas"}
-]
+# proveedor = [
+#     {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
+#      "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
+#      "productos": "Leche y queso"},
+#     {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
+#      "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
+#      "productos": "Bebidas"}
+# ]
 
 
 
 # @bp_admistracion.route('/adminstrador/DashBoad')
 # def dashboard():
 #     return 
-
-# * Sección para el CRUD de los Uusarios
-@bp_admistracion.route('/usuarios')
-def usuarios():
-    return render_template('admin/usuarios.html')
 
 # * Ruta para el dashboard del administrador
 @bp_admistracion.route('/dashboard_admin')
@@ -39,6 +34,11 @@ def dashboard_admin():
     return render_template('admin/dashboard.html')
 
 
+
+# * Sección para el CRUD de los Uusarios
+@bp_admistracion.route('/usuarios')
+def usuarios():
+    return render_template('admin/usuarios.html')
 # ~ Sección para el porveedores
 
 
