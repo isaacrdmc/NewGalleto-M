@@ -19,7 +19,7 @@ from ...admin import bp_admistracion
 
 
 
-
+ 
 
 
 # Ruta para gestionar insumos dentro del archivo rutas de la carpeta producción

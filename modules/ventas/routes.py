@@ -45,26 +45,4 @@ insumo = [
     {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
 ]
 
-# Ruta para el dashboard de ventas
-@bp_ventas.route('/ventas')
-def ventas():
-    if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('ventas.login'))
-    return render_template('ventas/ventas.html')
-
-@bp_ventas.route('/insumos/agregar', methods=['POST'])
-def agregar_insumo():
-    datos = request.get_json()
-    nuevo_insumo = {
-        "id": str(len(insumo) + 1).zfill(4),  # Generar ID automático
-        "lote": datos['lote'],
-        "producto": datos['producto'],
-        "cantidad": datos['cantidad'],
-        "fechaCaducidad": datos['fechaCaducidad'],
-        "mermas": datos['mermas']
-    }
-    insumo.append(nuevo_insumo)
-    return jsonify({"mensaje": "Insumo agregado", "insumo": nuevo_insumo})
-
-
 

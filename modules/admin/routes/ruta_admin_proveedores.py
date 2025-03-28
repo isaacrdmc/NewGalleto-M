@@ -20,7 +20,7 @@ from ...admin import bp_admistracion
 def agregarProv():
     proveedoresNuevos=agregar_proveedor()
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
-
+ 
 
 
 # * Renderiza la página y trae los datos del arreglo

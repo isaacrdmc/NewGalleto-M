@@ -30,7 +30,7 @@ def ventas():
 
 
 
-
+ 
 
 # ! No se que hace
 @bp_admistracion.route('/perfil')

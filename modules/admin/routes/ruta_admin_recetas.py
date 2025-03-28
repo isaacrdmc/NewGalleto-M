@@ -21,3 +21,4 @@ def recetas():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('production.login'))
     return render_template('admin/recetas.html')
+ 
