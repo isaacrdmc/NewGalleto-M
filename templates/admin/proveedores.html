@@ -25,14 +25,14 @@
                     <thead>
                         <tr>
                             <th>Acción</th>
-                            <th>ID</th>
+                            <!-- <th>ID</th> -->
                             <th>Empresa</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
                             <th>Dirección</th>
                             <th>Productos</th>
                         </tr>
-                    </thead>
+                    </thead> 
                     <tbody id="tablapes">
                         {% for p in proveedor %}
                         <tr id="row-{{ p.id }}">
@@ -41,10 +41,10 @@
                                 <button class="btn btn-danger btn-sm" onclick="eliminarp('{{ p.id }}')">❌</button>
                             </td>
                             <!-- <td>{{ p.id }}</td> -->
-                            <td>{{ p.empresa }}</td>
-                            <td>{{ p.telefono }}</td>  <!-- * ----------- -->
-                            <td>{{ p.correo }}</td>  <!-- * ----------- -->
-                            <td>{{ p.direccion }}</td>  <!-- * ----------- -->
+                            <td>{{ p.nombre }}</td>
+                            <td>{{ p.telefono }}</td>    <!-- * -------- -->
+                            <td>{{ p.correo }}</td>    <!-- * -------- -->
+                            <td>{{ p.direccion }}</td>    <!-- * -------- -->
                             <td>{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
@@ -53,7 +53,7 @@
             </div>
         </div>
 
-        <!-- Modal -->
+        <!-- ^ Modal -->
         <div class="modal fade" id="modalp" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -62,8 +62,9 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
+
                         <form id="formp">
-                            <input type="hidden" id="pId">
+                            <input type="hidden" id="pId"> 
                             <div class="mb-3">
                                 <label>Empresa</label>
                                 <input type="text" id="empresa" class="form-control" required>
@@ -85,6 +86,7 @@
                                 <input type="text" id="productos" class="form-control" required>
                             </div>
                         </form>
+                        
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-primary" onclick="guardarp()">Guardar</button>
@@ -102,6 +104,8 @@
         document.getElementById("pId").value = "";
     }
 
+
+    <!-- ? Función para guardar los datos dentro de la BD -->
     function guardarp() {
         const id = document.getElementById('pId').value;
         const data = {
