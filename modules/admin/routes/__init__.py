@@ -1,4 +1,11 @@
-from .admin_routes__Dashboard import *  # Importa las rutas relacionadas con el dashboard
-from .proveedores_routes import *  # Importa las rutas relacionadas con proveedores
-from .usuarios_routes import *  # Importa las rutas relacionadas con usuarios
-
+# from .ruta_admin_clientes import *
+# from .ruta_admin_dashboard import *
+# from .ruta_admin_Inventario import *
+# from .ruta_admin_proveedores import *
+# from .ruta_admin_recetas import *
+# from .ruta_admin_usuario import *
+from . import ruta_admin_dashboard
+from . import ruta_admin_Inventario
+from . import ruta_admin_proveedores
+from . import ruta_admin_recetas
+from . import ruta_admin_usuario
