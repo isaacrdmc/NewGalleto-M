@@ -34,6 +34,7 @@ def proveedores():
 
     return render_template('admin/proveedores.html', proveedor=proveedores)
 
+
 # * Agregamos un nuevo porveedor
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
@@ -85,3 +86,4 @@ def obtener_proveedor(id):
     return jsonify({"error": "Proveedor no encontrado"}), 404
 
 
+ 
