@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "shared/base.html" %}
 
 {% block content %}
 <div class="login-container">
@@ -12,7 +12,7 @@
     <!-- Contenedor de Login -->
     <div class="login-box">
         <h3 id="tab-title">Producción</h3>
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('shared.login') }}">
             <input type="hidden" name="active_tab" id="active_tab" value="Producción"> <!-- Campo oculto -->
             <label for="username">Usuario:</label>
             <input type="text" name="username" placeholder="Usuario" class="input-box" required>
