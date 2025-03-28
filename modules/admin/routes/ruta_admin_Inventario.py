@@ -1,5 +1,3 @@
-
-
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from ..services import agregar_proveedor, obtener_proveedores
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
@@ -26,7 +24,11 @@ from ...admin import bp_admistracion
 @bp_admistracion.route('/insumos')
 def insumos():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('production.login'))
+        return redirect(url_for('cliente.login'))
+    
+    # Definir la variable insumo (puede ser una consulta a la base de datos o un valor predeterminado)
+    insumo = []  # Ejemplo: lista vacía o datos obtenidos de la base de datos
+    
     return render_template('admin/insumos.html', insumo=insumo)
 
 
