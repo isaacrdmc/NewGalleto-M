@@ -22,15 +22,16 @@ proveedor = [
 
 
 
-@bp_admistracion.route('/adminstrador/DashBoad')
-def dashboard():
-    return 
+# @bp_admistracion.route('/adminstrador/DashBoad')
+# def dashboard():
+#     return 
 
+# * Sección para el CRUD de los Uusarios
 @bp_admistracion.route('/usuarios')
 def usuarios():
     return render_template('admin/usuarios.html')
 
-# Ruta para el dashboard del administrador
+# * Ruta para el dashboard del administrador
 @bp_admistracion.route('/dashboard_admin')
 def dashboard_admin():
     if 'username' not in session or session['role'] != 'admin':
@@ -38,19 +39,28 @@ def dashboard_admin():
     return render_template('admin/dashboard.html')
 
 
+# ~ Sección para el porveedores
+
+
+# * nueva ruta, ruta para el CRUD de los proveedores
+@bp_admistracion.route('/agregarProveedor')
+def agregarProv():
+    proveedoresNuevos=agregar_proveedor()
+    return render_template('admin/index.html', proveedores=proveedoresNuevos)
+
+
+
+
+
+
+
+
+
+
+# ! No se que hace
 @bp_admistracion.route('/perfil')
 def perfil():
     if 'username' not in session or session['role'] != 'cliente':
         return redirect(url_for('admin.login'))
     return render_template('client/perfil_cliente.html')
 
-
-
-# ~ Sección para el porveedores
-
-
-# TODO nueva ruta, ruta para un CRUD
-@bp_admistracion.route('/agregarProveedor')
-def agregarProv():
-    proveedoresNuevos=agregar_proveedor()
-    return render_template('admin/index.html', proveedores=proveedoresNuevos)
