@@ -6,7 +6,7 @@ from database.conexion import db
 
 # ~ Seccion de proveedores
 
-# ^ Creamos las operaciones para Proveedores:
+# ^ Agregamos un proveedor  (C)
 def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
     nuevo_proveedor = Proveedores(
         nombre=nombre,
@@ -21,6 +21,29 @@ def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, t
     db.session.commit()
 
 
-# ^ Vemos todos los datos de la tabla
+# ^ Leemos todos los datos de la tabla  (R)
 def obtener_proveedores():
     return Proveedores.query.all()
+
+
+# ^ Modificar un porveedore  (U)
+def modificar_proveedores():
+    return
+
+
+# ^ Elminar un porveedor  (D)
+def eliminar_proveedor():
+    return
+
+
+
+# ^ Buscamos un proveedor en específico
+
+
+
+
+# ^ Filtamos un porveedor por sus insumos
+
+
+
+
