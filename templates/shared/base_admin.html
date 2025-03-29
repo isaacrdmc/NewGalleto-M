@@ -42,22 +42,22 @@
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'clientes' %}active{% endif %} rounded-3" href="{{ url_for('cliente.clientes') }}">
+                            <a class="nav-link {% if request.endpoint == 'admin.clientes' %}active{% endif %} rounded-3" href="{{ url_for('admin.clientes') }}">
                                 Gestión de Clientes
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3" href="{{ url_for('production.proveedores') }}">
+                            <a class="nav-link {% if request.endpoint == 'proveedores' %}active{% endif %} rounded-3" href="{{ url_for('admin.proveedores') }}">
                                 Gestión de Proveedores
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3" href="{{ url_for('production.recetas') }}">
+                            <a class="nav-link {% if request.endpoint == 'recetas' %}active{% endif %} rounded-3" href="{{ url_for('admin.recetas') }}">
                                 Gestión de Recetas
                             </a>
                         </li>
                         <li class="nav-item my-1">
-                            <a class="nav-link {% if request.endpoint == 'insumos' %}active{% endif %} rounded-3" href="{{ url_for('production.insumos') }}">
+                            <a class="nav-link {% if request.endpoint == 'admin.insumos' %}active{% endif %} rounded-3" href="{{ url_for('admin.insumos') }}">
                                 Gestión de Inventario
                             </a>
                         </li>
