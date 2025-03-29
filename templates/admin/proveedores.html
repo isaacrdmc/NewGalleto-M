@@ -61,33 +61,40 @@
                         <h5 class="modal-title">Agregar/Editar proveedor</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
 
+                    <div class="modal-body">
                         <form id="formp">
-                            <input type="hidden" id="pId"> 
+                            {{ form.hidden_tag() }}     <!-- TODO  "Para el token CSRF" No se que hace esto -->
+
+
+                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                <label>Empresa</label>
-                                <input type="text" id="empresa" class="form-control" required>
+                                {{ form.empresa.label(class="form-label") }}
+                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
+                            
+                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                <label>Teléfono</label>
-                                <input type="text" id="telefono" class="form-control" required>
+                                {{ form.empresa.label(class="form-label") }}
+                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
+                            
+                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                <label>Correo</label>
-                                <input type="email" id="correo" class="form-control" required>
+                                {{ form.empresa.label(class="form-label") }}
+                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
+                            
+                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                <label>Dirección</label>
-                                <input type="text" id="direccion" class="form-control" required>
+                                {{ form.empresa.label(class="form-label") }}
+                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
-                            <div class="mb-3">
-                                <label>Productos</label>
-                                <input type="text" id="productos" class="form-control" required>
-                            </div>
+                            
                         </form> 
                         
                     </div>
+
                     <div class="modal-footer">
                         <button class="btn btn-primary" onclick="guardarp()">Guardar</button>
                     </div>

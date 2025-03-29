@@ -1,7 +1,11 @@
 
 
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+
+from modules.admin.forms.proveedores import ProveedoresForm
+from modules.admin.models import Proveedores
 from ..services import agregar_proveedor, obtener_proveedores
+from database import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from ...admin import bp_admistracion
 
@@ -35,20 +39,63 @@ def proveedores():
     return render_template('admin/proveedores.html', proveedor=proveedores)
 
 
+
+
+
 # * Agregamos un nuevo porveedor
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
-    datos = request.get_json()
-    nuevo_proveedor = {
-        "id": str(len(proveedor) + 1).zfill(4),  # ? Generar ID automático
-        "empresa": datos['empresa'],
-        "telefono": datos['telefono'],
-        "correo": datos['correo'],
-        "direccion": datos['direccion'],
-        "productos": datos['productos']
-    }
-    proveedor.append(nuevo_proveedor)
-    return jsonify({"mensaje": "Proveedor agregado", "proveedor": nuevo_proveedor})
+
+    #  * Instanciamos la clase del formulario para poder utilizarla dentro del sistema
+    form = ProveedoresForm()
+
+    # ? Verificamos si el formulario  es valido
+    if form.validate_on_submit():
+        # Obtenemos los datos del formuario
+        nuevo_Proveedor = Proveedores(
+            nombre=form.empresa.data,
+            telefono=form.telefono.data,
+            correo=form.correo.data,
+            direccion=form.direccion.data,
+            poductos=form.productos.data
+        )
+
+        # * 
+        db.session.add(nuevo_Proveedor)
+        db.session.commit()
+
+        # ? Si el formulairo es valido y se guarda en la Bd, mostramos el mensaje de exito
+    return jsonify({
+        "mensaje": "Proveedor agregado", 
+        "proveedor": {
+            "id":  nuevo_Proveedor.idProveedores,
+            "empresa":  nuevo_Proveedor.nombre,
+            "telpefono":  nuevo_Proveedor.telefono,
+            "correo":  nuevo_Proveedor.correo,
+            "direccion":  nuevo_Proveedor.direccion,
+            "productos":  nuevo_Proveedor.productosProveedor
+        }})
+    
+    # ? Si hay errores en la validación mostrmaos que sucedio
+    # errors = {field.name: field.errors for field in form if field.errors}
+    # return jsonify({"errors": errors}), 400}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # * Edita los datos del porveedor
 @bp_admistracion.route('/proveedores/editar/<id>', methods=['POST'])
