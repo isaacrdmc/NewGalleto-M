@@ -1,5 +1,25 @@
 # 🍪​ NewGalleto-M
 
+#### Secciónes de la docuemtnación del repositorio:
+<a href="#explicación-del-uso-del-repositorio">
+    <img src="https://img.shields.io/badge/🗿-Explicación del repositorio-yellow?style=for-the-badge">
+</a>
+<a href="#forma-de-trabajar">
+    <img src="https://img.shields.io/badge/👷-Forma de trabajar-orange?style=for-the-badge">
+</a>
+
+<a href="#base-de-datos-mysql">
+    <img src="https://img.shields.io/badge/💾-Base de Datos-blue?style=for-the-badge">
+</a>
+<a href="#estructura-del-proyecto">
+    <img src="https://img.shields.io/badge/📜-Estructura del proyecto-green?style=for-the-badge">
+</a>
+
+
+<br>
+<br>
+<br>
+
 <br>
 <img src="static/Logo.png" alt="Imagen de unas nubes">
 
@@ -61,7 +81,31 @@ Cada uno estaremos en dentro de nuestra rama donde crearemos **sub ramas** para 
 * Todos utilizaremos la misma BD dentro de manera local con los mimso nombres de las tablas
 * En el scritp de la conexión manejaremos las credenciales a través de variables de entorno para evitar problemas.
 * Si despues necesitamos modificar algun campo en la BD notificar al equipo para hacer los cambios necesarios a la BD
+--- 
+<br>
+<br>
+<br>
 
 
+## Estrucutra del poryecto
 
+### static
+Es donde estaran todos los archivos que no van a cambian dinámicamente en el proyecto, como los estilos, scripts y archivos multimedia.
+Es donde iran las hojas de estilo, los JS y las imágenes como el logo.
+
+### templates
+Aca es donde estaran las páginass de HTML y el contenido dinámico para la web.
+
+### módulos
+Es donde cada uno debera de crear una carpeta de sú módulo donde se usara para el backend y frontend.
+
+### database
+Aquí se almacenan los archivos relacionados con la base de datos.
+COmo por ejemplo la conexión.
+
+### app.py 
+Es donde se configura la aplicación y se registran los módulos.
+
+### .env
+Es el archivo donde iran las claves para la conexión con la BD
 
