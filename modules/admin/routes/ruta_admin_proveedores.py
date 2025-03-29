@@ -21,7 +21,7 @@ def agregarProv():
     proveedoresNuevos=agregar_proveedor()
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
  
-
+ 
 
 # * Renderiza la página y trae los datos del arreglo
 @bp_admistracion.route('/proveedores')
@@ -40,7 +40,7 @@ def proveedores():
 def agregar_proveedor():
     datos = request.get_json()
     nuevo_proveedor = {
-        "id": str(len(proveedor) + 1).zfill(4),  # Generar ID automático
+        "id": str(len(proveedor) + 1).zfill(4),  # ? Generar ID automático
         "empresa": datos['empresa'],
         "telefono": datos['telefono'],
         "correo": datos['correo'],
