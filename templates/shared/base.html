@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Don Galleto</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo3.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+                <!-- Logo de la empresa a la izquierda -->
+                <a class="navbar-brand" href="{{ url_for('shared.index') }}">
+                    <img src="{{ url_for('static', filename='img/logo3.png') }}" alt="Logo"
+                        class="d-inline-block align-text-top">
+                </a>
+
+                {% if not 'username' in session %}
+                <div class="navbar-brand mx-auto text-center">
+                    <h3 class="mb-0">Iniciar Sesión</h3>
+                </div>
+                {% endif %}
+
+                {% if 'username' in session %}
+                {% if session['role'] != 'cliente' %}
+                <div class="navbar-brand text-left">
+                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
+                        <h2 class="mb-0">Don Galleto</h2>
+                    </a>
+                </div>
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3">
+                        Bienvenido, {{ session['role'] }}
+                    </span>
+                    {% if session['role'] == 'produccion' %}
+                    <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
+                        href="{{ url_for('production.dashboard_produccion') }}"
+                        style="margin-right: 20px; background-color: #ffd47ed5;">
+                        <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos" width="40">
+                    </a>
+                    {% endif %}
+                    {% if session['role'] == 'ventas' %}
+                    <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
+                        href="{{ url_for('production.inventario_galletas') }}"
+                        style="margin-right: 20px; background-color: #ffd47ed5;">
+                        <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas" width="40">
+                    </a>
+                    {% endif %}
+                    <a class="submit" href="{{ url_for('shared.logout') }}">
+                        <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión"
+                            class="me-2 rounded-circle" width="50">
+                    </a>
+                </div>
+                {% endif %}
+                {% if session['role'] == 'cliente' %}
+                <div class="navbar-brand mx-auto text-center">
+                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
+                        <h2 class="mb-0">Don Galleto</h2>
+                    </a>
+                </div>
+                <!-- Menú desplegable de perfil -->
+                <div class="dropdown" style="margin-right: 20px;">
+                    <a class="dropdown-toggle text-decoration-none" href="#" role="button" id="dropdownMenuLink"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="Perfil" width="40">
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="{{ url_for('admin.perfil') }}">Ver perfil</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('shared.logout') }}">Cerrar sesión</a></li>
+                    </ul>
+                </div>
+                <!-- Menú lateral (Sidemenu) para el carrito -->
+                <div class="d-flex align-items-center" style="margin-right: 20px;">
+                    <a href="#" class="text-decoration-none" data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
+                        <img src="{{ url_for('static', filename='img/carrito.png') }}" alt="Carrito" class="me-2"
+                            width="50">
+                    </a>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </nav>
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+</body>
+
+</html>

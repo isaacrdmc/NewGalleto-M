@@ -1,0 +1,306 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E8C6A7; /* Fondo cálido */
+    margin: 0;
+    padding-top: 70px; /* Ajuste para no tapar el contenido */
+}
+
+/* Navbar */
+.navbar {
+    background-color: #2C2C2C; /* Fondo oscuro */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050; /* Asegurar que esté sobre otros elementos */
+    height: 70px;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand img {
+    width: 80px;
+    height: auto;
+}
+
+.navbar-brand h3 {
+    color: white;
+    font-weight: bold;
+    font-size: 1.4em;
+    margin-left: -30%;
+}
+
+.navbar-brand h2 {
+    color: white;
+    font-weight: bold;
+    font-size: 1.4em;
+}
+
+
+/* Contenedor principal del login con pestañas */
+.login-container {
+    display: flex;
+    background-color: #603A1E;  /* Fondo marrón oscuro */
+    color: white;
+    width: 400px;
+    padding: 40px;
+    border-radius: 0 25px 25px 25px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: auto;  /* Espacio para el navbar */
+    font-style: bold;
+    top: 60px;
+}
+
+/* Estilos de las pestañas dentro del login-container */
+.tabs {
+    display: flex;
+    justify-content: flex-start;
+    position: absolute;
+    top: -8%;
+    left: -10px;
+    width: 100%;
+    padding: 0 10px;
+}
+
+.tab {
+    background-color: #3D2314;  /* Fondo marrón más oscuro */
+    color: white;
+    padding: 10px 15px 5px 10px;  /* Reducir el tamaño de las pestañas */
+    font-size: 0.8em;  /* Reducir el tamaño de la fuente */
+    border-radius: 10px 50px 0 0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;  /* Transición suave */
+    text-align: left;  /* Alinear el texto a la izquierda */
+}
+
+.tab.active {
+    background-color: #603A1E;  /* Fondo marrón oscuro para la pestaña activa */
+}
+
+.prod {
+    padding-right: 5%;
+}
+
+.pes {
+    padding-right: 10%;
+}
+
+.tab:hover {
+    background-color: #603A1E;  /* Fondo marrón más claro al pasar el mouse */
+}
+
+.tab-tittle {
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+.login-box h3 {
+    text-align: center;
+    margin-bottom: 10%;
+    font-weight: bold;
+}
+
+.login-box label {
+    margin-left: 10%;
+    font-size: 0.8em;  /* Reducir el tamaño de la fuente */
+    font-weight: bold;
+}
+
+/* Estilos de los inputs */
+.input-box {
+    width: 90%;
+    margin: 0 0 65px 5%;
+    border: none;
+    border-radius: 20px;
+    background-color: #FFFFFF;  /* Fondo marrón más claro */
+    color: black;
+    font-size: 0.8em;
+    padding-left: 10px;
+}
+
+.input-box::placeholder {
+    color: #876b4a;  /* Color del placeholder */
+}
+
+/* Estilos del botón */
+.btn {
+    margin-left: 5%;
+    background-color: #C4A484;  /* Fondo beige */
+    color: white;
+    padding: 5px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 90%;
+    transition: background-color 0.3s ease;  /* Transición suave */
+}
+
+.btn:hover {
+    background-color: #B08B65;  /* Fondo beige más oscuro al pasar el mouse */
+}
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    .navbar-brand h3 {
+        font-size: 1.2em;
+    }
+
+    .login-container {
+        margin-top: 50px;  /* Ajustar el espacio para el navbar */
+        width: 90%;
+        padding: 20px;
+    }
+
+    .tabs {
+        left: -18.2% !important;  /* Ajustar la posición de las pestañas */ ;
+        top: -10%;  /* Ajustar la posición de las pestañas */
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .tab {
+        font-size: 0.8em;
+        padding: 8px 10px;
+        margin-bottom: 5px;
+    }
+
+    .login-box h2 {
+        font-size: 1.2em;
+        margin-bottom: 15px;
+    }
+
+    .input-box {
+        font-size: 0.9em;
+    }
+
+    .btn {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        height: auto;
+        flex-direction: column;
+        padding-top: 50px;
+    }
+
+    .navbar {
+        padding: 10px;
+        flex-direction: column;
+    }
+
+    .navbar-brand img {
+        width: 60px;
+    }
+
+    .navbar-brand h3 {
+        font-size: 1em;
+    }
+
+    .login-container {
+        margin-top: 100px;
+        width: 100%;
+        padding: 15px;
+        border-radius: 25px;
+    }
+
+    .tabs {
+        left: 0 !important;
+        top: -9.8%;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .tab {
+        padding: 8px 10px;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .tab.active {
+        padding: 8px 10px;
+    }
+
+    .tab.inactive {
+        padding: 8px 10px;
+    }
+
+    .input-box {
+        font-size: 0.9em;
+        padding: 10px;
+    }
+
+    .btn {
+        font-size: 1em;
+        padding: 10px;
+    }
+}
+
+main {
+    margin-left: 270px;  /* Para dejar espacio para la barra lateral */
+    padding-top: 20px;
+}
+
+/* Estilo de las tarjetas en el dashboard */
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.card-body {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.card-text {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* Margen para los elementos del dashboard */
+.my-4 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Estilo del dashboard en el administrador */
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.dashboard-card {
+    width: 30%;
+    margin-bottom: 20px;
+}
+
+.dashboard-card .card-body {
+    background-color: #E8C6A7;
+}
+
+.dashboard-card .card-title {
+    color: #2C2C2C;
+}
+
+.dashboard-card .card-text {
+    color: #333;
+}
