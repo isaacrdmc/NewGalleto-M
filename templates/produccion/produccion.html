@@ -1,0 +1,149 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="my-4 text-center fw-bold">🍪 Módulo de Producción - Don Galleto 🍪</h1>
+
+    <!-- Sección de Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-lg bg-light rounded-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Producción Diaria</h5>
+                    <p class="display-6 text-success">1,200 unidades</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-lg bg-light rounded-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Insumos Disponibles</h5>
+                    <p class="display-6 text-warning">85%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-lg bg-light rounded-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Lotes Pendientes</h5>
+                    <p class="display-6 text-danger">3</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario para Programar Producción -->
+    <div class="card border-0 shadow-lg rounded-4 mb-4">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-3">🛠️ Programar Nueva Producción</h4>
+            <form id="productionForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="receta" class="form-label fw-bold">Selecciona la Receta</label>
+                        <select class="form-control" id="receta" name="receta" required>
+                            <option value="chocolate">Galleta de Chocolate</option>
+                            <option value="vainilla">Galleta de Vainilla</option>
+                            <option value="nuez">Galleta de Nuez</option>
+                            <option value="mantequilla">Galleta de Mantequilla</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="cantidad" class="form-label fw-bold">Cantidad (en unidades)</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Ej. 500" required min="1">
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold">
+                        🚀 Iniciar Producción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Producción Reciente -->
+    <div class="card border-0 shadow-lg rounded-4 mb-5">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-3">📦 Producciones Recientes</h4>
+            <table class="table table-striped text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Lote</th>
+                        <th>Receta</th>
+                        <th>Cantidad</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#001</td>
+                        <td>Galleta de Chocolate</td>
+                        <td>1,000</td>
+                        <td><span class="badge bg-success">Completado</span></td>
+                        <td>2025-03-15</td>
+                    </tr>
+                    <tr>
+                        <td>#002</td>
+                        <td>Galleta de Vainilla</td>
+                        <td>800</td>
+                        <td><span class="badge bg-warning">En proceso</span></td>
+                        <td>2025-03-16</td>
+                    </tr>
+                    <tr>
+                        <td>#003</td>
+                        <td>Galleta de Nuez</td>
+                        <td>500</td>
+                        <td><span class="badge bg-danger">Pendiente</span></td>
+                        <td>2025-03-18</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gráfica de Producción -->
+    <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-3">📊 Producción Semanal</h4>
+            <canvas id="productionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para la Gráfica -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Simulación de datos de producción semanal
+    const ctx = document.getElementById('productionChart').getContext('2d');
+    const productionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+            datasets: [{
+                label: 'Unidades Producidas',
+                data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
+                backgroundColor: '#74c69d',
+                borderColor: '#40916c',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Simular envío del formulario para iniciar producción
+    document.getElementById('productionForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const receta = document.getElementById('receta').value;
+        const cantidad = document.getElementById('cantidad').value;
+        alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
+    });
+</script>
+{% endblock %}

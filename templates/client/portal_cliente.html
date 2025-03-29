@@ -1,0 +1,63 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<!-- Título del Portal -->
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h1>Bienvenido {{ session['role' ]}}!</h1>
+            <p class="lead">¡Disfruta de nuestros productos y realiza tus pedidos fácilmente!</p>
+        </div>
+    </div>
+
+    <!-- Fila de tarjetas con acciones -->
+    <div class="row">
+        <!-- Mis Pedidos -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title">Mis Pedidos</h5>
+                    <p class="card-text">Aquí puedes ver todos los pedidos que has realizado.</p>
+                    <a href="#" class="btn btn-primary">Ver Pedidos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Realizar Pedido -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title">Realizar Pedido</h5>
+                    <p class="card-text">Puedes realizar un nuevo pedido de nuestras deliciosas galletas.</p>
+                    <a href="#" class="btn btn-success">Nuevo Pedido</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ofertas Especiales (opcional) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card text-white bg-warning mb-4">
+                <div class="card-body bg-warning">
+                    <h5 class="card-title">¡Ofertas Especiales!</h5>
+                    <p class="card-text">No te pierdas nuestras ofertas exclusivas en galletas. ¡Aprovecha ahora!</p>
+                    <a href="#" class="btn btn-light">Ver Ofertas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Contacto -->
+    <div class="row">
+        <div class="col-12r">
+            <div class="text-center">
+                <h3>Contacto</h3>
+                <p>¿Tienes alguna pregunta? ¡Contáctanos!</p>
+            </div>
+            <a href="#" class="btn btn-info">Ir a Contacto</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

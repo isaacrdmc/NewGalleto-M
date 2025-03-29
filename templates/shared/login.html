@@ -1,0 +1,64 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <!-- Pestañas -->
+    <div class="tabs">
+        <div class="tab active prod" onclick="changeTab('Producción', this)">Producción</div>
+        <div class="tab inactive pes" onclick="changeTab('Ventas', this)">Ventas</div>
+        <div class="tab inactive pes" onclick="changeTab('Cliente', this)">Cliente</div>
+    </div>
+
+    <!-- Contenedor de Login -->
+    <div class="login-box">
+        <h3 id="tab-title">Producción</h3>
+        <form method="POST" action="{{ url_for('shared.login') }}">
+            <input type="hidden" name="active_tab" id="active_tab" value="Producción"> <!-- Campo oculto -->
+            <label for="username">Usuario:</label>
+            <input type="text" name="username" placeholder="Usuario" class="input-box" required>
+            <label for="password">Contraseña:</label>
+            <input type="password" name="password" placeholder="Contraseña" class="input-box" required>
+            <button type="submit" class="btn">Ingresar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let activeTab = 'Producción'; // Pestaña activa por defecto
+
+    // Cambia la pestaña activa
+    function changeTab(tabName, element) {
+        activeTab = tabName; // Actualiza la pestaña activa
+        document.getElementById('active_tab').value = tabName; // Actualiza el campo oculto
+
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabs.forEach(tab => tab.classList.add('inactive'));
+        element.classList.remove('inactive');
+        element.classList.add('active');
+        document.getElementById('tab-title').innerText = tabName; // Cambia el título del formulario
+    }
+
+
+    // Verifica si se puede iniciar sesión según la pestaña activa
+    document.querySelector('form').addEventListener('submit', function (event) {
+        const usernameInput = document.querySelector('input[name="username"]');
+        const passwordInput = document.querySelector('input[name="password"]');
+
+        // Si el usuario es admin y está en la pestaña de "Cliente", no permitir el login
+        if (activeTab === 'Cliente' && usernameInput.value === 'admin') {
+            alert('No se puede iniciar sesión como administrador en la pestaña de Cliente.');
+            event.preventDefault(); // Detiene el envío del formulario
+            return false;
+        }
+
+        // Si el usuario es admin y está en la pestaña de "Producción" o "Ventas", dejar continuar
+        if (usernameInput.value === 'admin' && (activeTab === 'Producción' || activeTab === 'Ventas')) {
+            return true;
+        }
+
+        return true; // Permitir que continúe si no es admin o está en la pestaña correcta
+    });
+</script>
+
+{% endblock %}

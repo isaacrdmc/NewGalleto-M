@@ -21,7 +21,7 @@
 <br>
 
 <br>
-<img src="static/Logo.png" alt="Imagen de unas nubes">
+<img src="static\img\Logo.png" alt="Imagen de unas nubes">
 
 <br>
 
