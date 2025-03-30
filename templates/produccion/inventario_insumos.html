@@ -1,0 +1,24 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center fw-bold">Inventario</h2>
+    <div class="row">
+        {% for item in inventario %}
+        <div class="col-md-4 col-lg-3 mb-3">
+            <a href="{{ url_for('production.detalle_insumo', nombre_insumo=item.nombre) }}" 
+                class="text-decoration-none d-block">
+                <div class="card text-center border border-3 {{ 'border-success' if item.stock > 0 else 'border-danger' }} shadow-sm hover-effect h-100">
+                    <div class="card-body">
+                        <img src="{{ item.imagen }}" alt="{{ item.nombre }}" class="img-fluid mb-2" style="max-height: 80px;">
+                        <h5 class="card-title">{{ item.nombre }}</h5>
+                        <p class="mb-1">{{ item.cantidad }}GR</p>
+                        <p>{{ item.piezas }}PZ</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
