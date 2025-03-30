@@ -22,12 +22,11 @@ def agregarProv():
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
  
 
-
 # * Renderiza la página y trae los datos del arreglo
 @bp_admistracion.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('production.login'))
+        return redirect(url_for('shared.login'))
     
     # ~ Obtenemos los datos de la tabla de 'proveedores' de la BD
     proveedores = obtener_proveedores()

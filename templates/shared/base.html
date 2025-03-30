@@ -14,7 +14,7 @@
 <body>
     <div class="container-fluid">
         <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <nav class="navbar navbar-dark bg-dark">
             <div class="container-fluid">
                 <!-- Logo de la empresa a la izquierda -->
                 <a class="navbar-brand" href="{{ url_for('shared.index') }}">
@@ -48,7 +48,7 @@
                     {% endif %}
                     {% if session['role'] == 'ventas' %}
                     <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('production.inventario_galletas') }}"
+                        href="{{ url_for('ventas.inventario_galletas') }}"
                         style="margin-right: 20px; background-color: #ffd47ed5;">
                         <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas" width="40">
                     </a>
@@ -72,7 +72,7 @@
                         <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="Perfil" width="40">
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{{ url_for('admin.perfil') }}">Ver perfil</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('cliente.perfil') }}">Ver perfil</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('shared.logout') }}">Cerrar sesión</a></li>
                     </ul>
                 </div>
@@ -83,6 +83,35 @@
                         <img src="{{ url_for('static', filename='img/carrito.png') }}" alt="Carrito" class="me-2"
                             width="50">
                     </a>
+                </div>
+
+                <!-- Offcanvas para el carrito -->
+                <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCarrito"
+                    aria-labelledby="offcanvasCarritoLabel">
+                    <div class="offcanvas-header">
+                        <h5 class="offcanvas-title" id="offcanvasCarritoLabel">Carrito de Compras</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <!-- Aquí puedes agregar los productos del carrito -->
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Producto 1
+                                <span class="badge bg-primary rounded-pill">1</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Producto 2
+                                <span class="badge bg-primary rounded-pill">2</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Producto 3
+                                <span class="badge bg-primary rounded-pill">3</span>
+                            </li>
+                        </ul>
+                        <div class="mt-3">
+                            <button class="btn btn-success w-100">Finalizar Compra</button>
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
                 {% endif %}

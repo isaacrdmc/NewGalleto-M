@@ -8,33 +8,21 @@ from . import bp_production
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
  
 
-
 # ^ Sección de producción
-
-proveedor = [
-    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
-     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
-     "productos": "Leche y queso"},
-    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
-     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
-     "productos": "Bebidas"}
-]
-
-
-insumo = [
-    {"id": 1, "lote": 1, "producto": "Huevo", "cantidad": 100, "fechaCaducidad": "2024-11-20", "mermas": 5},
-    {"id": 2, "lote": 2, "producto": "Leche", "cantidad": 50, "fechaCaducidad": "2024-11-10", "mermas": 10}
-]
 
 
 # * Ruta para el dashboard de producción
 @bp_production.route('/produccion')
 def produccion():
     if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('production.login'))
+        return redirect(url_for('shared.login'))
     return render_template('produccion/produccion.html')
 
-
+@bp_production.route('/inventario_insumos')
+def inventario_insumos():
+    if 'username' not in session or session['role'] != 'produccion':
+        return redirect(url_for('shared.login'))
+    return render_template('produccion/mat_prim.html')
 
 
 
