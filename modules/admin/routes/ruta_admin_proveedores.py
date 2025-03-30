@@ -1,11 +1,9 @@
-
-
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
 from ..services import agregar_proveedor, obtener_proveedores
-from database import db
+from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from ...admin import bp_admistracion
 
@@ -28,15 +26,19 @@ def agregarProv():
  
 
 # * Renderiza la página y trae los datos del arreglo
-@bp_admistracion.route('/proveedores')
+@bp_admistracion.route('/proveedores', methods=['GET'])
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('production.login'))
     
-    # ~ Obtenemos los datos de la tabla de 'proveedores' de la BD
-    proveedores = obtener_proveedores()
+    # Obtener la lista de proveedores
+    lista_proveedores = obtener_proveedores()
 
-    return render_template('admin/proveedores.html', proveedor=proveedores)
+    # * Instanciamos al formulario:
+    form = ProveedoresForm()
+
+    # Pasar solo los proveedores al contexto de la plantilla
+    return render_template('admin/proveedores.html', proveedor=lista_proveedores, form=form)
 
 
 
@@ -45,44 +47,70 @@ def proveedores():
 # * Agregamos un nuevo porveedor
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
+    try:
 
-    #  * Instanciamos la clase del formulario para poder utilizarla dentro del sistema
-    form = ProveedoresForm()
+        # * 
+        data = request.get_json()
 
-    # ? Verificamos si el formulario  es valido
-    if form.validate_on_submit():
+        # * Validamos los datos que se envian:
+        if not all(key in data for key  in ['', '', '']):
+            return jsonify({'error':'Datos incompletos'}), 400
+
         # Obtenemos los datos del formuario
         nuevo_Proveedor = Proveedores(
-            nombre=form.empresa.data,
-            telefono=form.telefono.data,
-            correo=form.correo.data,
-            direccion=form.direccion.data,
-            poductos=form.productos.data
+            nombre=data['empresa'],
+            telefono=data['telefono'],
+            correo=data['correo'],
+            direccion=data['direccion'],
+            poductos=data['productos']
         )
-
         # * 
         db.session.add(nuevo_Proveedor)
         db.session.commit()
 
+
+
+        #  * Instanciamos la clase del formulario para poder utilizarla dentro del sistema
+        # form = ProveedoresForm()
+
+        # ? Verificamos si el formulario  es valido
+        # if form.validate_on_submit():
+        #     # Obtenemos los datos del formuario
+        #     nuevo_Proveedor = Proveedores(
+        #         nombre=form.empresa.data,
+        #         telefono=form.telefono.data,
+        #         correo=form.correo.data,
+        #         direccion=form.direccion.data,
+        #         poductos=form.productos.data
+        #     )
+        # # * 
+        # db.session.add(nuevo_Proveedor)
+        # db.session.commit()
+
+
+
+
         # ? Si el formulairo es valido y se guarda en la Bd, mostramos el mensaje de exito
-    return jsonify({
-        "mensaje": "Proveedor agregado", 
-        "proveedor": {
-            "id":  nuevo_Proveedor.idProveedores,
-            "empresa":  nuevo_Proveedor.nombre,
-            "telpefono":  nuevo_Proveedor.telefono,
-            "correo":  nuevo_Proveedor.correo,
-            "direccion":  nuevo_Proveedor.direccion,
-            "productos":  nuevo_Proveedor.productosProveedor
-        }})
+        return jsonify({
+                "mensaje": "Proveedor agregado", 
+                "proveedor": {
+                    "id":  nuevo_Proveedor.idProveedores,
+                    "empresa":  nuevo_Proveedor.nombre,
+                    "telpefono":  nuevo_Proveedor.telefono,
+                    "correo":  nuevo_Proveedor.correo,
+                    "direccion":  nuevo_Proveedor.direccion,
+                    "productos":  nuevo_Proveedor.productosProveedor
+                }
+            }), 201
+    
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     
     # ? Si hay errores en la validación mostrmaos que sucedio
     # errors = {field.name: field.errors for field in form if field.errors}
     # return jsonify({"errors": errors}), 400}
-
-
-
-
 
 
 
@@ -133,4 +161,3 @@ def obtener_proveedor(id):
     return jsonify({"error": "Proveedor no encontrado"}), 404
 
 
- 

@@ -37,6 +37,12 @@ def create_app():
     def index():
         return redirect(url_for('shared.login'))  # Asegúrate de que 'login' es el nombre correcto de la vista
 
+    # @app.before_first_request
+    # def show_routes():
+    #     print("=== Rutas registradas ===")
+    #     for rule in app.url_map.iter_rules():
+    #         print(f"{rule.endpoint}: {rule.methods} -> {rule}")
+    #     print("========================")
 
 
     # * Ejecutamos la app

@@ -3,7 +3,7 @@
 
 # Importamos la conexión
 from database.conexion import db
-
+ 
 # ~ Creamos una clase con el nombre de la tabla para poder utilizarl más adelante
 class Proveedores(db.Model):    # ? 
     __tablename__ = 'proveedores'       # Nombre de la tabla

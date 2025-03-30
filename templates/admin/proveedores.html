@@ -1,11 +1,11 @@
 {% extends "shared/base_admin.html" %}
 
-{% block title %}Gestión de pes{% endblock %}
+{% block title %}Gestión de Proveedores{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar pes
+        Home / Administrador / Gestionar Proveedores
     </div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
         <div class="container mt-3">
@@ -20,12 +20,11 @@
             </div>
 
             <div class="table-responsive">
-                <!-- Tabla de pes -->
+                <!-- Tabla de proveedores -->
                 <table class="table table-bordered bg-white text-center">
                     <thead>
                         <tr>
                             <th>Acción</th>
-                            <!-- <th>ID</th> -->
                             <th>Empresa</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
@@ -35,16 +34,15 @@
                     </thead> 
                     <tbody id="tablapes">
                         {% for p in proveedor %}
-                        <tr id="row-{{ p.id }}">
+                        <tr id="row-{{ p.idProveedores }}">
                             <td>
-                                <button class="btn btn-warning btn-sm" onclick="editarp('{{ p.id }}')">✏️</button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarp('{{ p.id }}')">❌</button>
+                                <button class="btn btn-warning btn-sm" onclick="editarp('{{ p.idProveedores }}')">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarp('{{ p.idProveedores }}')">❌</button>
                             </td>
-                            <!-- <td>{{ p.id }}</td> -->
                             <td>{{ p.nombre }}</td>
-                            <td>{{ p.telefono }}</td>    <!-- * -------- -->
-                            <td>{{ p.correo }}</td>    <!-- * -------- -->
-                            <td>{{ p.direccion }}</td>    <!-- * -------- -->
+                            <td>{{ p.telefono }}</td>
+                            <td>{{ p.correo }}</td>
+                            <td>{{ p.direccion }}</td>
                             <td>{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
@@ -53,54 +51,54 @@
             </div>
         </div>
 
-        <!-- ^ Modal -->
+        <!-- ^ Modal para agregar/editar proveedores -->
         <div class="modal fade" id="modalp" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
+                    
                     <div class="modal-header">
                         <h5 class="modal-title">Agregar/Editar proveedor</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
                     <div class="modal-body">
-                        <form id="formp">
-                            {{ form.hidden_tag() }}     <!-- TODO  "Para el token CSRF" No se que hace esto -->
-
-
-                            <input type="hidden" name="pId">
+                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp">
+                            {{ form.hidden_tag() }}
+                            <!-- <input type="hidden" name="pId"> -->
                             <div class="mb-3">
                                 {{ form.empresa.label(class="form-label") }}
                                 {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
-                            
-                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                {{ form.empresa.label(class="form-label") }}
-                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
+                                {{ form.telefono.label(class="form-label") }}
+                                {{ form.telefono(class="form-control", id="telefono", required="required") }}
                             </div>
-                            
-                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                {{ form.empresa.label(class="form-label") }}
-                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
+                                {{ form.correo.label(class="form-label") }}
+                                {{ form.correo(class="form-control", id="correo", required="required") }}
                             </div>
-                            
-                            <input type="hidden" name="pId">
                             <div class="mb-3">
-                                {{ form.empresa.label(class="form-label") }}
-                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
+                                {{ form.direccion.label(class="form-label") }}
+                                {{ form.direccion(class="form-control", id="direccion", required="required") }}
                             </div>
-                            
-                        </form> 
-                        
+                            <div class="mb-3">
+                                {{ form.productos.label(class="form-label") }}
+                                {{ form.productos(class="form-control", id="productos", required="required") }}
+                            </div>
+                        </form>
                     </div>
 
                     <div class="modal-footer">
                         <button class="btn btn-primary" onclick="guardarp()">Guardar</button>
                     </div>
+
                 </div>
             </div>
         </div>
+
+
+
+
     </main>
 </div>
 
@@ -108,53 +106,118 @@
 <script>
     function limpiarFormulario() {
         document.getElementById("formp").reset();
-        document.getElementById("pId").value = "";
+        // const pIdElement = document.getElementById("pId");
+        /*
+        if (pIdElement) {
+            pIdElement.value = "";
+        }
+        */
     }
 
 
     <!-- ? Función para guardar los datos dentro de la BD -->
-    function guardarp() {
-        const id = document.getElementById('pId').value;
-        const data = {
-            empresa: document.getElementById('empresa').value,
-            telefono: document.getElementById('telefono').value,
-            correo: document.getElementById('correo').value,
-            direccion: document.getElementById('direccion').value,
-            productos: document.getElementById('productos').value
-        };
+    async function guardarp() {
+        try {
+            const data = {
+                empresa: document.getElementById('empresa').value.trim(),
+                telefono: document.getElementById('telefono').value.trim(),
+                correo: document.getElementById('correo').value.trim(),
+                direccion: document.getElementById('direccion').value.trim(),
+                productos: document.getElementById('productos').value.trim()
+            };
 
-        let url = '/proveedores/agregar';
-        let method = 'POST';
+            // Validamos los campos básicos
+            if (!data.empresa || !data.telefono || !data.correo) {
+                throw new Error('Por favor completa TODOS los campos requeridos');
+            };
 
-        if (id) {  // Si hay un ID, es una edición
-            url = `/proveedores/editar/${id}`;
-            method = 'POST';
-        } else {
-            data.id = new Date().getTime().toString(); // Generar un ID único si es nuevo
+            // Ruta para agregar proveedores
+            const url = '/admin/proveedores/agregar';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                },
+                body: JSON.stringify(data)
+            });
+
+            // Verificamos si la respuesta es exitosa
+            let result;
+            if (response.ok) {
+                result = await response.json();
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            // Mostramos un mensaje de éxito
+            mostrarNotificacion(result.mensaje, 'success');
+
+            // Cerramos el modal y limpiamos el formulario
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalp'));
+            if (modal) modal.hide();
+            limpiarFormulario();
+            actualizarTablaProveedores();
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarNotificacion(error.message || 'Error desconocido', 'error');
         }
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.json())
-            .then(res => {
-                if (res.error) {
-                    alert("Error: " + res.error);
-                } else {
-                    alert(res.mensaje);
-                    location.reload(); // Recargar la página para actualizar la tabla
-                }
-            })
-            .catch(error => console.error('Error al guardar proveedor:', error));
-
-        // Cerrar el modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalp'));
-        modal.hide();
     }
+
+    // <!-- ? Función par amostrar las notificaciónes: -->
+    function mostrarNotificacion(mensaje, tipo='success'){
+        // <!-- TODO es para implementarlo con 'SweetAlert' u otros -->
+        alert(`${tipo.toUpperCase()}: ${mensaje}`);
+    };
+
+    // <!-- ? Función para actualizar la tabla sin necesidad de recargar la página -->
+    async function actualizarTablaProveedores() {
+        try{
+            const response = await fetch('/proveedores/listar');
+            const proveedores = await response.json();
+
+            // <!-- * Sección para actualizar la tabla -->
+            const tbody = document.querySelector('#tablapes tbody') // <!-- Selecciónamos la tabla a racargar -->
+            tbody.innerHTML = '';   // <!-- ? Limpiamos la tabla -->
+
+            // <!--  -->
+            proveedores.forEach(proveedor => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td>${proveedor.id}</td>
+                <td>${proveedor.empresa}</td>
+                <td>${proveedor.telefono}</td>
+                <td>${proveedor.correo}</td>
+                <td>
+                    <button onclick="editarp('${proveedor.id}')" class="btn btn-sm btn-warning">Editar</button>
+                    <button onclick="eliminarp('${proveedor.id}')" class="btn btn-sm btn-danger">Eliminar</button>
+                </td>
+                `;
+                tbody.appendChild(row)
+            });
+        } catch (error) {
+            console.error('Error al actualizar la tabla:', error)
+        }
+    }
+    
+
+    
+
+
+
+    
+
+
+
+    
+
+
+
+    
+
+
+
 
     function editarp(id) {
         fetch(`/proveedores/${id}`)
@@ -170,7 +233,7 @@
                 const proveedor = data;
 
                 // Rellenar los campos del modal con los valores existentes
-                document.getElementById("pId").value = proveedor.id;  // ID del proveedor
+                // document.getElementById("pId").value = proveedor.id;  // ID del proveedor
                 document.getElementById("empresa").value = proveedor.empresa;  // Empresa
                 document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
                 document.getElementById("correo").value = proveedor.correo;  // Correo
