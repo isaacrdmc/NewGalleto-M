@@ -4,7 +4,7 @@
 <div class="register-container">
     <!-- Contenedor de Registro -->
     <div class="register-box">
-        <h3>Registro de Cliente</h3>
+        <h3 class="pb-3">Registrate!</h3>
         <form method="POST" action="{{ url_for('shared.register') }}">
             <label for="username">Usuario:</label>
             <input type="text" name="username" placeholder="Usuario" class="input-box" required>
@@ -18,13 +18,10 @@
             <label for="confirm_password">Confirmar Contraseña:</label>
             <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirmar Contraseña" class="input-box" required>
             
-            <!-- reCAPTCHA -->
-            <div class="g-recaptcha" data-sitekey="TU_CLAVE_DEL_SITE_KEY"></div>
-            
             <button type="submit" class="btn">Registrarse</button>
         </form>
         <div class="login-link">
-            <p>¿Ya tienes una cuenta? <a href="{{ url_for('shared.login') }}">Inicia sesión aquí</a></p>
+            <p>¿Ya tienes una cuenta? <a class="link" href="{{ url_for('shared.login') }}">Inicia sesión aquí</a></p>
         </div>
     </div>
 </div>

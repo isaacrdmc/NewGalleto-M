@@ -69,7 +69,7 @@ def login():
 
         flash('Nombre de usuario o contraseña incorrectos', 'danger')
 
-    return render_template('shared/login.html')
+    return render_template('shared/login.html', page_title='Iniciar Sesión')
 
 
 # Ruta para cerrar sesión
@@ -85,5 +85,5 @@ def register():
     if request.method == 'POST':
         # Lógica para registrar un cliente
         pass
-    return render_template('shared/register.html')
+    return render_template('shared/register.html', page_title='Registro')
 

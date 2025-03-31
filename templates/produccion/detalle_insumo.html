@@ -1,0 +1,95 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">DETALLE DE INSUMO</h2>
+        <span class="badge bg-secondary fs-6">Fazenda: 6</span>
+    </div>
+    
+    <!-- Tarjeta de información principal -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <!-- Imagen y datos básicos -->
+                <div class="col-md-3 text-center">
+                    <img src="{{ insumo.imagen }}" alt="{{ insumo.nombre }}" class="img-fluid" style="max-height: 120px;">
+                </div>
+                <div class="col-md-6">
+                    <h3 class="mb-1">{{ insumo.nombre }}</h3>
+                    <div class="d-flex gap-2 mb-2">
+                        <span class="badge bg-info text-dark">Total: {{ insumo.cantidad }}GR</span>
+                        <span class="badge bg-warning text-dark">Piezas: {{ insumo.piezas }}</span>
+                        <span class="badge {{ 'bg-success' if insumo.stock > 0 else 'bg-danger' }}">
+                            {{ 'Disponible' if insumo.stock > 0 else 'Agotado' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Registrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabla de lotes -->
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Lotes registrados</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Lote</th>
+                            <th>Cantidad</th>
+                            <th>Fecha caducidad</th>
+                            <th>Mermas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lote in lotes %}
+                        <tr class="{{ 'table-warning' if lote in proximos_caducar else '' }}">
+                            <td>{{ lote.lote }}</td>
+                            <td>{{ lote.cantidad }}GR</td>
+                            <td>
+                                {{ lote.fecha_caducidad }}
+                                {% if lote in proximos_caducar %}
+                                <span class="badge bg-danger ms-2">Próximo a caducar</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ lote.mermas }}GR</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger">Registrar merma</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerta para productos próximos a caducar -->
+    {% if proximos_caducar %}
+    <div class="alert alert-warning mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Productos próximos a caducar</h5>
+                <p class="mb-0">
+                    <strong>{{ insumo.nombre }}</strong> | 
+                    Cantidad: {{ proximos_caducar|sum(attribute='cantidad') }}GR | 
+                    Fecha: {{ proximos_caducar[0].fecha_caducidad }}
+                </p>
+            </div>
+            <button class="btn btn-sm btn-warning">Ver detalle</button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
