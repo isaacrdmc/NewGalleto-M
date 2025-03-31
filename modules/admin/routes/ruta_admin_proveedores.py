@@ -17,15 +17,9 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/production/proveedores
 
 
-# * nueva ruta, ruta para el CRUD de los proveedores
-@bp_admistracion.route('/agregarProveedor')
-def agregarProv():
-    proveedoresNuevos=agregar_proveedor()
-    return render_template('admin/index.html', proveedores=proveedoresNuevos)
- 
- 
 
-# * Renderiza la página y trae los datos del arreglo
+
+# ~ Nos dirijimos a la ruta de admin y renderizamos el HTMl del mismo
 @bp_admistracion.route('/proveedores', methods=['GET'])
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
@@ -42,90 +36,74 @@ def proveedores():
 
 
 
-
-
-# * Agregamos un nuevo porveedor
+# ^ Agregamos un nuevo porveedor        (C)
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
     try:
-
-        # * 
         data = request.get_json()
 
-        # * Validamos los datos que se envian:
-        if not all(key in data for key  in ['', '', '']):
-            return jsonify({'error':'Datos incompletos'}), 400
+        # Validar los datos enviados
+        if not all(key in data for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
+            return jsonify({'error': 'Datos incompletos'}), 400
 
-        # Obtenemos los datos del formuario
-        nuevo_Proveedor = Proveedores(
+        # Crear un nuevo proveedor
+        nuevo_proveedor = Proveedores(
             nombre=data['empresa'],
             telefono=data['telefono'],
             correo=data['correo'],
             direccion=data['direccion'],
-            poductos=data['productos']
+            productosProveedor=data['productos']
         )
-        # * 
-        db.session.add(nuevo_Proveedor)
+        db.session.add(nuevo_proveedor)
         db.session.commit()
 
-
-
-        #  * Instanciamos la clase del formulario para poder utilizarla dentro del sistema
-        # form = ProveedoresForm()
-
-        # ? Verificamos si el formulario  es valido
-        # if form.validate_on_submit():
-        #     # Obtenemos los datos del formuario
-        #     nuevo_Proveedor = Proveedores(
-        #         nombre=form.empresa.data,
-        #         telefono=form.telefono.data,
-        #         correo=form.correo.data,
-        #         direccion=form.direccion.data,
-        #         poductos=form.productos.data
-        #     )
-        # # * 
-        # db.session.add(nuevo_Proveedor)
-        # db.session.commit()
-
-
-
-
-        # ? Si el formulairo es valido y se guarda en la Bd, mostramos el mensaje de exito
+        # Respuesta exitosa
         return jsonify({
-                "mensaje": "Proveedor agregado", 
-                "proveedor": {
-                    "id":  nuevo_Proveedor.idProveedores,
-                    "empresa":  nuevo_Proveedor.nombre,
-                    "telpefono":  nuevo_Proveedor.telefono,
-                    "correo":  nuevo_Proveedor.correo,
-                    "direccion":  nuevo_Proveedor.direccion,
-                    "productos":  nuevo_Proveedor.productosProveedor
-                }
-            }), 201
-    
+            "mensaje": "Proveedor agregado",
+            "proveedor": {
+                "id": nuevo_proveedor.idProveedores,
+                "empresa": nuevo_proveedor.nombre,
+                "telefono": nuevo_proveedor.telefono,
+                "correo": nuevo_proveedor.correo,
+                "direccion": nuevo_proveedor.direccion,
+                "productos": nuevo_proveedor.productosProveedor
+            }
+        }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    
-    # ? Si hay errores en la validación mostrmaos que sucedio
-    # errors = {field.name: field.errors for field in form if field.errors}
-    # return jsonify({"errors": errors}), 400}
 
+# ^ Renderiza la página y trae los datos del arreglo        (R)
+@bp_admistracion.route('/proveedores/listar', methods=['GET'])
+def listar_proveedores():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "No autorizado"}), 403
 
+    try:
+        # * Obtener la lista de proveedores
+        lista_proveedores = obtener_proveedores()
+        if not lista_proveedores:
+            return jsonify({"mensaje": "No hay proveedores registrados"}), 200
 
+        proveedores_json = [
+            {
+                "id": p.idProveedores,
+                "nombre": p.nombre,
+                "telefono": p.telefono,
+                "correo": p.correo,
+                "direccion": p.direccion,
+                "productosProveedor": p.productosProveedor
+            }
+            for p in lista_proveedores
+        ]
+        return jsonify(proveedores_json), 200
+    except Exception as e:
+        # Loguear el error para depuración
+        print(f"Error al listar proveedores: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
-
-
-
-
-
-
-
-
-
-
-# * Edita los datos del porveedor
+# ^ Edita los datos del porveedor        (U)
 @bp_admistracion.route('/proveedores/editar/<id>', methods=['POST'])
 def editar_proveedor(id):
     if request.is_json:
@@ -145,19 +123,24 @@ def editar_proveedor(id):
     else:
         return jsonify({"error": "Tipo de contenido no soportado"}), 415
 
-# * Eliminamos un proveedor
+# ^ Eliminamos un proveedor        (D)
 @bp_admistracion.route('/proveedores/eliminar/<id>', methods=['DELETE'])
 def eliminar_proveedor(id):
     global proveedor
     proveedor = [p for p in proveedor if p['id'] != id]
     return jsonify({"mensaje": "Proveedor eliminado"})
 
-# * Buscar un proveedor
+
+
+
+
+
+
+# ^ Buscar un proveedor dentro de la BD        (D)
 @bp_admistracion.route('/proveedores/<id>', methods=['GET'])
 def obtener_proveedor(id):
     for p in proveedor:
         if p['id'] == id:
             return jsonify(p)
     return jsonify({"error": "Proveedor no encontrado"}), 404
-
 

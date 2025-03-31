@@ -49,6 +49,7 @@
                     </tbody>
                 </table>
             </div>
+            
         </div>
 
         <!-- ^ Modal para agregar/editar proveedores -->
@@ -113,6 +114,7 @@
         }
         */
     }
+    // ! Error de consola
 
 
     <!-- ? Función para guardar los datos dentro de la BD -->
@@ -131,6 +133,7 @@
                 throw new Error('Por favor completa TODOS los campos requeridos');
             };
 
+            
             // Ruta para agregar proveedores
             const url = '/admin/proveedores/agregar';
             const response = await fetch(url, {
@@ -151,6 +154,7 @@
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
 
+            // <!-- ! Error de consola -->
             // Mostramos un mensaje de éxito
             mostrarNotificacion(result.mensaje, 'success');
 
@@ -163,7 +167,7 @@
             console.error('Error:', error);
             mostrarNotificacion(error.message || 'Error desconocido', 'error');
         }
-    }
+    };
 
     // <!-- ? Función par amostrar las notificaciónes: -->
     function mostrarNotificacion(mensaje, tipo='success'){
@@ -173,33 +177,40 @@
 
     // <!-- ? Función para actualizar la tabla sin necesidad de recargar la página -->
     async function actualizarTablaProveedores() {
-        try{
-            const response = await fetch('/proveedores/listar');
+        try {
+            
+            const response = await fetch('/admin/proveedores/listar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
             const proveedores = await response.json();
 
-            // <!-- * Sección para actualizar la tabla -->
-            const tbody = document.querySelector('#tablapes tbody') // <!-- Selecciónamos la tabla a racargar -->
-            tbody.innerHTML = '';   // <!-- ? Limpiamos la tabla -->
+            // Actualizar la tabla con los datos obtenidos
+            const tbody = document.querySelector('#tablapes');
+            tbody.innerHTML = ''; // Limpiar la tabla
 
-            // <!--  -->
             proveedores.forEach(proveedor => {
                 const row = document.createElement('tr');
+                row.id = `row-${proveedor.id}`;
                 row.innerHTML = `
-                <td>${proveedor.id}</td>
-                <td>${proveedor.empresa}</td>
-                <td>${proveedor.telefono}</td>
-                <td>${proveedor.correo}</td>
-                <td>
-                    <button onclick="editarp('${proveedor.id}')" class="btn btn-sm btn-warning">Editar</button>
-                    <button onclick="eliminarp('${proveedor.id}')" class="btn btn-sm btn-danger">Eliminar</button>
-                </td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editarp('${proveedor.id}')">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarp('${proveedor.id}')">❌</button>
+                    </td>
+                    <td>${proveedor.nombre}</td>
+                    <td>${proveedor.telefono}</td>
+                    <td>${proveedor.correo}</td>
+                    <td>${proveedor.direccion}</td>
+                    <td>${proveedor.productosProveedor}</td>
                 `;
-                tbody.appendChild(row)
+                tbody.appendChild(row);
             });
         } catch (error) {
-            console.error('Error al actualizar la tabla:', error)
+            console.error('Error al actualizar la tabla:', error);
         }
-    }
+    };
     
 
     

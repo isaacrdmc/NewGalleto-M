@@ -15,5 +15,5 @@ class Proveedores(db.Model):    # ?
     correo = db.Column(db.String(60), nullable=False)
     direccion = db.Column(db.String(120), nullable=False)
     productosProveedor = db.Column(db.String(300), nullable=False)
-    tipoProveedor = db.Column(db.String(40), nullable=False)
+    # tipoProveedor = db.Column(db.String(40), nullable=False)
 
