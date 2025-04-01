@@ -1,5 +1,6 @@
 from datetime import datetime
-from flask import abort, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import os
+from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from modules.admin.services import obtener_proveedores
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
@@ -7,6 +8,7 @@ from . import bp_production
 
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
+# * Ruta para el dashboard de producción
 
 @bp_production.route('/dashboard_produccion')
 def dashboard_produccion():
@@ -75,15 +77,6 @@ def detalle_insumo(nombre_insumo):
                          lotes=insumo.get('lotes', []),
                          proximos_caducar=proximos_caducar)
 
-proveedor = [
-    {"id": "0001", "empresa": "19 Hermanos", "telefono": "477-724-5893", 
-     "correo": "queso@gmail.com", "direccion": "Paseo de los Insurgentes 362", 
-     "productos": "Leche y queso"},
-    {"id": "0002", "empresa": "Skibidi", "telefono": "477-123-4567", 
-     "correo": "skibidi@gmail.com", "direccion": "Avenida Central 123", 
-     "productos": "Bebidas"}
-]
-
 
 insumo = [
     {"id": 1, "lote": 1, "producto": "Huevo", "cantidad": 100, "fechaCaducidad": "2024-11-20", "mermas": 5},
@@ -91,12 +84,162 @@ insumo = [
 ]
 
 
-# * Ruta para el dashboard de producción
-@bp_production.route('/produccion')
-def produccion():
-    if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('production.login'))
-    return render_template('produccion/produccion.html')
+###############
+# * Ruta para el horneado de galletas
+# Función para guardar y cargar datos (simulando una base de datos)
+DATA_FILE = 'horneado_data.json'
+
+def load_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except:
+                return {"cookies_queue": [], "cookies_in_process": [], "finished_cookies": []}
+    return {"cookies_queue": [], "cookies_in_process": [], "finished_cookies": []}
+
+def save_data(data):
+    with open(DATA_FILE, 'w') as f:
+        json.dump(data, f)
+
+# Tipos de galletas disponibles
+cookie_types = ["Chocolate", "Vainilla", "Avena", "Mantequilla"]
+
+@bp_production.route('/horneado', methods=['GET'])
+def horneado():
+    # Cargar datos
+    data = load_data()
+    
+    # Obtener fecha actual para lotes
+    current_date = datetime.now().strftime("%d%m%y")
+    
+    # Renderizar plantilla con datos
+    return render_template(
+        'produccion/hornear_galleta.html',
+        cookies_queue=data['cookies_queue'],
+        cookies_in_process=data['cookies_in_process'],
+        finished_cookies=data['finished_cookies'],
+        cookie_types=cookie_types,
+        current_date=current_date
+    )
+
+@bp_production.route('/add_to_queue', methods=['POST'])
+def add_to_queue():
+    # Obtener tipo de galleta del formulario
+    cookie_type = request.form.get('cookie_type')
+    
+    # Validar tipo de galleta
+    if cookie_type not in cookie_types:
+        flash('Tipo de galleta no válido', 'danger')
+        return redirect(url_for('production.horneado'))
+    
+    # Cargar datos actuales
+    data = load_data()
+    
+    # Generar ID para la galleta
+    cookie_id = f"{cookie_type[0:2].upper()}{datetime.now().strftime('%d%m%y%H%M%S')}"
+    
+    # Agregar galleta a la cola
+    data['cookies_queue'].append({
+        'id': cookie_id,
+        'type': cookie_type,
+        'created_at': datetime.now().strftime("%H:%M:%S")
+    })
+    
+    # Guardar datos
+    save_data(data)
+    
+    flash(f'Galleta de {cookie_type} agregada a la cola', 'success')
+    return redirect(url_for('production.horneado'))
+
+@bp_production.route('/start_process/<cookie_id>', methods=['POST'])
+def start_process(cookie_id):
+    # Cargar datos actuales
+    data = load_data()
+    
+    # Buscar galleta en la cola
+    for i, cookie in enumerate(data['cookies_queue']):
+        if cookie['id'] == cookie_id:
+            # Mover galleta de la cola al proceso
+            cookie_to_process = data['cookies_queue'].pop(i)
+            cookie_to_process['process_started_at'] = datetime.now().strftime("%H:%M:%S")
+            data['cookies_in_process'].append(cookie_to_process)
+            
+            # Guardar datos
+            save_data(data)
+            
+            flash(f'Galleta de {cookie_to_process["type"]} movida a proceso', 'success')
+            return redirect(url_for('production.horneado'))
+    
+    flash('Galleta no encontrada', 'danger')
+    return redirect(url_for('production.horneado'))
+
+@bp_production.route('/finish_process/<cookie_id>', methods=['POST'])
+def finish_process(cookie_id):
+    # Cargar datos actuales
+    data = load_data()
+    
+    # Buscar galleta en proceso
+    for i, cookie in enumerate(data['cookies_in_process']):
+        if cookie['id'] == cookie_id:
+            # Mover galleta del proceso a terminadas
+            cookie_to_finish = data['cookies_in_process'].pop(i)
+            cookie_to_finish['finished_at'] = datetime.now().strftime("%H:%M:%S")
+            
+            # Generar número de lote
+            batch_number = f"{cookie_to_finish['type'][0:2].upper()}{datetime.now().strftime('%d%m%y')}"
+            cookie_to_finish['batch'] = batch_number
+            
+            data['finished_cookies'].append(cookie_to_finish)
+            
+            # Guardar datos
+            save_data(data)
+            
+            flash(f'Galleta de {cookie_to_finish["type"]} finalizada con éxito', 'success')
+            return redirect(url_for('production.horneado'))
+    
+    flash('Galleta no encontrada', 'danger')
+    return redirect(url_for('production.horneado'))
+
+@bp_production.route('/delete_cookie', methods=['POST'])
+def delete_cookie():
+    cookie_id = request.form.get('cookie_id')
+    list_type = request.form.get('list_type')
+    
+    # Cargar datos actuales
+    data = load_data()
+    
+    # Seleccionar lista correcta
+    if list_type == 'queue':
+        target_list = data['cookies_queue']
+        list_name = 'cookies_queue'
+    elif list_type == 'process':
+        target_list = data['cookies_in_process']
+        list_name = 'cookies_in_process'
+    elif list_type == 'finished':
+        target_list = data['finished_cookies']
+        list_name = 'finished_cookies'
+    else:
+        flash('Lista no válida', 'danger')
+        return redirect(url_for('production.horneado'))
+    
+    # Buscar y eliminar la galleta
+    for i, cookie in enumerate(target_list):
+        if cookie['id'] == cookie_id:
+            cookie_info = target_list[i]
+            del data[list_name][i]
+            
+            # Guardar datos
+            save_data(data)
+            
+            flash(f'Galleta de {cookie_info["type"]} eliminada', 'success')
+            return redirect(url_for('production.horneado'))
+    
+    flash('Galleta no encontrada', 'danger')
+    return redirect(url_for('production.horneado'))
+#########################
+
+
 
 
 
