@@ -37,6 +37,41 @@ def proveedores():
 
 
 
+# ^ Renderiza la página y trae los datos del arreglo        (R)
+@bp_admistracion.route('/proveedores/listar', methods=['GET'])
+def listar_proveedores():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "No autorizado"}), 403
+
+    try:
+        # * Obtener la lista de proveedores
+        lista_proveedores = obtener_proveedores()
+        if not lista_proveedores:
+            return jsonify({"mensaje": "No hay proveedores registrados"}), 200
+
+        proveedores_json = [
+            {
+                "id": p.idProveedores,
+                "nombre": p.nombre,
+                "telefono": p.telefono,
+                "correo": p.correo,
+                "direccion": p.direccion,
+                "productosProveedor": p.productosProveedor
+            }
+            for p in lista_proveedores
+        ]
+        return jsonify(proveedores_json), 200
+    except Exception as e:
+        # Loguear el error para depuración
+        print(f"Error al listar proveedores: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
+
+
+
+
+
+
+
 # ^ Agregamos un nuevo porveedor        (C)
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
@@ -75,40 +110,24 @@ def agregar_proveedor():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# ^ Renderiza la página y trae los datos del arreglo        (R)
-@bp_admistracion.route('/proveedores/listar', methods=['GET'])
-def listar_proveedores():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "No autorizado"}), 403
 
-    try:
-        # * Obtener la lista de proveedores
-        lista_proveedores = obtener_proveedores()
-        if not lista_proveedores:
-            return jsonify({"mensaje": "No hay proveedores registrados"}), 200
 
-        proveedores_json = [
-            {
-                "id": p.idProveedores,
-                "nombre": p.nombre,
-                "telefono": p.telefono,
-                "correo": p.correo,
-                "direccion": p.direccion,
-                "productosProveedor": p.productosProveedor
-            }
-            for p in lista_proveedores
-        ]
-        return jsonify(proveedores_json), 200
-    except Exception as e:
-        # Loguear el error para depuración
-        print(f"Error al listar proveedores: {e}")
-        return jsonify({"error": "Error interno del servidor"}), 500
+
 
 # ^ Edita los datos del porveedor        (U)
 @bp_admistracion.route('/proveedores/editar/<id>', methods=['POST'])
 def editar_proveedor(id):
     if request.is_json:
-        datos = request.get_json()  # Obtener los datos JSON del cuerpo de la solicitud
+        # * Obtenemos los datos JSON del cuerpo de la solicitud
+        datos = request.get_json()  
+
+        
+        # * Validamos los datos enviados
+        if not all(key in datos for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
+            return jsonify({'error': 'Datos incompletos'}), 400
+        
+        
+        # * Modificamos al proveedor
         for p in proveedor:  # Asegúrate de que el nombre de la lista sea "proveedores"
             if p['id'] == id:
                 # Usar los datos del JSON recibido para actualizar el proveedor
@@ -124,6 +143,13 @@ def editar_proveedor(id):
     else:
         return jsonify({"error": "Tipo de contenido no soportado"}), 415
 
+
+
+
+
+
+
+
 # ^ Eliminamos un proveedor        (D)
 @bp_admistracion.route('/proveedores/eliminar/<id>', methods=['DELETE'])
 def eliminar_proveedor(id):
@@ -137,11 +163,27 @@ def eliminar_proveedor(id):
 
 
 
-# ^ Buscar un proveedor dentro de la BD        (D)
-@bp_admistracion.route('/proveedores/<id>', methods=['GET'])
+# ^ Buscar un proveedor dentro de la BD        (Otro)
+
+
+# ~ Obtener un proveedor:
+@bp_admistracion.route('/proveedores/obtener/<int:id>', methods=['GET'])
 def obtener_proveedor(id):
+    try:
+        proveedor = Proveedores.query.get_or_404(id)
+        return jsonify({
+            "idProveedores": proveedor.idProveedores,
+            "nombre": proveedor.nombre,
+            "telefono": proveedor.telefono,
+            "correo": proveedor.correo,
+            "direccion": proveedor.direccion,
+            "productosProveedor": proveedor.productosProveedor
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
     for p in proveedor:
         if p['id'] == id:
             return jsonify(p)
     return jsonify({"error": "Proveedor no encontrado"}), 404
-
