@@ -151,12 +151,18 @@
 
             // <!-- ? Para la ruta para agregar/modificar proveedores usamos un ternario-->
             const url = esEdicion
-                ? `/proveedores/editar/?{idProveedor}`
+                ? `/admin/proveedores/editar/${idProveedor}`
                 : '/admin/proveedores/agregar';
 
-            // 
+            // <!-- ? Definimos el metodo deacuerdo a la ruta -->
+            const metodo = esEdicion
+            ? 'PUT'
+            : 'POST';
+
+
+            // <!-- ! ERROR DE CONSOLA  -->
             const response = await fetch(url, {
-                method: 'POST',
+                method: metodo,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
@@ -166,7 +172,12 @@
 
             // Verificamos si la respuesta es exitosa
             if (!response.ok) {
-                const errorData = await response.json();
+                let errorData;
+                try{
+                    const errorData = await response.json();
+                } catch {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
 
@@ -194,8 +205,9 @@
     // <!-- ? Editar los datos dentro de la BD           (U)  -->
     async function editarp(id) {
         try {
-            // <!-- * Hacemos  -->
-            const response = await fetch('/admin/proveedores/obtener/${id}');
+
+            // <!-- *  -->
+            const response = await fetch(`/admin/proveedores/obtener/${id}`);
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
@@ -204,25 +216,32 @@
             // <!--  -->
             const proveedor = await response.json();
 
+            // <!-- * Verificamos que tengamos los datos correctos -->
+            console.log('Datos recibidos:', proveedor)
+            
+
             // <!-- * Rellenamos el formulario del modal con los datos del proveedor selecionado -->
-            document.getElementById("idProveedor").value = proveedor.idProveedor;  // Id
-            document.getElementById("empresa").value = proveedor.empresa;  // Empresa
+            document.getElementById("idProveedor").value = proveedor.idProveedores;  // Id
+            document.getElementById("empresa").value = proveedor.nombre;  // Empresa
             document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
             document.getElementById("correo").value = proveedor.correo;  // Correo
             document.getElementById("direccion").value = proveedor.direccion;  // Dirección
-            document.getElementById("productos").value = proveedor.productosProveedor;  // Productos
+            document.getElementById("productos").value = proveedor.productosProveedor || proveedor.productos;  // Productos
 
             
             // <!-- * Cambiar el título dle modal -->
-            document.querySelector('.modal-title').textContent = 'Editar proveedor'
-
+            document.querySelector('.modal-title').textContent = 'Editar proveedor';
 
 
             // <!-- * Mostramos el modal -->
             new bootstrap.Modal(document.getElementById('modalp')).show();
         }catch (error){
-            console.error('Error al obtener el porveedor:', error);
-            mostrarNotificacion('Error al cargar los datos del proveedor', 'error');
+            console.error('Detalles del error:', {
+                error: error.message,
+                stack: error.stack,
+                response: await response?.text()
+            });
+            mostrarNotificacion(`Error al cargar: ${error.message}`, 'error');
         }
     }
 

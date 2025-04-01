@@ -2,7 +2,7 @@ from flask import render_template, request, Flask, render_template, request, red
 
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
-from ..services import agregar_proveedor, obtener_proveedores
+from ..services import actualizar_proveedor, agregar_proveedor, obtener_proveedores
 from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from ...admin import bp_admistracion
@@ -115,33 +115,37 @@ def agregar_proveedor():
 
 
 # ^ Edita los datos del porveedor        (U)
-@bp_admistracion.route('/proveedores/editar/<id>', methods=['POST'])
+@bp_admistracion.route('/proveedores/editar/<int:id>', methods=['PUT'])
 def editar_proveedor(id):
-    if request.is_json:
-        # * Obtenemos los datos JSON del cuerpo de la solicitud
-        datos = request.get_json()  
-
+    try:
+        data = request.get_json()
         
-        # * Validamos los datos enviados
-        if not all(key in datos for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
-            return jsonify({'error': 'Datos incompletos'}), 400
+        # Validación básica
+        if not all(key in data for key in ['empresa', 'telefono', 'correo']):
+            return jsonify({'error': 'Datos requeridos faltantes'}), 400
         
+        # Usamos la función de servicio
+        proveedor = actualizar_proveedor(
+            proveedor_id=id,
+            empresa=data['empresa'],
+            telefono=data['telefono'],
+            correo=data['correo'],
+            direccion=data.get('direccion', ''),  # Usamos get() para campos opcionales
+            productos=data.get('productos', '')
+        )
         
-        # * Modificamos al proveedor
-        for p in proveedor:  # Asegúrate de que el nombre de la lista sea "proveedores"
-            if p['id'] == id:
-                # Usar los datos del JSON recibido para actualizar el proveedor
-                p['empresa'] = datos['empresa']
-                p['telefono'] = datos['telefono']
-                p['correo'] = datos['correo']
-                p['direccion'] = datos['direccion']
-                p['productos'] = datos['productos']
-                # Retornar el mensaje de éxito junto con el proveedor actualizado
-                return jsonify({"mensaje": "Proveedor actualizado correctamente", "proveedor": p})
-        # Si no se encontró el proveedor
-        return jsonify({"error": "Proveedor no encontrado"}), 404
-    else:
-        return jsonify({"error": "Tipo de contenido no soportado"}), 415
+        return jsonify({
+            "mensaje": "Proveedor actualizado",
+            "proveedor": {
+                "id": proveedor.idProveedores,
+                "nombre": proveedor.nombre,
+                "telefono": proveedor.telefono,
+                "correo": proveedor.correo
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -181,9 +185,3 @@ def obtener_proveedor(id):
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-
-    for p in proveedor:
-        if p['id'] == id:
-            return jsonify(p)
-    return jsonify({"error": "Proveedor no encontrado"}), 404
