@@ -8,7 +8,16 @@ from . import bp_production
 
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
+<<<<<<< HEAD
 # * Ruta para el dashboard de producción
+=======
+ 
+@bp_production.route('/dashboard_produccion')
+def dashboard_produccion():
+    if 'username' not in session or session['role'] != 'produccion':
+        return redirect(url_for('admin.login'))
+    return render_template('produccion/produccion.html')
+>>>>>>> isaac
 
 @bp_production.route('/dashboard_produccion')
 def dashboard_produccion():
