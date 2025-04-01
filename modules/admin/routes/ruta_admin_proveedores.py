@@ -19,11 +19,12 @@ from ...admin import bp_admistracion
 
 
 
-# ~ Nos dirijimos a la ruta de admin y renderizamos el HTMl del mismo
-@bp_admistracion.route('/proveedores', methods=['GET'])
+# * Renderiza la página y trae los datos del arreglo
+# @bp_admistracion.route('/proveedores', methods=['GET'])
+@bp_admistracion.route('/proveedores')
 def proveedores():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('production.login'))
+        return redirect(url_for('shared.login'))
     
     # Obtener la lista de proveedores
     lista_proveedores = obtener_proveedores()

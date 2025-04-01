@@ -3,7 +3,7 @@
 
 
 from flask import Flask, redirect, url_for
-from config import Config   # * Es para poder crea run archivo de configuración para datos importantes del sistema
+from config import Config
 from database.conexion import db
 
 

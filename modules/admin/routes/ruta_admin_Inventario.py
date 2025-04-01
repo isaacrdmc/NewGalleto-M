@@ -16,15 +16,11 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/production/insumos
 
 
-
- 
-
-
 # Ruta para gestionar insumos dentro del archivo rutas de la carpeta producción
 @bp_admistracion.route('/insumos')
 def insumos():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('cliente.login'))
+        return redirect(url_for('shared.login'))
     
     # Definir la variable insumo (puede ser una consulta a la base de datos o un valor predeterminado)
     insumo = []  # Ejemplo: lista vacía o datos obtenidos de la base de datos
@@ -37,20 +33,6 @@ def eliminar_insumo(id):
     global insumo
     insumo = [i for i in insumo if i['id'] != id]
     return jsonify({"mensaje": "Insumo eliminado"})
-
-
-@bp_admistracion.route('/inventario_insumos')
-def inventario_insumos():
-    if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('production.login'))
-    return render_template('produccion/mat_prim.html')
-
-@bp_admistracion.route('/inventario_galletas')
-def inventario_galletas():
-    if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('production.login'))
-    return render_template('ventas/prod_term.html')
-
 
 @bp_admistracion.route('/insumos/<id>', methods=['GET'])
 def obtener_insumo(id):

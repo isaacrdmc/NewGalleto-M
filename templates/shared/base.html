@@ -12,82 +12,114 @@
 </head>
 
 <body>
-    <div class="container-fluid">
+    <div class="container-fluid px-0">
         <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2">
+            <div class="container-fluid align-items-center position-relative">
                 <!-- Logo de la empresa a la izquierda -->
-                <a class="navbar-brand" href="{{ url_for('shared.index') }}">
-                    <img src="{{ url_for('static', filename='img/logo3.png') }}" alt="Logo"
-                        class="d-inline-block align-text-top">
+                <a class="navbar-brand logo me-0" href="{{ url_for('shared.index') }}">
+                    <img src="{{ url_for('static', filename='img/logo3.png') }}" alt="Logo" width="100" height="auto"
+                        class="d-inline-block align-top">
                 </a>
 
                 {% if not 'username' in session %}
-                <div class="navbar-brand mx-auto text-center">
-                    <h3 class="mb-0">Iniciar Sesión</h3>
-                </div>
+                <h3 class="navbar-title-center">{{ page_title }}</h3>
                 {% endif %}
 
                 {% if 'username' in session %}
-                {% if session['role'] != 'cliente' %}
-                <div class="navbar-brand text-left">
-                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
-                        <h2 class="mb-0">Don Galleto</h2>
-                    </a>
-                </div>
-                <div class="navbar-nav ms-auto">
-                    <span class="navbar-text me-3">
-                        Bienvenido, {{ session['role'] }}
-                    </span>
-                    {% if session['role'] == 'produccion' %}
-                    <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('production.inventario_insumos') }}"
-                        style="margin-right: 20px; background-color: #ffd47ed5;">
-                        <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos" width="40">
-                    </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    {% if session['role'] != 'cliente' %}
+                    <h2 class="navbar-title-left">
+                        <a href="{{ url_for('shared.index')}}" class="text-decoration-none text-white">Don Galleto</a>
+                    </h2>
+                    <div class="d-flex align-items-center ms-auto">
+                        <span class="navbar-text me-3">
+                            Bienvenido, {{ session['role'] }}
+                        </span>
+                        {% if session['role'] == 'produccion' %}
+                        <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
+                            href="{{ url_for('production.inventario') }}"
+                            style="background-color: #ffd47ed5 !important;">
+                            <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos">
+                        </a>
+                        {% endif %}
+
+                        {% if session['role'] == 'ventas' %}
+                        <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
+                            href="{{ url_for('ventas.inventario_galletas') }}"
+                            style="background-color: #ffd47ed5 !important;">
+                            <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas">
+                        </a>
+                        {% endif %}
+                        <a class="ms-2 px-3" href="{{ url_for('shared.logout') }}">
+                            <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50">
+                        </a>
+                    </div>
                     {% endif %}
-                    {% if session['role'] == 'ventas' %}
-                    <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('production.inventario_galletas') }}"
-                        style="margin-right: 20px; background-color: #ffd47ed5;">
-                        <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas" width="40">
-                    </a>
+
+                    {% if session['role'] == 'cliente' %}
+                    <h2 class="navbar-title-center">Don Galleto</h2>
+
+                    <div class="d-flex align-items-center ms-auto">
+                        <!-- Menú desplegable de perfil -->
+                        <div class="dropdown me-3">
+                            <a class="dropdown-toggle text-decoration-none" href="#" role="button" id="dropdownMenuLink"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="Perfil" width="40">
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('cliente.perfil') }}">Ver perfil</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('shared.logout') }}">Cerrar sesión</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Carrito -->
+                        <a href="#" class="text-decoration-none" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
+                            <img src="{{ url_for('static', filename='img/carrito.png') }}" alt="Carrito" width="50">
+                        </a>
+                    </div>
                     {% endif %}
-                    <a class="submit" href="{{ url_for('shared.logout') }}">
-                        <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión"
-                            class="me-2 rounded-circle" width="50">
-                    </a>
                 </div>
-                {% endif %}
-                {% if session['role'] == 'cliente' %}
-                <div class="navbar-brand mx-auto text-center">
-                    <a href="{{ url_for('shared.index') }}" class="text-decoration-none">
-                        <h2 class="mb-0">Don Galleto</h2>
-                    </a>
-                </div>
-                <!-- Menú desplegable de perfil -->
-                <div class="dropdown" style="margin-right: 20px;">
-                    <a class="dropdown-toggle text-decoration-none" href="#" role="button" id="dropdownMenuLink"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="Perfil" width="40">
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{{ url_for('admin.perfil') }}">Ver perfil</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('shared.logout') }}">Cerrar sesión</a></li>
-                    </ul>
-                </div>
-                <!-- Menú lateral (Sidemenu) para el carrito -->
-                <div class="d-flex align-items-center" style="margin-right: 20px;">
-                    <a href="#" class="text-decoration-none" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
-                        <img src="{{ url_for('static', filename='img/carrito.png') }}" alt="Carrito" class="me-2"
-                            width="50">
-                    </a>
-                </div>
-                {% endif %}
                 {% endif %}
             </div>
         </nav>
+
+        <!-- Offcanvas para el carrito -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCarrito"
+            aria-labelledby="offcanvasCarritoLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasCarritoLabel">Carrito de Compras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <!-- Aquí puedes agregar los productos del carrito -->
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Producto 1
+                        <span class="badge bg-primary rounded-pill">1</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Producto 2
+                        <span class="badge bg-primary rounded-pill">2</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Producto 3
+                        <span class="badge bg-primary rounded-pill">3</span>
+                    </li>
+                </ul>
+                <div class="mt-3">
+                    <button class="btn btn-success w-100">Finalizar Compra</button>
+                </div>
+            </div>
+        </div>
+
         {% block content %}
         {% endblock %}
     </div>

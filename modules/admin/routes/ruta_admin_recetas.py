@@ -15,10 +15,9 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/production/recetas
 
 
-
 @bp_admistracion.route('/recetas')
 def recetas():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('production.login'))
+        return redirect(url_for('shared.login'))
     return render_template('admin/recetas.html')
  
