@@ -105,19 +105,23 @@
 
 <!-- JavaScript -->
 <script>
-    function limpiarFormulario() {
-        document.getElementById("formp").reset();
-        // const pIdElement = document.getElementById("pId");
-        /*
-        if (pIdElement) {
-            pIdElement.value = "";
+
+    // Función para cerrar el modal correctamente
+    function cerrarModal() {
+        const modalElement = document.getElementById('modalp');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide(); // Cierra el modal
         }
-        */
+
+        // Mueve el foco al botón que activó el modal
+        const abrirModalButton = document.querySelector('button[data-bs-target="#modalp"]');
+        if (abrirModalButton) {
+            abrirModalButton.focus();
+        }
     }
-    // ! Error de consola
 
-
-    <!-- ? Función para guardar los datos dentro de la BD -->
+    // Modifica la función guardarp para cerrar el modal correctamente
     async function guardarp() {
         try {
             const data = {
@@ -131,9 +135,8 @@
             // Validamos los campos básicos
             if (!data.empresa || !data.telefono || !data.correo) {
                 throw new Error('Por favor completa TODOS los campos requeridos');
-            };
+            }
 
-            
             // Ruta para agregar proveedores
             const url = '/admin/proveedores/agregar';
             const response = await fetch(url, {
@@ -146,28 +149,75 @@
             });
 
             // Verificamos si la respuesta es exitosa
-            let result;
-            if (response.ok) {
-                result = await response.json();
-            } else {
+            if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
 
-            // <!-- ! Error de consola -->
+            const result = await response.json();
+
             // Mostramos un mensaje de éxito
             mostrarNotificacion(result.mensaje, 'success');
 
             // Cerramos el modal y limpiamos el formulario
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalp'));
-            if (modal) modal.hide();
+            cerrarModal();
             limpiarFormulario();
             actualizarTablaProveedores();
         } catch (error) {
             console.error('Error:', error);
             mostrarNotificacion(error.message || 'Error desconocido', 'error');
         }
-    };
+    }
+
+    // <!-- ? Función para editar los datos dentro de la BD           (U)  -->
+    function editarp(id) {
+        fetch(`/proveedores/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                // Verificar si hay un error (Proveedor no encontrado)
+                if (data.error) {
+                    alert("Error: No se encontró el proveedor.");
+                    return;
+                }
+
+                // Acceder al proveedor desde la respuesta
+                const proveedor = data;
+
+                // Rellenar los campos del modal con los valores existentes
+                // document.getElementById("pId").value = proveedor.id;  // ID del proveedor
+                document.getElementById("empresa").value = proveedor.empresa;  // Empresa
+                document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
+                document.getElementById("correo").value = proveedor.correo;  // Correo
+                document.getElementById("direccion").value = proveedor.direccion;  // Dirección
+                document.getElementById("productos").value = proveedor.productos;  // Productos
+
+                // Abrir el modal
+                new bootstrap.Modal(document.getElementById("modalp")).show();
+            })
+            .catch(error => console.error("Error al obtener proveedor:", error));
+    }
+
+    // <!-- ? Función para eliminar los datos dentro de la BD           (D)  -->
+    function eliminarp(id) {
+        fetch(`/proveedores/eliminar/${id}`, { method: "DELETE" })
+            .then(() => location.reload());
+    }
+
+
+
+
+    // <!-- ? Función para Filtrar los datos dentro de la BD           (Otro)  -->
+    function filtrarpes() {
+        const filtro = document.getElementById("buscar").value.toLowerCase();
+        document.querySelectorAll("#tablapes tr").forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(filtro) ? "" : "none";
+        });
+    }
+
+
+
+
+    // <!-- ^ Funciónes generales -->
 
     // <!-- ? Función par amostrar las notificaciónes: -->
     function mostrarNotificacion(mensaje, tipo='success'){
@@ -212,62 +262,20 @@
         }
     };
     
-
-    
-
-
-
-    
-
-
-
-    
-
-
-
-    
-
-
-
-
-    function editarp(id) {
-        fetch(`/proveedores/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                // Verificar si hay un error (Proveedor no encontrado)
-                if (data.error) {
-                    alert("Error: No se encontró el proveedor.");
-                    return;
-                }
-
-                // Acceder al proveedor desde la respuesta
-                const proveedor = data;
-
-                // Rellenar los campos del modal con los valores existentes
-                // document.getElementById("pId").value = proveedor.id;  // ID del proveedor
-                document.getElementById("empresa").value = proveedor.empresa;  // Empresa
-                document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
-                document.getElementById("correo").value = proveedor.correo;  // Correo
-                document.getElementById("direccion").value = proveedor.direccion;  // Dirección
-                document.getElementById("productos").value = proveedor.productos;  // Productos
-
-                // Abrir el modal
-                new bootstrap.Modal(document.getElementById("modalp")).show();
-            })
-            .catch(error => console.error("Error al obtener proveedor:", error));
+    // <!-- ? Función para limpiar los campos del formulario del modal -->
+    function limpiarFormulario() {
+        document.getElementById("formp").reset();
+        // const pIdElement = document.getElementById("pId");
+        /*
+        if (pIdElement) {
+            pIdElement.value = "";
+        }
+        */
     }
 
-    function eliminarp(id) {
-        fetch(`/proveedores/eliminar/${id}`, { method: "DELETE" })
-            .then(() => location.reload());
-    }
+    
 
-    function filtrarpes() {
-        const filtro = document.getElementById("buscar").value.toLowerCase();
-        document.querySelectorAll("#tablapes tr").forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(filtro) ? "" : "none";
-        });
-    }
+
 </script>
 
 {% endblock %}

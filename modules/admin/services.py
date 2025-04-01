@@ -4,6 +4,16 @@
 from .models import Proveedores
 from database.conexion import db
 
+
+
+
+
+
+# ~ Seccion de los reportes de las gallletass
+
+
+
+
 # ~ Seccion de proveedores
  
 # ^ Agregamos un proveedor  (C)
@@ -45,5 +55,29 @@ def eliminar_proveedor():
 # ? Filtamos un porveedor por sus insumos 
 
 
+
+
+
+# ~ Seccion de proveedores
+
+
+
+
+# ~ Seccion de los insumos
+
+
+
+
+# ~ Seccion de las recetass
+
+
+
+
+# ~ Seccion de los clientes
+
+
+
+
+# ~ Seccion de los usuairos
 
 
