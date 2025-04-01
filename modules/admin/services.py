@@ -42,7 +42,7 @@ def eliminar_proveedor():
 
 
 
-# ^ Filtamos un porveedor por sus insumos
+# ? Filtamos un porveedor por sus insumos 
 
 
 
