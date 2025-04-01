@@ -17,25 +17,5 @@ from ...admin import bp_admistracion
 @bp_admistracion.route('/dashboard_admin')
 def dashboard_admin():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('admin.login'))
+        return redirect(url_for('shared.login'))
     return render_template('admin/dashboard.html')
-
-
-# Ruta para el dashboard de ventas
-@bp_admistracion.route('/ventas')
-def ventas():
-    if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('ventas.login'))
-    return render_template('ventas/ventas.html')
-
-
-
- 
-
-# ! No se que hace
-@bp_admistracion.route('/perfil')
-def perfil():
-    if 'username' not in session or session['role'] != 'cliente':
-        return redirect(url_for('admin.login'))
-    return render_template('client/perfil_cliente.html')
-

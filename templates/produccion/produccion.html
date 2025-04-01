@@ -2,8 +2,31 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="my-4 text-center fw-bold">🍪 Módulo de Producción - Don Galleto 🍪</h1>
+    <h1 class="pt-5 pb-4 text-center fw-bold"> Módulo de Producción - Don Galleto </h1>
 
+    <!-- Sección de Estadísticas -->
+    <div class="row mb-4 text-center">
+        <div class="col-md-3">
+            <a href="URL_AQUI" class="btn btn-success w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-oven"></i></i> Proceso de horneadas
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="URL_AQUI" class="btn btn-primary w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-jar-wheat"></i></i> Registrar insumos
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
+            </a>
+        </div>        
+        <div class="col-md-3">
+            <a href="URL_AQUI" class="btn btn-danger w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-clipboard"></i></i> Historial de horneadas
+            </a>
+        </div>
+    </div>
     <!-- Sección de Estadísticas -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -29,35 +52,6 @@
                     <p class="display-6 text-danger">3</p>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Formulario para Programar Producción -->
-    <div class="card border-0 shadow-lg rounded-4 mb-4">
-        <div class="card-body">
-            <h4 class="card-title text-center mb-3">🛠️ Programar Nueva Producción</h4>
-            <form id="productionForm">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="receta" class="form-label fw-bold">Selecciona la Receta</label>
-                        <select class="form-control" id="receta" name="receta" required>
-                            <option value="chocolate">Galleta de Chocolate</option>
-                            <option value="vainilla">Galleta de Vainilla</option>
-                            <option value="nuez">Galleta de Nuez</option>
-                            <option value="mantequilla">Galleta de Mantequilla</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="cantidad" class="form-label fw-bold">Cantidad (en unidades)</label>
-                        <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Ej. 500" required min="1">
-                    </div>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold">
-                        🚀 Iniciar Producción
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -101,15 +95,6 @@
             </table>
         </div>
     </div>
-
-    <!-- Gráfica de Producción -->
-    <div class="card border-0 shadow-lg rounded-4">
-        <div class="card-body">
-            <h4 class="card-title text-center mb-3">📊 Producción Semanal</h4>
-            <canvas id="productionChart"></canvas>
-        </div>
-    </div>
-</div>
 
 <!-- Scripts para la Gráfica -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

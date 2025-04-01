@@ -15,7 +15,6 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/admin/usuarios
 
 
-
 # * Sección para el CRUD de los Uusarios
 
 # TODO Ruta de prueva?
@@ -24,7 +23,6 @@ from ...admin import bp_admistracion
 #     if 'username' not in session or session['role'] != 'admin':
 #         return redirect(url_for('cliente.login'))
 #     return render_template('admin/usuarios.html')
-
 
 
 @bp_admistracion.route('/usuarios')
