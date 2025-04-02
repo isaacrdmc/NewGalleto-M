@@ -155,11 +155,34 @@ def editar_proveedor(id):
 
 
 # ^ Eliminamos un proveedor        (D)
-@bp_admistracion.route('/proveedores/eliminar/<id>', methods=['DELETE'])
-def eliminar_proveedor(id):
-    global proveedor
-    proveedor = [p for p in proveedor if p['id'] != id]
-    return jsonify({"mensaje": "Proveedor eliminado"})
+
+# @bp_admistracion.route('/proveedores/eliminar/<id>', methods=['DELETE'])
+# def eliminar_proveedor(id):
+#     global proveedor
+#     proveedor = [p for p in proveedor if p['id'] != id]
+#     return jsonify({"mensaje": "Proveedor eliminado"})
+
+
+
+# @bp_admistracion.route('/proveedores/eliminar/<int:id>', methods=['GET'])
+@bp_admistracion.route('/proveedores/eliminar/<int:id>', methods=['DELETE'])
+def eliminar_proveedor_route(id):
+    try:
+        # Llamar a la función de servicio para eliminar el proveedor
+        proveedor_eliminado = eliminar_proveedor(id)
+        
+        return jsonify({
+            "mensaje": f"Proveedor '{proveedor_eliminado['nombre']}' eliminado correctamente",
+            "proveedor_id": proveedor_eliminado['id']
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
 
 
 

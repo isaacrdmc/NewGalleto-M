@@ -15,7 +15,7 @@ from database.conexion import db
 
 
 # ~ Seccion de proveedores
- 
+
 # ^ Agregamos un proveedor  (C)
 def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
     nuevo_proveedor = Proveedores(
@@ -54,8 +54,28 @@ def actualizar_proveedor(proveedor_id, empresa, telefono, correo, direccion, pro
 
 
 # ^ Elminar un porveedor  (D)
-def eliminar_proveedor():
-    return
+def eliminar_proveedor(proveedor_id):
+    try:
+        # ? Buscar el proveedor por medio del ID
+        proveedor = Proveedores.query.get_or_404(proveedor_id)
+        
+        # ? Guardamos los datos antes de eliminarlos para poder ocnfirmar la eliminación
+        proveedor_info = {
+            "id": proveedor.idProveedores,
+            "nombre": proveedor.nombre
+        }
+        
+        # * Eliminar el proveedor
+        db.session.delete(proveedor)
+        db.session.commit()
+        
+        # * Retornar información sobre el proveedor eliminado
+        return proveedor_info
+    
+    except Exception as e:
+        # Hacer rollback en caso de error
+        db.session.rollback()
+        raise e
 
 
 
