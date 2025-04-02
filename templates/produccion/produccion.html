@@ -7,12 +7,12 @@
     <!-- Sección de Estadísticas -->
     <div class="row mb-4 text-center">
         <div class="col-md-3">
-            <a href="URL_AQUI" class="btn btn-success w-100 py-3 shadow-lg">
+            <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-oven"></i></i> Proceso de horneadas
             </a>
         </div>
         <div class="col-md-3">
-            <a href="URL_AQUI" class="btn btn-primary w-100 py-3 shadow-lg">
+            <a href="#" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-jar-wheat"></i></i> Registrar insumos
             </a>
         </div>
@@ -20,46 +20,52 @@
             <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
             </a>
-        </div>        
+        </div>
         <div class="col-md-3">
-            <a href="URL_AQUI" class="btn btn-danger w-100 py-3 shadow-lg">
+            <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-clipboard"></i></i> Historial de horneadas
             </a>
         </div>
     </div>
-    <!-- Sección de Estadísticas -->
+    <!-- Sección de Estadísticas Dinámicas -->
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card border-0 shadow-lg bg-light rounded-4">
+            <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
                 <div class="card-body text-center">
                     <h5 class="card-title fw-bold">Producción Diaria</h5>
-                    <p class="display-6 text-success">1,200 unidades</p>
+                    <p class="display-6 text-success">
+                        {{ "{:,}".format(produccion_diaria|default(0)) }} unidades
+                    </p>
                 </div>
             </div>
-        </div>
+        </div>  
         <div class="col-md-4">
-            <div class="card border-0 shadow-lg bg-light rounded-4">
+            <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
                 <div class="card-body text-center">
                     <h5 class="card-title fw-bold">Insumos Disponibles</h5>
-                    <p class="display-6 text-warning">85%</p>
+                    <p class="display-6 text-warning">
+                        {{ porcentaje_insumos|default(0) }}%
+                    </p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-lg bg-light rounded-4">
+            <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
                 <div class="card-body text-center">
                     <h5 class="card-title fw-bold">Lotes Pendientes</h5>
-                    <p class="display-6 text-danger">3</p>
+                    <p class="display-6 text-danger">
+                        {{ lotes_pendientes|default(0) }}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Tabla de Producción Reciente -->
-    <div class="card border-0 shadow-lg rounded-4 mb-5">
+    <div class="card border-0 shadow-lg rounded-4 mb-5" style="background-color: #e8d8a7;">
         <div class="card-body">
             <h4 class="card-title text-center mb-3">📦 Producciones Recientes</h4>
-            <table class="table table-striped text-center align-middle">
+            <table class="table table-striped table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
                         <th>Lote</th>
@@ -96,39 +102,39 @@
         </div>
     </div>
 
-<!-- Scripts para la Gráfica -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Simulación de datos de producción semanal
-    const ctx = document.getElementById('productionChart').getContext('2d');
-    const productionChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-            datasets: [{
-                label: 'Unidades Producidas',
-                data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
-                backgroundColor: '#74c69d',
-                borderColor: '#40916c',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
+    <!-- Scripts para la Gráfica -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Simulación de datos de producción semanal
+        const ctx = document.getElementById('productionChart').getContext('2d');
+        const productionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+                datasets: [{
+                    label: 'Unidades Producidas',
+                    data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
+                    backgroundColor: '#74c69d',
+                    borderColor: '#40916c',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Simular envío del formulario para iniciar producción
-    document.getElementById('productionForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-        const receta = document.getElementById('receta').value;
-        const cantidad = document.getElementById('cantidad').value;
-        alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
-    });
-</script>
-{% endblock %}
+        // Simular envío del formulario para iniciar producción
+        document.getElementById('productionForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const receta = document.getElementById('receta').value;
+            const cantidad = document.getElementById('cantidad').value;
+            alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
+        });
+    </script>
+    {% endblock %}

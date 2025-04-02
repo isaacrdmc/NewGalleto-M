@@ -29,6 +29,10 @@ def inventario():
     ]
     return render_template('produccion/mat_prim.html', inventario=productos)
 
+@bp_production.route('/proceso_horneadas')
+def proceso_horneadas():
+    return render_template('produccion/proceso_horneadas.html')
+
 
 @bp_production.route('/detalle/<nombre_insumo>')
 def detalle_insumo(nombre_insumo):
