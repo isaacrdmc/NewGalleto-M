@@ -16,14 +16,14 @@
 
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-light">
+            <div class="card">
                 <div class="card-body">
                     <h2 class="text-center fw-bold">Hornear galletas</h2>
                     
                     <!-- Fila de imágenes de galletas y selección -->
                     <div class="row my-4">
                         <div class="col-md-8">
-                            <div class="d-flex justify-content-center flex-wrap">
+                            <div class="d-flex justify-content-center flex-wrap  bg-light">
                                 {% for cookie in cookies_in_process %}
                                 <div class="m-1 p-2 border border-warning rounded cookie-in-oven" title="{{ cookie.type }} - En proceso desde {{ cookie.process_started_at }}">
                                     <img src="{{ url_for('static', filename='img/galleta.png') }}" alt="{{ cookie.type }}" width="50" height="50">
