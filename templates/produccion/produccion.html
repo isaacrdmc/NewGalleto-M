@@ -12,7 +12,7 @@
             </a>
         </div>
         <div class="col-md-3">
-            <a href="URL_AQUI" class="btn btn-primary w-100 py-3 shadow-lg">
+            <a href="#" class="btn btn-primary w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-jar-wheat"></i></i> Registrar insumos
             </a>
         </div>
@@ -20,9 +20,9 @@
             <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
             </a>
-        </div>        
+        </div>
         <div class="col-md-3">
-            <a href="URL_AQUI" class="btn btn-danger w-100 py-3 shadow-lg">
+            <a href="#" class="btn btn-danger w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-clipboard"></i></i> Historial de horneadas
             </a>
         </div>
@@ -38,7 +38,7 @@
                     </p>
                 </div>
             </div>
-        </div>  
+        </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
                 <div class="card-body text-center">
@@ -101,40 +101,41 @@
             </table>
         </div>
     </div>
+</div>
 
-    <!-- Scripts para la Gráfica -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Simulación de datos de producción semanal
-        const ctx = document.getElementById('productionChart').getContext('2d');
-        const productionChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-                datasets: [{
-                    label: 'Unidades Producidas',
-                    data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
-                    backgroundColor: '#74c69d',
-                    borderColor: '#40916c',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+<!-- Scripts para la Gráfica -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Simulación de datos de producción semanal
+    const ctx = document.getElementById('productionChart').getContext('2d');
+    const productionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+            datasets: [{
+                label: 'Unidades Producidas',
+                data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
+                backgroundColor: '#74c69d',
+                borderColor: '#40916c',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Simular envío del formulario para iniciar producción
-        document.getElementById('productionForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            const receta = document.getElementById('receta').value;
-            const cantidad = document.getElementById('cantidad').value;
-            alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
-        });
-    </script>
-    {% endblock %}
+    // Simular envío del formulario para iniciar producción
+    document.getElementById('productionForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const receta = document.getElementById('receta').value;
+        const cantidad = document.getElementById('cantidad').value;
+        alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
+    });
+</script>
+{% endblock %}

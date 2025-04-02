@@ -1,1 +1,1 @@
-{"cookies_in_process": [], "cookies_queue": [], "finished_cookies": [{"batch": "VA300325", "created_at": "18:50:48", "finished_at": "18:51:18", "id": "VA300325185048", "process_started_at": "18:50:56", "type": "Vainilla"}, {"batch": "CH300325", "created_at": "18:51:06", "finished_at": "18:51:21", "id": "CH300325185106", "process_started_at": "18:51:09", "type": "Chocolate"}]}
+{"cookies_in_process": [], "cookies_queue": [], "finished_cookies": []}

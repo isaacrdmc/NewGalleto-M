@@ -11,7 +11,7 @@ from . import bp_production
 # * Ruta para el dashboard de producción
 
 @bp_production.route('/produccion')
-def dashboard_produccion():
+def produccion():
     if 'username' not in session or session['role'] != 'produccion':
         return redirect(url_for('admin.login'))
     return render_template('produccion/produccion.html')
@@ -25,7 +25,7 @@ def inventario():
         {"nombre": "Mantequilla", "imagen": "static/img/mantequilla.png", "cantidad": 100, "piezas": 30, "stock": 3},
         {"nombre": "Huevos", "imagen": "static/img/huevos.png", "cantidad": 100, "piezas": 30, "stock": 8},
     ]
-    return render_template('produccion/mat_prim.html', inventario=productos)
+    return render_template('produccion/inventario_insumos.html', inventario=productos)
 
 
 @bp_production.route('/detalle/<nombre_insumo>')
