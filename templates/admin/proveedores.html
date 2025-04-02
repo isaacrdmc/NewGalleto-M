@@ -1,17 +1,21 @@
 {% extends "shared/base_admin.html" %}
 
-{% block title %}Gestión de pes{% endblock %}
+{% block title %}Gestión de Proveedores{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar pes
+        Home / Administrador / Gestionar Proveedores
     </div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
         <div class="container mt-3">
             <!-- Botón y búsqueda -->
             <div class="d-flex justify-content-between mb-3">
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalp"
+                <!--  ^ Boton para habrir el modal -->
+                <button 
+                    class="btn btn-success" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#modalp"
                     onclick="limpiarFormulario()">
                     ➕ Nuevo proveedor
                 </button>
@@ -20,12 +24,11 @@
             </div>
 
             <div class="table-responsive">
-                <!-- Tabla de pes -->
+                <!-- Tabla de proveedores -->
                 <table class="table table-bordered bg-white text-center">
                     <thead>
                         <tr>
                             <th>Acción</th>
-                            <!-- <th>ID</th> -->
                             <th>Empresa</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
@@ -35,158 +38,326 @@
                     </thead> 
                     <tbody id="tablapes">
                         {% for p in proveedor %}
-                        <tr id="row-{{ p.id }}">
+                        <tr id="row-{{ p.idProveedores }}">
                             <td>
-                                <button class="btn btn-warning btn-sm" onclick="editarp('{{ p.id }}')">✏️</button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarp('{{ p.id }}')">❌</button>
+                                <!-- ? Boton para modificar el elemento selecciónado -->
+                                <button 
+                                    class="btn btn-warning btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#modalp"
+                                    onclick="editarp('{{ p.idProveedores }}')">✏️
+                                </button>
+                                <button 
+                                    class="btn btn-danger btn-sm" 
+                                    onclick="eliminarp('{{ p.idProveedores }}')">❌
+                                </button>
                             </td>
-                            <!-- <td>{{ p.id }}</td> -->
                             <td>{{ p.nombre }}</td>
-                            <td>{{ p.telefono }}</td>    <!-- * -------- -->
-                            <td>{{ p.correo }}</td>    <!-- * -------- -->
-                            <td>{{ p.direccion }}</td>    <!-- * -------- -->
+                            <td>{{ p.telefono }}</td>
+                            <td>{{ p.correo }}</td>
+                            <td>{{ p.direccion }}</td>
                             <td>{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            
         </div>
 
-        <!-- ^ Modal -->
+        <!-- ^ Modal para agregar/editar proveedores -->
         <div class="modal fade" id="modalp" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
+                    
                     <div class="modal-header">
-                        <h5 class="modal-title">Agregar/Editar proveedor</h5>
+                        <h5 class="modal-title">Agregar un proveedor</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
 
-                        <form id="formp">
-                            <input type="hidden" id="pId"> 
+                    <div class="modal-body">
+                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp">
+                            <!-- ? Campo oculto para el ID del proveedor -->
+                            <input type="hiden" id="idProveedor" name="idProveedor">
+
+                            {{ form.hidden_tag() }}
+                            <!-- <input type="hidden" name="pId"> -->
                             <div class="mb-3">
-                                <label>Empresa</label>
-                                <input type="text" id="empresa" class="form-control" required>
+                                {{ form.empresa.label(class="form-label") }}
+                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
                             </div>
                             <div class="mb-3">
-                                <label>Teléfono</label>
-                                <input type="text" id="telefono" class="form-control" required>
+                                {{ form.telefono.label(class="form-label") }}
+                                {{ form.telefono(class="form-control", id="telefono", required="required") }}
                             </div>
                             <div class="mb-3">
-                                <label>Correo</label>
-                                <input type="email" id="correo" class="form-control" required>
+                                {{ form.correo.label(class="form-label") }}
+                                {{ form.correo(class="form-control", id="correo", required="required") }}
                             </div>
                             <div class="mb-3">
-                                <label>Dirección</label>
-                                <input type="text" id="direccion" class="form-control" required>
+                                {{ form.direccion.label(class="form-label") }}
+                                {{ form.direccion(class="form-control", id="direccion", required="required") }}
                             </div>
                             <div class="mb-3">
-                                <label>Productos</label>
-                                <input type="text" id="productos" class="form-control" required>
+                                {{ form.productos.label(class="form-label") }}
+                                {{ form.productos(class="form-control", id="productos", required="required") }}
                             </div>
                         </form>
-                        
                     </div>
+
                     <div class="modal-footer">
-                        <button class="btn btn-primary" onclick="guardarp()">Guardar</button>
+                        <!-- <button class="btn btn-primary" onclick="guardarp()">Guardar</button> -->
+                        <button class="btn btn-primary" onclick="guardarp()" id="btnGuardar">Guardar</button>
                     </div>
+
+                    
+
                 </div>
             </div>
         </div>
+
+
+
+
     </main>
 </div>
 
 <!-- JavaScript -->
 <script>
-    function limpiarFormulario() {
-        document.getElementById("formp").reset();
-        document.getElementById("pId").value = "";
-    }
+
+    // <!-- ? Insertar los datos dentro de la BD           (C)   -->
+    async function guardarp() {
+        try {
+
+            // <!-- * COnstantes para el ID del proveedor -->
+            const idProveedor = document.getElementById('idProveedor').value;
+            const esEdicion = idProveedor !=='';1
 
 
-    <!-- ? Función para guardar los datos dentro de la BD -->
-    function guardarp() {
-        const id = document.getElementById('pId').value;
-        const data = {
-            empresa: document.getElementById('empresa').value,
-            telefono: document.getElementById('telefono').value,
-            correo: document.getElementById('correo').value,
-            direccion: document.getElementById('direccion').value,
-            productos: document.getElementById('productos').value
-        };
 
-        let url = '/proveedores/agregar';
-        let method = 'POST';
+            // <!-- * Constante para almacenar los datos del formulario del modal -->
+            const data = {
+                empresa: document.getElementById('empresa').value.trim(),
+                telefono: document.getElementById('telefono').value.trim(),
+                correo: document.getElementById('correo').value.trim(),
+                direccion: document.getElementById('direccion').value.trim(),
+                productos: document.getElementById('productos').value.trim()
+            };
 
-        if (id) {  // Si hay un ID, es una edición
-            url = `/proveedores/editar/${id}`;
-            method = 'POST';
-        } else {
-            data.id = new Date().getTime().toString(); // Generar un ID único si es nuevo
+            // Validamos que los campos esten completos
+            if (!data.empresa || !data.telefono || !data.correo) {
+                throw new Error('Por favor completa TODOS los campos requeridos');
+            }
+
+            // <!-- ? Para la ruta para agregar/modificar proveedores usamos un ternario-->
+            const url = esEdicion
+                ? `/admin/proveedores/editar/${idProveedor}`
+                : '/admin/proveedores/agregar';
+
+            // <!-- ? Definimos el metodo deacuerdo a la ruta -->
+            const metodo = esEdicion
+            ? 'PUT'
+            : 'POST';
+
+
+            // <!-- ! ERROR DE CONSOLA  -->
+            const response = await fetch(url, {
+                method: metodo,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                },
+                body: JSON.stringify(data)
+            });
+
+            // Verificamos si la respuesta es exitosa
+            if (!response.ok) {
+                let errorData;
+                try{
+                    const errorData = await response.json();
+                } catch {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+
+            // <!-- ?  -->
+            const result = await response.json();
+
+
+
+            // <!-- ~ Acciones finales de la función -->
+            // <!-- * Mostramos un mensaje de éxito con la aletra -->
+            // <!-- TODO Agregar algo como swet alert  -->
+            mostrarNotificacion(result.mensaje, 'success');
+
+            // <!-- * Cerramos el modal y limpiamos el formulario -->
+            cerrarModal();
+            limpiarFormulario();
+            actualizarTablaProveedores();
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarNotificacion(error.message || 'Error desconocido', 'error');
         }
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.json())
-            .then(res => {
-                if (res.error) {
-                    alert("Error: " + res.error);
-                } else {
-                    alert(res.mensaje);
-                    location.reload(); // Recargar la página para actualizar la tabla
-                }
-            })
-            .catch(error => console.error('Error al guardar proveedor:', error));
-
-        // Cerrar el modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalp'));
-        modal.hide();
     }
 
-    function editarp(id) {
-        fetch(`/proveedores/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                // Verificar si hay un error (Proveedor no encontrado)
-                if (data.error) {
-                    alert("Error: No se encontró el proveedor.");
-                    return;
-                }
+    // <!-- ? Editar los datos dentro de la BD           (U)  -->
+    async function editarp(id) {
+        try {
 
-                // Acceder al proveedor desde la respuesta
-                const proveedor = data;
+            // <!-- *  -->
+            const response = await fetch(`/admin/proveedores/obtener/${id}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
 
-                // Rellenar los campos del modal con los valores existentes
-                document.getElementById("pId").value = proveedor.id;  // ID del proveedor
-                document.getElementById("empresa").value = proveedor.empresa;  // Empresa
-                document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
-                document.getElementById("correo").value = proveedor.correo;  // Correo
-                document.getElementById("direccion").value = proveedor.direccion;  // Dirección
-                document.getElementById("productos").value = proveedor.productos;  // Productos
+            // <!--  -->
+            const proveedor = await response.json();
 
-                // Abrir el modal
-                new bootstrap.Modal(document.getElementById("modalp")).show();
-            })
-            .catch(error => console.error("Error al obtener proveedor:", error));
+            // <!-- * Verificamos que tengamos los datos correctos -->
+            console.log('Datos recibidos:', proveedor)
+            
+
+            // <!-- * Rellenamos el formulario del modal con los datos del proveedor selecionado -->
+            document.getElementById("idProveedor").value = proveedor.idProveedores;  // Id
+            document.getElementById("empresa").value = proveedor.nombre;  // Empresa
+            document.getElementById("telefono").value = proveedor.telefono;  // Teléfono
+            document.getElementById("correo").value = proveedor.correo;  // Correo
+            document.getElementById("direccion").value = proveedor.direccion;  // Dirección
+            document.getElementById("productos").value = proveedor.productosProveedor || proveedor.productos;  // Productos
+
+            
+            // <!-- * Cambiar el título dle modal -->
+            document.querySelector('.modal-title').textContent = 'Editar proveedor';
+
+
+            // <!-- * Mostramos el modal -->
+            new bootstrap.Modal(document.getElementById('modalp')).show();
+        }catch (error){
+            console.error('Detalles del error:', {
+                error: error.message,
+                stack: error.stack,
+                response: await response?.text()
+            });
+            mostrarNotificacion(`Error al cargar: ${error.message}`, 'error');
+        }
     }
 
+
+
+
+
+
+
+
+    // <!-- ? Eliminar los datos dentro de la BD           (D)  -->
     function eliminarp(id) {
         fetch(`/proveedores/eliminar/${id}`, { method: "DELETE" })
             .then(() => location.reload());
     }
 
+
+
+
+    // <!-- ? Función para Filtrar los datos dentro de la BD           (Otro)  -->
     function filtrarpes() {
         const filtro = document.getElementById("buscar").value.toLowerCase();
         document.querySelectorAll("#tablapes tr").forEach(row => {
             row.style.display = row.innerText.toLowerCase().includes(filtro) ? "" : "none";
         });
     }
+
+
+
+
+    // <!-- ^ Funciónes generales -->
+
+    // <!-- ? Mostramos las notificaciónes: -->
+    function mostrarNotificacion(mensaje, tipo='success'){
+        // <!-- TODO es para implementarlo con 'SweetAlert' u otros -->
+        alert(`${tipo.toUpperCase()}: ${mensaje}`);
+    };
+
+    // <!-- ? Actualizamos la tabla sin necesidad de recargar la página -->
+    async function actualizarTablaProveedores() {
+        try {
+            
+            const response = await fetch('/admin/proveedores/listar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const proveedores = await response.json();
+
+            // Actualizar la tabla con los datos obtenidos
+            const tbody = document.querySelector('#tablapes');
+            tbody.innerHTML = ''; // Limpiar la tabla
+
+            proveedores.forEach(proveedor => {
+                const row = document.createElement('tr');
+                row.id = `row-${proveedor.id}`;
+                row.innerHTML = `
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editarp('${proveedor.id}')">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarp('${proveedor.id}')">❌</button>
+                    </td>
+                    <td>${proveedor.nombre}</td>
+                    <td>${proveedor.telefono}</td>
+                    <td>${proveedor.correo}</td>
+                    <td>${proveedor.direccion}</td>
+                    <td>${proveedor.productosProveedor}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error al actualizar la tabla:', error);
+        }
+    };
+    
+    // <!-- ? Limpiamos los campos del formulario del modal -->
+    function limpiarFormulario() {
+        document.getElementById("formp").reset();
+        // const pIdElement = document.getElementById("pId");
+        /*
+        if (pIdElement) {
+            pIdElement.value = "";
+        }
+        */
+    }
+
+    // <!-- ? Cerrar el modal correctamente -->
+    function cerrarModal() {
+        const modalElement = document.getElementById('modalp');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        
+        // Cierra el modal si existe una instancia
+        if (modalInstance) {
+            modalInstance.hide();
+            
+            // Elimina el backdrop manualmente si persiste
+            const backdrops = document.getElementsByClassName('modal-backdrop');
+            while(backdrops.length > 0){
+                backdrops[0].parentNode.removeChild(backdrops[0]);
+            }
+        }
+        
+        // Habilita el scroll del body
+        document.body.style.overflow = 'auto';
+        document.body.style.paddingRight = '0';
+        
+        // Mueve el foco fuera del modal
+        const abrirModalButton = document.querySelector('button[data-bs-target="#modalp"]');
+        if (abrirModalButton) {
+            abrirModalButton.focus();
+        }
+    }
+
+    
+
+
 </script>
 
 {% endblock %}

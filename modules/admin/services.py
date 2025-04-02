@@ -4,8 +4,18 @@
 from .models import Proveedores
 from database.conexion import db
 
-# ~ Seccion de proveedores
 
+
+
+
+
+# ~ Seccion de los reportes de las gallletass
+
+
+
+
+# ~ Seccion de proveedores
+ 
 # ^ Agregamos un proveedor  (C)
 def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
     nuevo_proveedor = Proveedores(
@@ -27,8 +37,20 @@ def obtener_proveedores():
 
 
 # ^ Modificar un porveedore  (U)
-def modificar_proveedores():
-    return
+def actualizar_proveedor(proveedor_id, empresa, telefono, correo, direccion, productos):
+    try: 
+        proveedor = Proveedores.query.get_or_404(proveedor_id)
+        proveedor.nombre = empresa
+        proveedor.telefono = telefono
+        proveedor.correo = correo
+        proveedor.direccion = direccion
+        proveedor.productosProveedor = productos
+        db.session.commit()
+        return proveedor
+    
+    except Exception as e:
+        db.session.rollback()
+        # raise e
 
 
 # ^ Elminar un porveedor  (D)
@@ -42,8 +64,32 @@ def eliminar_proveedor():
 
 
 
-# ^ Filtamos un porveedor por sus insumos
+# ? Filtamos un porveedor por sus insumos 
 
 
+
+
+
+# ~ Seccion de proveedores
+
+
+
+
+# ~ Seccion de los insumos
+
+
+
+
+# ~ Seccion de las recetass
+
+
+
+
+# ~ Seccion de los clientes
+
+
+
+
+# ~ Seccion de los usuairos
 
 
