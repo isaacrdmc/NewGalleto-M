@@ -1,3 +1,4 @@
+
 # TODO archvio de ejecución de la APP
 from __init__ import create_app         # ? De la acrpeta de APP importamos la carpeta app
 
