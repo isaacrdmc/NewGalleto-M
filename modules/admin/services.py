@@ -69,8 +69,12 @@ def eliminar_proveedor(proveedor_id):
     try:
         # ? Ahoara vamos a eliminara  un proveedor del sistema
         proveedorEliminar = Proveedores.query.get_or_404(proveedor_id)
-        db.session.deletee(proveedorEliminar)   # * Eliminamos al proveedor
+
+
+        db.session.delete(proveedorEliminar)   # * Eliminamos al proveedor
         db.session.commit()  # * Guardamos los cambios en la base de datos
+        
+        
         return proveedorEliminar
     except Exception as e:
         # ? Si hay un error, hacemos un rollback para deshacer los cambios

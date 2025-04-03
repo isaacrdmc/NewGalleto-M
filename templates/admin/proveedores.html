@@ -219,6 +219,7 @@
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
 
+
             // <!--  -->
             const proveedor = await response.json();
 
@@ -259,9 +260,46 @@
 
 
     // <!-- ? Eliminar los datos dentro de la BD           (D)  -->
-    function eliminarp(id) {
-        fetch(`/proveedores/eliminar/${id}`, { method: "DELETE" })
-            .then(() => location.reload());
+    async function eliminarp(id, nombreProveedor) {
+
+        // <!-- * Mostramos la confirmación del usuario para eliminar al proveedor  -->
+        const confirmacion = confirm(`¿Estas seguro de eliminar al proveedor "${nombreProveedor}"?`);
+
+        if (!confirmacion) {
+            return; // Si el suaisario cancela la operación no hacemos nada xd
+        }
+
+        // <!-- ?  -->
+        try {
+            // <!-- ? Peticion para poder eliminar al proveedor  -->
+            const response = await fetch(`/admin/proveedores/eliminar/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            // <!-- * Veriicamos si la respuesta fue correcta antes de seguir -->
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            // <!-- * El response lo almacenamos -->
+            const result = await response.json();
+
+            // <!-- * Mostramos la notificación de éxito -->
+            mostrarNotificacion(result.mensaje, 'success');
+
+            // <!-- * Actualizamos la tabla para verificar que los datos fueon eliminados -->
+            actualizarTablaProveedores();
+
+        } catch (error) {
+            console.error('Error al eliminar:', error);
+            mostrarNotificacion(`Error al eliminar: ${error.mensaje}`, 'error')
+
+        }        
     }
 
 
