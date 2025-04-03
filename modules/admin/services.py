@@ -86,8 +86,14 @@ def eliminar_proveedor(proveedor_id):
 
 
 # ^ Buscamos un proveedor en específico
+def buscar_proveedore_productos(producto_buscar):
+    # ? Acá es donde buscamos un proveedor por su producto, con que coincida uno de los porudcto 
+    # Algo así como esta consulta de  MySQL:
+    # SELECT *
+    # FROM proveedores 
+    # WHERE productosProveedor LIKE '%Chocolate%';
 
-
+    return Proveedores.query.filter(Proveedores.productosProveedor.like(f'%{producto_buscar}%')).all()
 
 
 # ? Filtamos un porveedor por sus insumos 

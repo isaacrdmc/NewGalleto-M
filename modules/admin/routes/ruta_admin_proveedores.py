@@ -211,6 +211,47 @@ def eliminar_proveedor_route(id):
 
 
 # ^ Buscar un proveedor dentro de la BD        (Otro)
+@bp_admistracion.route('/proveedores/buscar', methods=['GET'])
+def buscar_proveedor_route():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "No autorizado"}), 403
+    
+    # * la respuesa la almacenamos en una variable
+    producto = request.args.get('producto', '').strip()
+
+    # ? Validmos al proveedor
+    if not producto:
+        return jsonify({"error": "No se ha proporiconado un producto a buscar"}), 400
+    
+    try: 
+        # ? Usamos la función de servicio para buscar el proveedor
+        proveedores = buscar_proveedor_route(producto)
+
+        # * Validamos la existencia del porveedor
+        if not proveedores:
+            return jsonify({"mensaje": f"No se han encontrado proveedores con el {producto}"}), 404
+
+        # ? Entregamos al ista de los porveedore en formato JSON
+        proveedores_json = [
+            {
+                "id": p.idProveedores,
+                "nombre": p.nombre,
+                "telefono": p.telefono,
+                "correo": p.correo,
+                "direccion": p.direccion,
+                "productosProveedor": p.productosProveedor
+            }
+            for p in proveedores
+        ]
+        
+        return jsonify(proveedores_json), 200
+
+    except Exception as e:
+        print(f"Error al buscar proveedores: {e}")
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+
+
 
 
 # ~ Obtener un proveedor:

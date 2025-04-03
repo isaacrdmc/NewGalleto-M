@@ -19,8 +19,20 @@
                     onclick="limpiarFormulario()" document.getElementById('idProveedor').value = '';>
                     ➕ Nuevo proveedor
                 </button>
-                <input type="text" id="buscar" placeholder="Buscar" class="form-control" style="max-width: 200px;"
-                    onkeyup="filtrarpes()">
+
+                <!-- ^ Búsqueda de elementos -->
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="text" id="buscar" placeholder="Buscar por producto..." class="form-control">
+                    <!-- <select id="tipoBusqueda" class="form-select" style="max-width: 120px;">
+                        <option value="producto">Producto</option>
+                        <option value="empresa">Empresa</option>
+                    </select> -->
+                    <button class="btn btn-primary" type="button" onclick="filtrarpes()">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+
+                <!-- <input type="text" id="buscar" placeholder="Buscar" class="form-control" style="max-width: 200px;" onkeyup="filtrarpes()"> -->
             </div>
 
             <div class="table-responsive">
@@ -404,4 +416,3 @@
 
 {% endblock %}
 
-<!-- Porque cuando trato de agregar un nuevo proveedor en lugar de sera gregado el porveedor el sistema actualizar al último proveedor que hay en la BD? -->
