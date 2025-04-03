@@ -78,7 +78,7 @@
                     <div class="modal-body">
                         <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp">
                             <!-- ? Campo oculto para el ID del proveedor -->
-                            <input type="hiden" id="idProveedor" name="idProveedor">
+                            <input type="hidden" id="idProveedor" name="idProveedor">
 
                             {{ form.hidden_tag() }}
                             <!-- <input type="hidden" name="pId"> -->
@@ -202,6 +202,9 @@
         }
     }
 
+
+
+    
     // <!-- ? Editar los datos dentro de la BD           (U)  -->
     async function editarp(id) {
         try {

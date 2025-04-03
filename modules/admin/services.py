@@ -33,7 +33,15 @@ def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, t
 
 # ^ Leemos todos los datos de la tabla  (R)
 def obtener_proveedores():
-    return Proveedores.query.all()
+    # ? Ordena los datos que se van a mostrar por el producto????
+    # return Proveedores.query.order_by(Proveedores.idProveedores.desc()).all()
+    
+    # ? Ordena los datos que se van a mostrar de fomra aecendente
+    # return Proveedores.query.order_by(Proveedores.idProveedores.asc()).all()
+    
+    # ? Ordena los datos que se van a mostrar de fomra decendente
+    return Proveedores.query.order_by(Proveedores.idProveedores.desc()).all()
+
 
 
 # ^ Modificar un porveedore  (U)
