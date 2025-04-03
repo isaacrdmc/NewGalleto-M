@@ -11,12 +11,12 @@
         <div class="container mt-3">
             <!-- Botón y búsqueda -->
             <div class="d-flex justify-content-between mb-3">
-                <!--  ^ Boton para habrir el modal -->
+                <!--  ^ Boton para agregar un nuevo proveedor -->
                 <button 
                     class="btn btn-success" 
                     data-bs-toggle="modal" 
                     data-bs-target="#modalp"
-                    onclick="limpiarFormulario()">
+                    onclick="limpiarFormulario()" document.getElementById('idProveedor').value = '';>
                     ➕ Nuevo proveedor
                 </button>
                 <input type="text" id="buscar" placeholder="Buscar" class="form-control" style="max-width: 200px;"
@@ -78,7 +78,7 @@
                     <div class="modal-body">
                         <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp">
                             <!-- ? Campo oculto para el ID del proveedor -->
-                            <input type="hidden" id="idProveedor" name="idProveedor">
+                            <input type="hiden" id="idProveedor" name="idProveedor">
 
                             {{ form.hidden_tag() }}
                             <!-- <input type="hidden" name="pId"> -->
@@ -122,21 +122,30 @@
     </main>
 </div>
 
-<!-- JavaScript -->
+<!-- ^ JavaScript -->
 <script>
 
     // <!-- ? Insertar los datos dentro de la BD           (C)   -->
     async function guardarp() {
         try {
 
+            // <!-- * Obtenemos el ID del proveedor para verificar si es una edición o un nuevo registro de proveedores -->
             const idProveedor = document.getElementById('idProveedor').value;
+
             const esEdicion = idProveedor !== '';
 
             // <!-- ?  -->
-            console.log('Modo:', esEdicion ? 'Edición' : 'Agregar', 'ID:', idProveedor);
+            console.log('Modo:', esEdicion 
+                            ? 'Edición' 
+                            : 'Agregar', 'ID:', idProveedor
+                        );
+            
+            // DEBUG: Verificamos si el ID es correcto
+            console.log('ID Proveedor:', idProveedor, 'Es edición:', esEdicion);
 
 
             const data = {
+                // <!-- ? COn 'trim()' eliminamos los espacios en blanco al inicio y al final de los campos -->
                 empresa: document.getElementById('empresa').value.trim(),
                 telefono: document.getElementById('telefono').value.trim(),
                 correo: document.getElementById('correo').value.trim(),
@@ -251,6 +260,7 @@
         }
     }
 
+
     // <!-- ? Eliminar los datos dentro de la BD           (D)  -->
     async function eliminarp(id, nombreProveedor) {
 
@@ -355,13 +365,9 @@
     
     // <!-- ? Limpiamos los campos del formulario del modal -->
     function limpiarFormulario() {
-        document.getElementById("formp").reset();
-        // const pIdElement = document.getElementById("pId");
-        /*
-        if (pIdElement) {
-            pIdElement.value = "";
-        }
-        */
+        document.getElementById("formp").reset();   // Limpiamos el formulario
+        // docuemnt.getElementById("idProveedor").value = ''; // Limpiamos el ID del proveedor para evitar errores
+        // document.getElementById('.modalp').
     }
 
     // <!-- ? Cerrar el modal correctamente -->
@@ -397,3 +403,5 @@
 </script>
 
 {% endblock %}
+
+<!-- Porque cuando trato de agregar un nuevo proveedor en lugar de sera gregado el porveedor el sistema actualizar al último proveedor que hay en la BD? -->
