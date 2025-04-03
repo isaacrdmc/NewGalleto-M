@@ -15,7 +15,7 @@ from database.conexion import db
 
 
 # ~ Seccion de proveedores
- 
+
 # ^ Agregamos un proveedor  (C)
 def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
     # ? Acá es donde crearemos al nuevo proveedor

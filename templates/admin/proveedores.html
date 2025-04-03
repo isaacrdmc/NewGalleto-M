@@ -449,6 +449,8 @@
     }
 
 
+    
+
 
 
     // <!-- ^ Funciónes generales -->
@@ -539,14 +541,14 @@
             
             // Elimina el backdrop manualmente si persiste
             const backdrops = document.getElementsByClassName('modal-backdrop');
-            while(backdrops.length > 0){
+            while (backdrops.length > 0) {
                 backdrops[0].parentNode.removeChild(backdrops[0]);
             }
         }
         
-        // Habilita el scroll del body
-        document.body.style.overflow = 'auto';
-        document.body.style.paddingRight = '0';
+        // Restablece el estilo del body para permitir el scroll
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
         
         // Mueve el foco fuera del modal
         const abrirModalButton = document.querySelector('button[data-bs-target="#modalp"]');
