@@ -129,13 +129,9 @@
     async function guardarp() {
         try {
 
-            // <!-- * COnstantes para el ID del proveedor -->
             const idProveedor = document.getElementById('idProveedor').value;
-            const esEdicion = idProveedor !=='';1
+            const esEdicion = idProveedor !== '';
 
-
-
-            // <!-- * Constante para almacenar los datos del formulario del modal -->
             const data = {
                 empresa: document.getElementById('empresa').value.trim(),
                 telefono: document.getElementById('telefono').value.trim(),
@@ -144,28 +140,34 @@
                 productos: document.getElementById('productos').value.trim()
             };
 
-            // Validamos que los campos esten completos
-            if (!data.empresa || !data.telefono || !data.correo) {
+            // Validamos que los campos estén completos
+            if (!data.empresa || !data.telefono || !data.correo || !data.direccion || !data.productos) {
                 throw new Error('Por favor completa TODOS los campos requeridos');
             }
+
+            // Validar correo
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.correo)) {
+                throw new Error('Por favor ingresa un correo electrónico válido (ejemplo: usuario@dominio.com)');
+            }
+
+            // Validar teléfono (solo números y algunos caracteres especiales)
+            const phoneRegex = /^[\d\s()+.-]+$/;
+            if (!phoneRegex.test(data.telefono)) {
+                throw new Error('El teléfono solo puede contener números y los caracteres ()+-.');
+            }
+            
+
 
             // <!-- ? Para la ruta para agregar/modificar proveedores usamos un ternario-->
             const url = esEdicion
                 ? `/admin/proveedores/editar/${idProveedor}`
                 : '/admin/proveedores/agregar';
 
-            // <!-- ? Definimos el metodo deacuerdo a la ruta -->
-            // const metodo = esEdicion
-            // ? 'PUT'
-            // : 'POST';
-            const metodo = esEdicion
-            ? 'POST'
-            : 'POST';
-
-
-            // <!-- ! ERROR DE CONSOLA  -->
+            const metodo = esEdicion ? 'POST' : 'POST';
+            
             const response = await fetch(url, {
-                method: 'POST',
+                method: metodo,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
@@ -205,9 +207,6 @@
         }
     }
 
-
-
-    
     // <!-- ? Editar los datos dentro de la BD           (U)  -->
     async function editarp(id) {
         try {
@@ -251,13 +250,6 @@
             mostrarNotificacion(`Error al cargar: ${error.message}`, 'error');
         }
     }
-
-
-
-
-
-
-
 
     // <!-- ? Eliminar los datos dentro de la BD           (D)  -->
     async function eliminarp(id, nombreProveedor) {

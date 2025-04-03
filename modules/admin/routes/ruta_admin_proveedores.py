@@ -1,3 +1,4 @@
+import re
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from modules.admin.forms.proveedores import ProveedoresForm
@@ -83,6 +84,23 @@ def agregar_proveedor():
         # Validar los datos enviados
         if not all(key in data for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
             return jsonify({'error': 'Datos incompletos'}), 400
+        
+        # ? Validación adicional del correo
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', data['correo']):
+            return jsonify({'error': 'Correo electrónico no válido'}), 400
+        
+        # ? Validación adicional del teléfono (solo números y algunos caracteres especiales)
+        if not re.match(r'^[\d\s()+.-]+$', data['telefono']):
+            return jsonify({'error': 'Teléfono no válido. Solo números y los caracteres ()+-.'}), 400
+        
+        
+        # ? Sanitización básica de los campos
+        # empresa = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ.,-]', '', data['empresa'])[:30]
+        # telefono = re.sub(r'[^\d\s()+.-]', '', data['telefono'])[:16]
+        # correo = data['correo'][:60]
+        # direccion = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ#.,-]', '', data['direccion'])[:120]
+        # productos = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ.,;-]', '', data['productos'])[:300]
+        
 
         # Crear un nuevo proveedor
         nuevo_proveedor = Proveedores(
