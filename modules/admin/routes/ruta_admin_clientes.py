@@ -15,21 +15,10 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/admin/usuarios
 
 
-# ^ Sección del cliente
-
-# Ruta para el dashboard del cliente
-@bp_admistracion.route('/portal_cliente')
-def portal_cliente():
-    if 'username' not in session or session['role'] != 'cliente':
-        return redirect(url_for('cliente.login'))
-    return render_template('client/portal_cliente.html')
-
+# ^ Sección del clientes
 
 @bp_admistracion.route('/clientes')
 def clientes():
     if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('cliente.login'))
+        return redirect(url_for('shared.login'))
     return render_template('admin/clientes.html')
-
-
- 
