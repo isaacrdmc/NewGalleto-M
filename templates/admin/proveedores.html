@@ -155,14 +155,17 @@
                 : '/admin/proveedores/agregar';
 
             // <!-- ? Definimos el metodo deacuerdo a la ruta -->
+            // const metodo = esEdicion
+            // ? 'PUT'
+            // : 'POST';
             const metodo = esEdicion
-            ? 'PUT'
+            ? 'POST'
             : 'POST';
 
 
             // <!-- ! ERROR DE CONSOLA  -->
             const response = await fetch(url, {
-                method: metodo,
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''

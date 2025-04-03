@@ -115,7 +115,8 @@ def agregar_proveedor():
 
 
 # ^ Edita los datos del porveedor        (U)
-@bp_admistracion.route('/proveedores/editar/<int:id>', methods=['PUT'])
+# @bp_admistracion.route('/proveedores/editar/<int:id>', methods=['PUT'])
+@bp_admistracion.route('/proveedores/editar/<int:id>', methods=['POST'])
 def editar_proveedor(id):
     try:
         data = request.get_json()
