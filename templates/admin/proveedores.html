@@ -67,56 +67,113 @@
             
         </div>
 
-        <!-- ^ Modal para agregar/editar proveedores -->
-        <div class="modal fade" id="modalp" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
+
+        <!-- ^ Modal para agregar/editar proveedores - Diseño mejorado -->
+        <div class="modal fade" id="modalp" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow">
                     
-                    <div class="modal-header">
-                        <h5 class="modal-title">Agregar un proveedor</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <!-- Encabezado con color de acento -->
+                    <!-- <div class="modal-header bg-danger text-white"> -->
+                    <div class="modal-header text-white" style="background-color: #603A1E">
+                        <h5 class="modal-title fs-5" id="modalProveedorLabel">Agregar un proveedor</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
 
-                    <div class="modal-body">
-                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp">
-                            <!-- ? Campo oculto para el ID del proveedor -->
-                            <input type="hiden" id="idProveedor" name="idProveedor">
-
+                    <!-- & Cuerpo del modal con mejor distribución -->
+                    <div class="modal-body p-4">
+                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp" class="needs-validation" novalidate>
+                            <!-- Campo oculto para el ID del proveedor (corregido "hiden" a "hidden") -->
+                            <input type="hidden" id="idProveedor" name="idProveedor">
                             {{ form.hidden_tag() }}
-                            <!-- <input type="hidden" name="pId"> -->
-                            <div class="mb-3">
-                                {{ form.empresa.label(class="form-label") }}
-                                {{ form.empresa(class="form-control", id="empresa", required="required") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.telefono.label(class="form-label") }}
-                                {{ form.telefono(class="form-control", id="telefono", required="required") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.correo.label(class="form-label") }}
-                                {{ form.correo(class="form-control", id="correo", required="required") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.direccion.label(class="form-label") }}
-                                {{ form.direccion(class="form-control", id="direccion", required="required") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.productos.label(class="form-label") }}
-                                {{ form.productos(class="form-control", id="productos", required="required") }}
+
+                            <!-- Diseño en dos columnas para pantallas grandes -->
+                            <div class="row g-3">
+                                <!-- Primera columna -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.empresa.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                            {{ form.empresa(class="form-control", id="empresa", required="required", placeholder="Nombre de la empresa") }}
+                                            <div class="invalid-feedback">
+                                                Por favor ingrese el nombre de la empresa.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.telefono.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                            {{ form.telefono(class="form-control", id="telefono", required="required", placeholder="Teléfono de contacto") }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.correo.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                            {{ form.correo(class="form-control", id="correo", required="required", placeholder="correo@proveedor.com", type="email") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Segunda columna -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.direccion.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                            {{ form.direccion(class="form-control", id="direccion", required="required", placeholder="Dirección completa") }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.productos.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+                                            {{ form.productos(class="form-control", id="productos", required="required", placeholder="Productos que suministra") }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Espacio adicional para futuros campos -->
+                                    
+                                </div>
                             </div>
                         </form>
                     </div>
 
-                    <div class="modal-footer">
-                        <!-- <button class="btn btn-primary" onclick="guardarp()">Guardar</button> -->
-                        <button class="btn btn-primary" onclick="guardarp()" id="btnGuardar">Guardar</button>
+                    <!-- Pie de página con acciones claras -->
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="guardarp()" id="btnGuardar">
+                            <i class="bi bi-save me-1"></i> Guardar Proveedor
+                        </button>
                     </div>
-
-                    
-
                 </div>
             </div>
         </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
 
 
