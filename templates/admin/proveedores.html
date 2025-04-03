@@ -125,15 +125,22 @@
 </div>
 
 <!-- ^ JavaScript -->
-    <script type="module">
-    import sweetalert2 from 'https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/+esm'
-    </script>
-<script>
+<script >
     
-
     // <!-- ? Insertar los datos dentro de la BD           (C)   -->
     async function guardarp() {
         try {
+
+            // <!-- ? Creamos un loader para esperar la acción -->
+            Swal.fire({
+                title: 'Procesando...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+
 
             // <!-- * Obtenemos el ID del proveedor para verificar si es una edición o un nuevo registro de proveedores -->
             const idProveedor = document.getElementById('idProveedor').value;
@@ -161,19 +168,39 @@
 
             // Validamos que los campos estén completos
             if (!data.empresa || !data.telefono || !data.correo || !data.direccion || !data.productos) {
-                throw new Error('Por favor completa TODOS los campos requeridos');
+                // throw new Error('Por favor completa TODOS los campos requeridos');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Campos incompletos',
+                    text: 'Por favor completa TODOS los campos requeridos'
+                });
+                return;
             }
+
 
             // Validar correo
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(data.correo)) {
-                throw new Error('Por favor ingresa un correo electrónico válido (ejemplo: usuario@dominio.com)');
+                // throw new Error('Por favor ingresa un correo electrónico válido (ejemplo: usuario@dominio.com)');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Correo inválido',
+                    text: 'Por favor ingresa un correo electrónico válido (ejemplo: usuario@dominio.com'
+                });
+                return;
+
             }
 
             // Validar teléfono (solo números y algunos caracteres especiales)
             const phoneRegex = /^[\d\s()+.-]+$/;
             if (!phoneRegex.test(data.telefono)) {
-                throw new Error('El teléfono solo puede contener números y los caracteres ()+-.');
+                // throw new Error('El teléfono solo puede contener números y los caracteres ()+-.');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Teléfono inválido',
+                    text: 'El teléfono solo puede contener números y los caracteres ()+-.'
+                });
+                return;
             }
 
 
@@ -205,9 +232,20 @@
 
 
             // <!-- ~ Acciones finales de la función -->
+
+            // <!-- * Cerrar el loader cuando todo finalice  -->
+            Swal.close();
+
             // <!-- * Mostramos un mensaje de éxito con la aletra -->
-            // <!-- TODO Agregar algo como swet alert  -->
-            mostrarNotificacion(result.mensaje, 'success');
+            // mostrarNotificacion(result.mensaje, 'success');
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: result.mensaje,
+                showConfirmButton: false,
+                timer: 1500
+            });
+
 
             // <!-- * Cerramos el modal y limpiamos el formulario -->
             cerrarModal();
@@ -215,7 +253,12 @@
             actualizarTablaProveedores();
         } catch (error) {
             console.error('Error:', error);
-            mostrarNotificacion(error.message || 'Error desconocido', 'error');
+            // mostrarNotificacion(error.message || 'Error desconocido', 'error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error desconocido'
+            });
         }
     }
 
@@ -266,12 +309,23 @@
         }
     }
 
-
     // <!-- ? Eliminar los datos dentro de la BD           (D)  -->
     async function eliminarp(id, nombreProveedor) {
 
         // <!-- * Mostramos la confirmación del usuario para eliminar al proveedor  -->
-        const confirmacion = confirm(`¿Estas seguro de eliminar al proveedor "${nombreProveedor}"?`);
+        // const confirmacion = confirm(`¿Estas seguro de eliminar al proveedor "${nombreProveedor}"?`);
+        const { value: confirmacion } = await Swal.fire({
+            title: '¿Estas seguro?',
+            text: '¿Estas segurso',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        })
+
+
 
         if (!confirmacion) {
             return; // Si el suaisario cancela la operación no hacemos nada xd
@@ -297,21 +351,32 @@
             // <!-- * El response lo almacenamos -->
             const result = await response.json();
 
+            
+            
             // <!-- * Mostramos la notificación de éxito -->
-            mostrarNotificacion(result.mensaje, 'success');
+            // mostrarNotificacion(result.mensaje, 'success');
+            Swal.fire(
+                'Eliminado',
+                result.mensaje,
+                'success'
+            )
 
+            
+            
             // <!-- * Actualizamos la tabla para verificar que los datos fueon eliminados -->
             actualizarTablaProveedores();
 
         } catch (error) {
             console.error('Error al eliminar:', error);
-            mostrarNotificacion(`Error al eliminar: ${error.mensaje}`, 'error')
+            // mostrarNotificacion(`Error al eliminar: ${error.mensaje}`, 'error')
+            Swal.fire(
+                'Error',
+                `Error al eliminar: ${error.mensaje}`,
+                'error'
+            )
 
         }        
     }
-
-
-
 
     // <!-- ? Función para Filtrar los datos dentro del sistema para hallar los que coinicdan   -->
     function filtrarpes() {
@@ -332,12 +397,35 @@
 
     // <!-- ? Mostramos las notificaciónes: -->
     function mostrarNotificacion(mensaje, tipo='success'){
-        // <!-- TODO es para implementarlo con 'SweetAlert' u otros -->
-        alert(`${tipo.toUpperCase()}: ${mensaje}`);
-    };
+        
+        // ? Mostramos la notificación junto ocn su mensaje de alerta
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTime)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // 
+        Toast.fire({
+            icon: tipo,
+            title: mensaje
+        });
+        
+        // alert(`${tipo.toUpperCase()}: ${mensaje}`);
+    }
+
+    
 
 
 
+
+    
     // <!-- ? Actualizamos la tabla sin necesidad de recargar la página -->
     async function actualizarTablaProveedores() {
         try {
@@ -408,9 +496,6 @@
             abrirModalButton.focus();
         }
     }
-
-    
-
 
 </script>
 
