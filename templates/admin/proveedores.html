@@ -132,6 +132,10 @@
             const idProveedor = document.getElementById('idProveedor').value;
             const esEdicion = idProveedor !== '';
 
+            // <!-- ?  -->
+            console.log('Modo:', esEdicion ? 'Edición' : 'Agregar', 'ID:', idProveedor);
+
+
             const data = {
                 empresa: document.getElementById('empresa').value.trim(),
                 telefono: document.getElementById('telefono').value.trim(),
@@ -156,18 +160,16 @@
             if (!phoneRegex.test(data.telefono)) {
                 throw new Error('El teléfono solo puede contener números y los caracteres ()+-.');
             }
-            
+
 
 
             // <!-- ? Para la ruta para agregar/modificar proveedores usamos un ternario-->
-            const url = esEdicion
-                ? `/admin/proveedores/editar/${idProveedor}`
-                : '/admin/proveedores/agregar';
+            const url = esEdicion 
+            ? `/admin/proveedores/editar/${idProveedor}`
+            : '/admin/proveedores/agregar';
 
-            const metodo = esEdicion ? 'POST' : 'POST';
-            
             const response = await fetch(url, {
-                method: metodo,
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
@@ -175,16 +177,11 @@
                 body: JSON.stringify(data)
             });
 
-            // Verificamos si la respuesta es exitosa
             if (!response.ok) {
-                let errorData;
-                try{
-                    const errorData = await response.json();
-                } catch {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
+    
 
 
             // <!-- ?  -->
@@ -225,6 +222,9 @@
             // <!-- * Verificamos que tengamos los datos correctos -->
             console.log('Datos recibidos:', proveedor)
             
+
+            // Limpia el formulario primero
+            limpiarFormulario();
 
             // <!-- * Rellenamos el formulario del modal con los datos del proveedor selecionado -->
             document.getElementById("idProveedor").value = proveedor.idProveedores;  // Id
