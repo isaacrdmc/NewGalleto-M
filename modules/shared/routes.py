@@ -39,7 +39,7 @@ def index():
         if session['role'] == 'admin':
             return redirect(url_for('admin.dashboard_admin'))
         elif session['role'] == 'produccion':
-            return redirect(url_for('shared.produccion'))
+            return redirect(url_for('production.dashboard_produccion'))
         elif session['role'] == 'ventas':
             return redirect(url_for('ventas.ventas'))
         elif session['role'] == 'cliente':

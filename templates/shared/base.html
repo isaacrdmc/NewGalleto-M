@@ -39,7 +39,7 @@
                     </span>
                     {% if session['role'] == 'produccion' %}
                     <a class="submit rounded-circle d-flex align-items-center justify-content-center px-1"
-                        href="{{ url_for('production.inventario_insumos') }}"
+                        href="{{ url_for('production.dashboard_produccion') }}"
                         style="margin-right: 20px; background-color: #ffd47ed5;">
                         <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos" width="40">
                     </a>
@@ -82,6 +82,7 @@
                             width="50">
                     </a>
                 </div>
+                {% endif %}
                 {% endif %}
             </div>
         </nav>

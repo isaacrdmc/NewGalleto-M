@@ -5,6 +5,30 @@
     <h1 class="my-4 text-center fw-bold">🍪 Módulo de Producción - Don Galleto 🍪</h1>
 
     <!-- Sección de Estadísticas -->
+    <div class="row mb-4 text-center">
+        <div class="col-md-3">
+            <a href="{{ url_for('production.horneado') }}" class="btn btn-warning w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-oven"></i> Proceso de horneadas
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="" class="btn btn-primary w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-jar-wheat"></i> Registrar insumos
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
+            </a>
+        </div>        
+        <div class="col-md-3">
+            <a href="" class="btn btn-danger w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-clipboard"></i> Historial de horneadas
+            </a>
+        </div>
+    </div>
+
+    <!-- Sección de Estadísticas -->
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card border-0 shadow-lg bg-light rounded-4">
@@ -48,21 +72,21 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>#001</td>
+                        <td><a href="">#001</a></td>
                         <td>Galleta de Chocolate</td>
                         <td>1,000</td>
                         <td><span class="badge bg-success">Completado</span></td>
                         <td>2025-03-15</td>
                     </tr>
                     <tr>
-                        <td>#002</td>
+                        <td><a href="">#002</a></td>
                         <td>Galleta de Vainilla</td>
                         <td>800</td>
                         <td><span class="badge bg-warning">En proceso</span></td>
                         <td>2025-03-16</td>
                     </tr>
                     <tr>
-                        <td>#003</td>
+                        <td><a href="">#003</a></td>
                         <td>Galleta de Nuez</td>
                         <td>500</td>
                         <td><span class="badge bg-danger">Pendiente</span></td>

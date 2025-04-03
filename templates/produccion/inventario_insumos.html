@@ -3,6 +3,51 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center fw-bold">Inventario</h2>
+
+    <!-- Botón para abrir el modal de agregar insumo -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addInsumoModal">
+            <i class="fa fa-plus"></i> Agregar Insumo
+        </button>
+    </div>
+
+    <!-- Modal para agregar nuevo insumo -->
+    <div class="modal fade" id="addInsumoModal" tabindex="-1" aria-labelledby="addInsumoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addInsumoModalLabel">Agregar Nuevo Insumo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario de agregar insumo -->
+                    <form id="addInsumoForm">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre del Insumo</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="unidadInsumo" class="form-label">Unidad del Insumo</label>
+                            <input type="text" class="form-control" id="unidadInsumo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidadDisponible" class="form-label">Cantidad Disponible</label>
+                            <input type="number" class="form-control" id="cantidadDisponible" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidadMinima" class="form-label">Cantidad Mínima</label>
+                            <input type="number" class="form-control" id="cantidadMinima" required>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Agregar Insumo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mostrar los insumos en tarjetas -->
     <div class="row">
         {% for item in inventario %}
         <div class="col-md-4 col-lg-3 mb-3">
@@ -21,4 +66,15 @@
         {% endfor %}
     </div>
 </div>
+
 {% endblock %}
+
+<!-- Scripts para el modal y formulario -->
+<script>
+    // Manejo del envío del formulario para agregar insumo
+    document.getElementById('addInsumoForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Obtener los valores del formulario
+        const nombre = document.getElementById('nombre').value;
+        const unidadInsumo = document.getElementById('unidadInsumo').
