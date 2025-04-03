@@ -31,7 +31,6 @@ def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, t
     db.session.add(nuevo_proveedor)
     db.session.commit()
 
-
 # ^ Leemos todos los datos de la tabla  (R)
 def obtener_proveedores():
     # ? Ordena los datos que se van a mostrar por el producto????
@@ -42,8 +41,6 @@ def obtener_proveedores():
     
     # ? Ordena los datos que se van a mostrar de fomra decendente
     return Proveedores.query.order_by(Proveedores.idProveedores.desc()).all()
-
-
 
 # ^ Modificar un porveedore  (U)
 def actualizar_proveedor(proveedor_id, empresa, telefono, correo, direccion, productos):
@@ -63,7 +60,6 @@ def actualizar_proveedor(proveedor_id, empresa, telefono, correo, direccion, pro
         db.session.rollback()
         # raise e
 
-
 # ^ Elminar un porveedor  (D)
 def eliminar_proveedor(proveedor_id):
     try:
@@ -79,24 +75,18 @@ def eliminar_proveedor(proveedor_id):
     except Exception as e:
         # ? Si hay un error, hacemos un rollback para deshacer los cambios
         db.session.rollback()
-        
 
 
+# # ^ Buscamos un proveedor en específico
+# def buscar_proveedore_productos(producto_buscar):
+#     # ? Acá es donde buscamos un proveedor por su producto, con que coincida uno de los porudcto 
+#     # Algo así como esta consulta de  MySQL:
+#     # SELECT *
+#     # FROM proveedores 
+#     # WHERE productosProveedor LIKE '%Chocolate%';
 
+#     return Proveedores.query.filter(Proveedores.productosProveedor.like(f'%{producto_buscar}%')).all()
 
-
-# ^ Buscamos un proveedor en específico
-def buscar_proveedore_productos(producto_buscar):
-    # ? Acá es donde buscamos un proveedor por su producto, con que coincida uno de los porudcto 
-    # Algo así como esta consulta de  MySQL:
-    # SELECT *
-    # FROM proveedores 
-    # WHERE productosProveedor LIKE '%Chocolate%';
-
-    return Proveedores.query.filter(Proveedores.productosProveedor.like(f'%{producto_buscar}%')).all()
-
-
-# ? Filtamos un porveedor por sus insumos 
 
 
 
