@@ -63,37 +63,6 @@ class LogsSistema(db.Model):
 
 
 
-"""
-CREATE TABLE roles (
-	idRolUsuario INT AUTO_INCREMENT PRIMARY KEY,
-    nombreRol VARCHAR(20) NOT NULL			-- Especificamos el rol del usuario que puede ser Admin, Cliente, Vendendor o Productor
-);
-
-CREATE TABLE usuario(
-	idUser INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(10) NOT NULL,		-- Sú nombre
-    apellP VARCHAR(40) not null,		-- Sú apellido paterno
-    apellM VARCHAR(40) not null,		-- Sú apellido materno
-    contrasena VARCHAR(255) NOT NULL,		-- La contrseña cifrada para mayor seguridad
-    nombreRol VARCHAR(20) NOT NULL			-- Especificamos el rol del usuario que puede ser Admin, Cliente, Vendendor o Productor
-    
-    /*idRol INT NOT NULL,
-    FOREIGN KEY (idRol) REFERENCES roles(idRolUsuario)*/
-);
-
-CREATE TABLE logsSistema (
-	idLog INT AUTO_INCREMENT PRIMARY KEY,
-    tipoLog ENUM('Error', 'Seguridad', 'Acceso', 'Operacion') NOT NULL,		-- El tipo de log que vamos a manejar
-    descripcionLog TEXT NOT NULL,		-- Breve descripción del log
-    fechaHora DATETIME NOT NULL DEFAULT current_timestamp,		-- Fecha en la que ocurrio el registro del Log
-    ipOrigen VARCHAR(45),		-- NO se que onada acá
-    
-    idUsuario INT,
-    FOREIGN KEY (idUsuario) REFERENCES usuario(idUser)
-);
-"""
-
-
 # ~ Tabla para los porveedores
 class Proveedores(db.Model):    # ? 
     __tablename__ = 'proveedores'       # Nombre de la tabla
