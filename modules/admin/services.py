@@ -7,7 +7,7 @@ from database.conexion import db
 
 
 # ~ Sección para los logs del sistema
-"""
+
 # Registro d elos logs al sistema
 def registrar_log(tipo_log, descripcion_log, ip_origen):
     
@@ -25,7 +25,9 @@ def registrar_log(tipo_log, descripcion_log, ip_origen):
     # ? Guardamos el nuevo log dentro de la Base de datos
     db.session.add(nuevo_log)  # * Agregamos el nuevo log a la base de datos
     db.session.commit()
-"""
+
+
+
 # Nos traemos los logs del sistema
 def obtener_logs(usuario_id=None, tipo_Log=None, limite=100):
     # ? De primeras nos traemos todos los logs del sistema
