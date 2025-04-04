@@ -2,27 +2,22 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="my-4 text-center fw-bold"> Módulo de Producción - Don Galleto </h1>
+    <h1 class="my-4 text-center fw-bold">Módulo de Producción</h1>
 
     <!-- Sección de Estadísticas -->
     <div class="row mb-4 text-center">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <a href="{{ url_for('production.horneado') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-oven"></i> Proceso de horneadas
             </a>
         </div>
-        <div class="col-md-3">
-            <a href="#" class="btn btn-primary w-100 py-3 shadow-lg">
-                <i class="fa-regular fa-jar-wheat"></i> Registrar insumos
-            </a>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
             </a>
-        </div>
-        <div class="col-md-3">
-            <a href="#" class="btn btn-danger w-100 py-3 shadow-lg">
+        </div>        
+        <div class="col-md-4">
+            <a href="{{ url_for('production.historial') }}" class="btn btn-danger w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-clipboard"></i> Historial de horneadas
             </a>
         </div>

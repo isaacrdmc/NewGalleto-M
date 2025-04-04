@@ -1,12 +1,13 @@
 from datetime import datetime
 import os
 from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from .services import ProveedorService, GalletaService, InsumoService, RecetaService
-from .models import db
+from .services import ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService
+from .models import db,Horneado
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
 from . import bp_production
-
+from database.conexion import db
+from datetime import datetime, timedelta
 
 # Servicios
 proveedor_service = ProveedorService(db.session)
@@ -165,7 +166,106 @@ def dashboard_produccion():
         return redirect(url_for('shared.login'))
     return render_template('produccion/produccion.html')
 
+# Añadir a routes.py
+
+# Instanciamos el servicio de horneado
+horneado_service = HorneadoService(db.session)
+
+@bp_production.route('/historial', methods=['GET'])
+def historial():
+    # Obtener parámetros de filtrado
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    id_receta = request.args.get('receta')
+    
+    # Convertir id_receta a entero si existe
+    if id_receta:
+        try:
+            id_receta = int(id_receta)
+        except ValueError:
+            id_receta = None
+    
+    # Obtener los horneados filtrados
+    horneados = horneado_service.get_horneados_filtrados(fecha_inicio, fecha_fin, id_receta)
+    
+    # Obtener todas las recetas para el filtro
+    recetas = receta_service.get_all_recetas()
+    
+    # Renderizar el template con los datos
+    return render_template(
+        'produccion/historial_horneada.html',
+        horneados=horneados,
+        recetas=recetas
+    )
+
+@bp_production.route('/estadisticas_horneado', methods=['GET'])
+def estadisticas_horneado():
+    # Obtener parámetro de días a consultar (por defecto 30 días)
+    dias = request.args.get('dias', 30, type=int)
+    
+    # Obtener estadísticas
+    estadisticas = horneado_service.get_estadisticas_horneado(dias)
+    
+    # Devolver en formato JSON para ser consumido por ajax
+    return jsonify(estadisticas)
+
 @bp_production.route('/horneado', methods=['GET'])
 @login_required
 def horneado():
-    return render_template('hornear_galleta.html')
+    # Obtener todas las recetas para el selector
+    recetas = receta_service.get_all_recetas()
+    return render_template('produccion/hornear_galleta.html', recetas=recetas)
+
+@bp_production.route('/registrar_horneado', methods=['POST'])
+def registrar_horneado():
+    try:
+        # Obtener datos del formulario
+        id_receta = request.form.get('id_receta', type=int)
+        temperatura = request.form.get('temperatura', type=int)
+        tiempo = request.form.get('tiempo', type=int)
+        cantidad = request.form.get('cantidad', type=int)
+        observaciones = request.form.get('observaciones', '')
+        
+        # Validar datos
+        if not all([id_receta, temperatura, tiempo, cantidad]):
+            flash('Todos los campos son obligatorios excepto observaciones', 'danger')
+            return redirect(url_for('production.horneado'))
+        
+        # Obtener id del usuario de la sesión
+        id_usuario = session.get('user_id')
+        if not id_usuario:
+            flash('Debes iniciar sesión para registrar horneados', 'danger')
+            return redirect(url_for('shared.login'))
+        
+        # Registrar horneado usando el servicio
+        resultado = horneado_service.registrar_horneado(
+            temperatura,
+            tiempo,
+            cantidad,
+            observaciones,
+            id_receta,
+            id_usuario
+        )
+        
+        if resultado:
+            flash('Horneado registrado exitosamente', 'success')
+        else:
+            flash('Error al registrar el horneado', 'danger')
+        
+        return redirect(url_for('production.horneado'))
+    
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('production.horneado'))
+
+@bp_production.route('/detalle_horneado/<int:id_horneado>', methods=['GET'])
+def detalle_horneado(id_horneado):
+    # Obtener el horneado por ID
+    horneado = horneado_service.get_horneado(id_horneado)
+    
+    if not horneado:
+        flash('Horneado no encontrado', 'danger')
+        return redirect(url_for('production.historial'))
+    
+    # Renderizar template con los detalles
+    return render_template('produccion/detalle_horneado.html', horneado=horneado)
