@@ -1,43 +1,80 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show small-alert" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
 <div class="login-container">
-    <!-- Contenedor de Login -->
     <div class="login-box">
-        <h3>Bienvenido!</h3>
-        <form method="POST" action="{{ url_for('shared.login') }}">
-            <label for="username">Usuario:</label>
-            <input type="text" name="username" placeholder="Usuario" class="input-box" required>
+        <h3>Bienvenido</h3>
+        <form method="POST" action="{{ url_for('shared.login') }}" id="loginForm">
+            <label for="username">Nombre de usuario:</label>
+            <input type="text" name="username" id="username" placeholder="Usuario" class="input-box" required>
+
             <label for="password">Contraseña:</label>
-            <input type="password" name="password" placeholder="Contraseña" class="input-box" required>
-            <button type="submit" class="btn">Ingresar</button>
+            <input type="password" name="password" id="password" placeholder="Contraseña" class="input-box" required>
+
+            <div class="reset_pass text-center mb-3">
+                <a href="{{ url_for('shared.reset_password_request') }}" class="link">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn mt-4">Ingresar</button>
         </form>
         <div class="border border-1 mt-5"></div>
         <div class="register-link text-center">
-            <p>¿Eres cliente y no tienes una cuenta?</p>
+            <p>¿No tienes una cuenta?</p>
             <a class="link" href="{{ url_for('shared.register') }}">Regístrate aquí</a>
         </div>
     </div>
 </div>
 
 <script>
-    // Validación básica del formulario de inicio de sesión
-    document.querySelector('form').addEventListener('submit', function (event) {
-        const usernameInput = document.querySelector('input[name="username"]').value.trim();
-        const passwordInput = document.querySelector('input[name="password"]').value.trim();
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
 
-        // Verificar que los campos no estén vacíos
-        if (!usernameInput || !passwordInput) {
-            alert('Por favor, completa todos los campos.');
-            event.preventDefault(); // Detiene el envío del formulario
+        if (!username || !password) {
+            e.preventDefault();
+            alert('Por favor completa todos los campos.');
             return false;
         }
 
-        // Validación adicional (si es necesario) puede agregarse aquí
-        return true; // Permitir el envío del formulario si todo está correcto
+        // Validación adicional si es necesario
+        return true;
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Actualizar mensaje de bloqueo temporal
+        const bloqueoMsg = document.querySelector('.alert-warning');
+        if (bloqueoMsg && bloqueoMsg.textContent.includes('segundos')) {
+            const updateCounter = () => {
+                const match = bloqueoMsg.textContent.match(/(\d+) segundos/);
+                if (match) {
+                    const segundos = parseInt(match[1]);
+                    if (segundos > 1) {
+                        bloqueoMsg.textContent = bloqueoMsg.textContent.replace(
+                            `${segundos} segundos`,
+                            `${segundos - 1} segundos`
+                        );
+                        setTimeout(updateCounter, 1000);
+                    } else {
+                        bloqueoMsg.textContent = '¡Ya puedes intentar iniciar sesión de nuevo!';
+                        bloqueoMsg.classList.replace('alert-warning', 'alert-success');
+                    }
+                }
+            };
+            setTimeout(updateCounter, 1000);
+        }
     });
 </script>
-
-<!-- Incluye el script de reCAPTCHA -->
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

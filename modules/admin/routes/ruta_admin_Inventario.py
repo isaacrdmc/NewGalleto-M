@@ -1,6 +1,5 @@
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from ..services import agregar_proveedor, obtener_proveedores
-#  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from ...admin import bp_admistracion
 
 
@@ -18,8 +17,9 @@ from ...admin import bp_admistracion
 
 # Ruta para gestionar insumos dentro del archivo rutas de la carpeta producción
 @bp_admistracion.route('/insumos')
+@login_required
 def insumos():
-    if 'username' not in session or session['role'] != 'admin':
+    if current_user.rol.nombreRol != 'Administrador':
         return redirect(url_for('shared.login'))
     
     # Definir la variable insumo (puede ser una consulta a la base de datos o un valor predeterminado)
@@ -29,12 +29,14 @@ def insumos():
 
 
 @bp_admistracion.route('/insumos/eliminar/<id>', methods=['DELETE'])
+@login_required
 def eliminar_insumo(id):
     global insumo
     insumo = [i for i in insumo if i['id'] != id]
     return jsonify({"mensaje": "Insumo eliminado"})
 
 @bp_admistracion.route('/insumos/<id>', methods=['GET'])
+@login_required
 def obtener_insumo(id):
     for i in insumo:
         if i['id'] == id:
@@ -42,6 +44,7 @@ def obtener_insumo(id):
     return jsonify({"error": "Insumo no encontrado"}), 404
 
 @bp_admistracion.route('/insumos/editar/<id>', methods=['POST'])
+@login_required
 def editar_insumo(id):
     if request.is_json:
         datos = request.get_json()  # Obtener los datos JSON del cuerpo de la solicitud
@@ -62,6 +65,7 @@ def editar_insumo(id):
 
 
 @bp_admistracion.route('/insumos/agregar', methods=['POST'])
+@login_required
 def agregar_insumo():
     datos = request.get_json()
     nuevo_insumo = {

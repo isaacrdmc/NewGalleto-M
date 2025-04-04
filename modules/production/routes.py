@@ -4,6 +4,7 @@ from flask import abort, json, render_template, request, Flask, render_template,
 
 from modules.admin.services import obtener_proveedores
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from . import bp_production
 
 
@@ -11,13 +12,16 @@ from . import bp_production
 # * Ruta para el dashboard de producción
 
 @bp_production.route('/produccion')
+@login_required
 def produccion():
-    if 'username' not in session or session['role'] != 'produccion':
-        return redirect(url_for('admin.login'))
+    if current_user.rol.nombreRol != 'Produccion':
+        flash('No tienes permisos para acceder a esta sección', 'danger')
+        return redirect(url_for('shared.index'))
     return render_template('produccion/produccion.html')
 # ^ Sección de producción
 
 @bp_production.route('/inventario')
+@login_required
 def inventario():
     productos = [
         {"nombre": "Harina", "imagen": "static/img/harina.png", "cantidad": 100, "piezas": 30, "stock": 5},
@@ -29,6 +33,7 @@ def inventario():
 
 
 @bp_production.route('/detalle/<nombre_insumo>')
+@login_required
 def detalle_insumo(nombre_insumo):
     # Define los datos del inventario directamente aquí o usa la lista global
     inventario_data = [
@@ -106,6 +111,7 @@ def save_data(data):
 cookie_types = ["Chocolate", "Vainilla", "Avena", "Mantequilla"]
 
 @bp_production.route('/horneado', methods=['GET'])
+@login_required
 def horneado():
     # Cargar datos
     data = load_data()
@@ -124,6 +130,7 @@ def horneado():
     )
 
 @bp_production.route('/add_to_queue', methods=['POST'])
+@login_required
 def add_to_queue():
     # Obtener tipo de galleta del formulario
     cookie_type = request.form.get('cookie_type')
@@ -153,6 +160,7 @@ def add_to_queue():
     return redirect(url_for('production.horneado'))
 
 @bp_production.route('/start_process/<cookie_id>', methods=['POST'])
+@login_required
 def start_process(cookie_id):
     # Cargar datos actuales
     data = load_data()
@@ -175,6 +183,7 @@ def start_process(cookie_id):
     return redirect(url_for('production.horneado'))
 
 @bp_production.route('/finish_process/<cookie_id>', methods=['POST'])
+@login_required
 def finish_process(cookie_id):
     # Cargar datos actuales
     data = load_data()
@@ -202,6 +211,7 @@ def finish_process(cookie_id):
     return redirect(url_for('production.horneado'))
 
 @bp_production.route('/delete_cookie', methods=['POST'])
+@login_required
 def delete_cookie():
     cookie_id = request.form.get('cookie_id')
     list_type = request.form.get('list_type')

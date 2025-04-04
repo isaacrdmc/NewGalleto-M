@@ -7,14 +7,14 @@ from database.conexion import db
 # ~ Seccion de proveedores
 
 # ^ Agregamos un proveedor  (C)
-def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, tipoProveedor):
+def agregar_proveedor(nombre, telefono, correo, direccion, productos, tipo):
     nuevo_proveedor = Proveedores(
         nombre=nombre,
         telefono=telefono,  # * --------
         correo=correo,  # * --------
         direccion=direccion,  # * --------
-        productosProveedor=productosProveedor,
-        tipoProveedor=tipoProveedor
+        productosProveedor=productos,
+        tipoProveedor=tipo
     )
     # * 
     db.session.add(nuevo_proveedor)

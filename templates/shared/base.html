@@ -22,26 +22,26 @@
                         class="d-inline-block align-top">
                 </a>
 
-                {% if not 'username' in session %}
+                {% if not current_user.is_authenticated %}
                 <h3 class="navbar-title-center">{{ page_title }}</h3>
                 {% endif %}
 
-                {% if 'username' in session %}
+                {% if current_user.is_authenticated %}
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                     aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarContent">
-                    {% if session['role'] != 'cliente' %}
+                    {% if current_user.rol.nombreRol != 'Cliente' %}
                     <h2 class="navbar-title-left">
                         <a href="{{ url_for('shared.index')}}" class="text-decoration-none text-white">Don Galleto</a>
                     </h2>
                     <div class="d-flex align-items-center ms-auto">
                         <span class="navbar-text me-3">
-                            Bienvenido, {{ session['role'] }}
+                            Bienvenido, {{ current_user.rol.nombreRol }}
                         </span>
-                        {% if session['role'] == 'produccion' %}
+                        {% if current_user.rol.nombreRol == 'Produccion' %}
                         <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
                             href="{{ url_for('production.inventario') }}"
                             style="background-color: #ffd47ed5 !important;">
@@ -49,7 +49,7 @@
                         </a>
                         {% endif %}
 
-                        {% if session['role'] == 'ventas' %}
+                        {% if current_user.rol.nombreRol == 'Ventas' %}
                         <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
                             href="{{ url_for('ventas.inventario_galletas') }}"
                             style="background-color: #ffd47ed5 !important;">
@@ -62,7 +62,7 @@
                     </div>
                     {% endif %}
 
-                    {% if session['role'] == 'cliente' %}
+                    {% if current_user.rol.nombreRol == 'Cliente' %}
                     <h2 class="navbar-title-center">Don Galleto</h2>
 
                     <div class="d-flex align-items-center ms-auto">

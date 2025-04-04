@@ -3,6 +3,7 @@
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from ..services import agregar_proveedor, obtener_proveedores
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from ...admin import bp_admistracion
 
 
@@ -17,6 +18,8 @@ from ...admin import bp_admistracion
 
 # * nueva ruta, ruta para el CRUD de los proveedores
 @bp_admistracion.route('/agregarProveedor')
+@login_required
+
 def agregarProv():
     proveedoresNuevos=agregar_proveedor()
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
@@ -24,8 +27,9 @@ def agregarProv():
 
 # * Renderiza la página y trae los datos del arreglo
 @bp_admistracion.route('/proveedores')
+@login_required
 def proveedores():
-    if 'username' not in session or session['role'] != 'admin':
+    if current_user.rol.nombreRol != 'Administrador':
         return redirect(url_for('shared.login'))
     
     # ~ Obtenemos los datos de la tabla de 'proveedores' de la BD
@@ -36,6 +40,7 @@ def proveedores():
 
 # * Agregamos un nuevo porveedor
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
+@login_required
 def agregar_proveedor():
     datos = request.get_json()
     nuevo_proveedor = {
@@ -51,6 +56,7 @@ def agregar_proveedor():
 
 # * Edita los datos del porveedor
 @bp_admistracion.route('/proveedores/editar/<id>', methods=['POST'])
+@login_required
 def editar_proveedor(id):
     if request.is_json:
         datos = request.get_json()  # Obtener los datos JSON del cuerpo de la solicitud
@@ -71,6 +77,7 @@ def editar_proveedor(id):
 
 # * Eliminamos un proveedor
 @bp_admistracion.route('/proveedores/eliminar/<id>', methods=['DELETE'])
+@login_required
 def eliminar_proveedor(id):
     global proveedor
     proveedor = [p for p in proveedor if p['id'] != id]
@@ -78,6 +85,7 @@ def eliminar_proveedor(id):
 
 # * Buscar un proveedor
 @bp_admistracion.route('/proveedores/<id>', methods=['GET'])
+@login_required
 def obtener_proveedor(id):
     for p in proveedor:
         if p['id'] == id:
