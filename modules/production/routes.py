@@ -80,9 +80,9 @@ def add_insumo():
     data = request.get_json()
     nuevo_insumo = insumo_service.add_insumo(
         data['nombre'],
-        data['unidadInsumo'],
-        data['cantidadDisponible'],
-        data['cantidadMinima']
+        data['unidadInsumo'],  # Este nombre se mantiene igual porque viene del cliente
+        data['cantidadDisponible'],  # Este nombre se mantiene igual porque viene del cliente
+        data['cantidadMinima']  # Este nombre se mantiene igual porque viene del cliente
     )
     if nuevo_insumo:
         return jsonify(nuevo_insumo.to_dict()), 201

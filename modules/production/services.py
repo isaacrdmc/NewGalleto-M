@@ -103,12 +103,20 @@ class InsumoService(BaseService):
     def add_insumo(self, nombre, unidadInsumo, cantidadDisponible, cantidadMinima):
         insumo = Insumo(
             nombre=nombre,
-            unidadInsumo=unidadInsumo,
-            cantidadDisponible=cantidadDisponible,
-            cantidadMinima=cantidadMinima
+            unidad=unidadInsumo,  # Changed from unidadInsumo to unidad
+            cantidad_disponible=cantidadDisponible,  # Changed to use the snake_case attribute name
+            cantidad_minima=cantidadMinima  # Changed to use the snake_case attribute name
         )
         return self.add(insumo)
 
+    def get_insumo_por_nombre(self, nombre):
+        try:
+            return self.db_session.query(Insumo).filter(Insumo.nombre == nombre).first()
+        except SQLAlchemyError as e:
+            print(f"Error al buscar insumo por nombre: {e}")
+            return None
+    
+    
     def get_insumo(self, id_insumo):
         return self.get(Insumo, id_insumo)
 

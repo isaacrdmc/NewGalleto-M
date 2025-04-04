@@ -16,8 +16,17 @@ class Insumo(db.Model):
     id = db.Column('idInsumo', db.Integer, primary_key=True)
     nombre = db.Column(db.String(40), nullable=False)
     unidad = db.Column('unidadInsumo', db.Enum('Gr', 'mL', 'Pz'), nullable=False)
-    cantidad_disponible = db.Column(db.Integer, nullable=False)
-    cantidad_minima = db.Column(db.Integer, nullable=False)
+    cantidad_disponible = db.Column('cantidadDisponible', db.Integer, nullable=False)
+    cantidad_minima = db.Column('cantidadMinima', db.Integer, nullable=False)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'unidad': self.unidad,
+            'cantidad_disponible': self.cantidad_disponible,
+            'cantidad_minima': self.cantidad_minima
+        }
 
 class Receta(db.Model):
     __tablename__ = 'recetas'

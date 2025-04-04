@@ -24,19 +24,23 @@
                     <form id="addInsumoForm">
                         <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre del Insumo</label>
-                            <input type="text" class="form-control" id="nombre" required>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
                         </div>
                         <div class="mb-3">
                             <label for="unidadInsumo" class="form-label">Unidad del Insumo</label>
-                            <input type="text" class="form-control" id="unidadInsumo" required>
+                            <select class="form-select" id="unidadInsumo" name="unidadInsumo" required>
+                                <option value="Gr">Gramos (Gr)</option>
+                                <option value="mL">Mililitros (mL)</option>
+                                <option value="Pz">Piezas (Pz)</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="cantidadDisponible" class="form-label">Cantidad Disponible</label>
-                            <input type="number" class="form-control" id="cantidadDisponible" required>
+                            <input type="number" class="form-control" id="cantidadDisponible" name="cantidadDisponible" required>
                         </div>
                         <div class="mb-3">
                             <label for="cantidadMinima" class="form-label">Cantidad Mínima</label>
-                            <input type="number" class="form-control" id="cantidadMinima" required>
+                            <input type="number" class="form-control" id="cantidadMinima" name="cantidadMinima" required>
                         </div>
                         <div class="text-center">
                             <button type="submit" class="btn btn-primary">Agregar Insumo</button>
@@ -53,12 +57,12 @@
         <div class="col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('production.detalle_insumo', nombre_insumo=item.nombre) }}" 
                 class="text-decoration-none d-block">
-                <div class="card text-center border border-3 {{ 'border-success' if item.stock > 0 else 'border-danger' }} shadow-sm hover-effect h-100">
+                <div class="card text-center border border-3 {{ 'border-success' if item.cantidad_disponible > item.cantidad_minima else 'border-danger' }} shadow-sm hover-effect h-100">
                     <div class="card-body">
-                        <img src="{{ item.imagen }}" alt="{{ item.nombre }}" class="img-fluid mb-2" style="max-height: 80px;">
                         <h5 class="card-title">{{ item.nombre }}</h5>
-                        <p class="mb-1">{{ item.cantidad }}GR</p>
-                        <p>{{ item.piezas }}PZ</p>
+                        <p class="mb-1">Cantidad: {{ item.cantidad_disponible }}</p>
+                        <p class="mb-0">Unidad: {{ item.unidad }}</p>
+                        <p>Mínimo: {{ item.cantidad_minima }}</p>
                     </div>
                 </div>
             </a>
@@ -67,14 +71,38 @@
     </div>
 </div>
 
-{% endblock %}
-
-<!-- Scripts para el modal y formulario -->
+<!-- JavaScript para manejar el formulario -->
 <script>
-    // Manejo del envío del formulario para agregar insumo
-    document.getElementById('addInsumoForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        // Obtener los valores del formulario
-        const nombre = document.getElementById('nombre').value;
-        const unidadInsumo = document.getElementById('unidadInsumo').
+document.getElementById('addInsumoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const nuevoInsumo = {
+        nombre: document.getElementById('nombre').value,
+        unidadInsumo: document.getElementById('unidadInsumo').value,
+        cantidadDisponible: parseInt(document.getElementById('cantidadDisponible').value),
+        cantidadMinima: parseInt(document.getElementById('cantidadMinima').value)
+    };
+    
+    fetch('/production/insumo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(nuevoInsumo)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert('Insumo agregado con éxito');
+            location.reload(); // Recargar la página para ver el nuevo insumo
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al agregar el insumo');
+    });
+});
+</script>
+{% endblock %}
