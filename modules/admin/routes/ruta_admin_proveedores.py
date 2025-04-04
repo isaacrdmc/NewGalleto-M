@@ -180,13 +180,9 @@ def editar_proveedor(id):
         return jsonify({"error": str(e)}), 500
 
 
-
-
-
-
-
 # ^ Eliminamos un proveedor        (D)
 @bp_admistracion.route('/proveedores/eliminar/<int:id>', methods=['POST'])
+@login_required
 def eliminar_proveedor_route(id):
     try:
         # ? Usamos la función de servicio para eliminar el proveedor
@@ -208,14 +204,12 @@ def eliminar_proveedor_route(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
-
-
-
+    
 
 
 # ^ Buscar un proveedor dentro de la BD        (Otro)
 @bp_admistracion.route('/proveedores/buscar', methods=['GET'])
+@login_required
 def buscar_proveedor_route():
     if 'username' not in session or session['role'] != 'admin':
         return jsonify({"error": "No autorizado"}), 403
@@ -256,10 +250,9 @@ def buscar_proveedor_route():
 
 
 
-
-
 # ~ Obtener un proveedor:
 @bp_admistracion.route('/proveedores/obtener/<int:id>', methods=['GET'])
+@login_required
 def obtener_proveedor(id):
     try:
         proveedor = Proveedores.query.get_or_404(id)
