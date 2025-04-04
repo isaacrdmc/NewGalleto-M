@@ -25,25 +25,26 @@ class Roles(db.Model):
     __tablename__ = 'roles'
 
     idRolUsuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombreRol = db.Column(db.String(20), nullable=False)
+    nombreRol = db.Column(db.String(20), nullable=False, unique=True)
+
+    # * Relación con la tabla de los usuarios
+    usuarios = db.relationship('Usuario', backref='rol', lazy=True)
     
 
 # & Clase para la tabla de los usuartios
-
 # 'UserMixin' es una calse que nos permite manejar la sesión de los usuarios 
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
-
-    # *
+    
     idUser = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombre = db.Column(db.String(20), nullable=False)
+    nombre = db.Column(db.String(50), nullable=False)
     apellP = db.Column(db.String(40), nullable=False)
     apellM = db.Column(db.String(40), nullable=False)
-    contrasena = db.Column(db.Strin(255), nullable=False)
-    nombreRol = db.Column(db.String(20), nullable=False)
+    contrasena = db.Column(db.String(255), nullable=False)
+    idRol = db.Column(db.Integer, db.ForeignKey('roles.idRolUsuario'), nullable=False)
 
     # * Relación con la tabla de los Logs del sistema
-    logs = db.relationship('LogsSistema', backeref='usuario', lazy=True)
+    logs = db.relationship('LogsSistema', backref='usuario_log', lazy=True)
 
 
 # & Clase para la tabla de los logs del sistema
@@ -53,13 +54,12 @@ class LogsSistema(db.Model):
 
     # * Columnas de la tabla
     idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tipoLog = db.column(db.enmum('Error', 'Seguridad', 'Acceso', 'Operacion'), nullable=False)
+    tipoLog = db.Column(db.Enum('Error', 'Seguridad', 'Acceso', 'Operacion', name='tipo_log_enum'), nullable=False)
     descripcionLog = db.Column(db.Text, nullable=False)
-    fechaHora = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp()) # * Fecha y hora actual
+    fechaHora = db.Column(db.DateTime, nullable=False, server_default=db.func.now()) # * Fecha y hora actual
     ipOrigen = db.Column(db.String(45), nullable=True) # * Obtenemos la ip del ciente
     
-    # 
-    idUsuario = db.Column(db.Integer, db.ForeignKey('usuario.idIser'), nullable=False) # * Obtenemos el id del usuario que hizo la acción
+    idUsuario = db.Column(db.Integer, db.ForeignKey('usuario.idUser', ondelete='SET NULL')) # * Obtenemos el id del usuario que hizo la acción
 
 
 

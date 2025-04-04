@@ -256,6 +256,7 @@ def buscar_proveedor_route():
 
 # ~ Obtener un proveedor:
 @bp_admistracion.route('/proveedores/obtener/<int:id>', methods=['GET'])
+# def obtener_proveedor_route(id):
 def obtener_proveedor(id):
     try:
         proveedor = Proveedores.query.get_or_404(id)
