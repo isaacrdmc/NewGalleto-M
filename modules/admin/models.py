@@ -15,10 +15,10 @@ from database.conexion import db
 
 # & Clase para los logs del sistema
 class TipoLog(Enum):
-    Error = 'Error'
-    Seguridad = 'Seguridad'
-    Acceso = 'Acceso'
-    Operacion = 'Operacion'
+    ERROR = 'Error'
+    SEGURIDAD = 'Seguridad'
+    ACCESO = 'Acceso'
+    OPERACION = 'Operacion'
 
 # & Clase para la tabla de los roles de los usuarios
 class Roles(db.Model):
@@ -54,11 +54,11 @@ class LogsSistema(db.Model):
 
     # * Columnas de la tabla
     idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tipoLog = db.Column(db.Enum('Error', 'Seguridad', 'Acceso', 'Operacion', name='tipo_log_enum'), nullable=False)
+    tipoLog = db.Column(db.Enum(TipoLog, name='tipo_log_enum'), nullable=False)
     descripcionLog = db.Column(db.Text, nullable=False)
     fechaHora = db.Column(db.DateTime, nullable=False, server_default=db.func.now()) # * Fecha y hora actual
     ipOrigen = db.Column(db.String(45), nullable=True) # * Obtenemos la ip del ciente
-    
+
     idUsuario = db.Column(db.Integer, db.ForeignKey('usuario.idUser', ondelete='SET NULL')) # * Obtenemos el id del usuario que hizo la acción
 
 
