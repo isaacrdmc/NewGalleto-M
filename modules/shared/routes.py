@@ -118,7 +118,7 @@ def login():
                 
                 db.session.commit()
                 
-        except SQLAlchemyError as e:
+        except SQLAlchemyError as e: 
             db.session.rollback()
             current_app.logger.error(f'Error de base de datos en login: {str(e)}')
             flash('Error al procesar la solicitud. Intente nuevamente.', 'danger')
