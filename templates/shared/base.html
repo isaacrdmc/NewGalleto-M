@@ -128,6 +128,53 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script>
+        let galletaActual = '';
+      
+        // Abrir modal al dar clic en cualquier botón de agregar
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('.btn-agregar').forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+              const imgSrc = document.querySelectorAll('.card-img-top')[index].src;
+              galletaActual = document.querySelectorAll('.card-title')[index].textContent;
+              document.getElementById('imgGalletaModal').src = imgSrc;
+              new bootstrap.Modal(document.getElementById('modalConfirmar')).show();
+            });
+          });
+      
+          // Cambiar opciones según tipo
+          document.getElementById('tipoVenta').addEventListener('change', (e) => {
+            const tipo = e.target.value;
+            const opcionVenta = document.getElementById('opcionVenta');
+            opcionVenta.innerHTML = '';
+      
+            let opciones = [];
+            if (tipo === 'pieza') opciones = ['1 pieza', '2 piezas', '5 piezas'];
+            if (tipo === 'gramos') opciones = ['100g', '250g', '500g'];
+            if (tipo === 'empacado') opciones = ['1 kg', '700 g'];
+      
+            opciones.forEach(op => {
+              const option = document.createElement('option');
+              option.value = op;
+              option.textContent = op;
+              opcionVenta.appendChild(option);
+            });
+          });
+      
+          // Abrir modal presentación
+          document.getElementById('btnSeleccionarPresentacion').addEventListener('click', () => {
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmar')).hide();
+            new bootstrap.Modal(document.getElementById('modalPresentacion')).show();
+          });
+      
+          // Enviar y mostrar modal de éxito
+          document.getElementById('formPresentacion').addEventListener('submit', (e) => {
+            e.preventDefault();
+            bootstrap.Modal.getInstance(document.getElementById('modalPresentacion')).hide();
+            new bootstrap.Modal(document.getElementById('modalExito')).show();
+          });
+        });
+      </script>
 </body>
 
 </html>

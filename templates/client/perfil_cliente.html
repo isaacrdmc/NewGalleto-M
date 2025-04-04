@@ -1,1 +1,139 @@
-<div>Aun no hay nada xd</div>
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Encabezado -->
+            <div class="text-center mb-4">
+                <h2 class="h4 text-muted mt-2">Bienvenido, {{ session['username'] }}</h2>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <h3 class="card-title text-center mb-4">Mi cuenta</h3>
+
+                    <!-- Botón Mis Pedidos -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-clipboard-list me-2"></i> 
+                                Mis pedidos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sección Información -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="ps-3">
+                                <div class="row align-items-center mb-2">
+                                    <div class="col-4 text-end">
+                                        <span class="fw-bold">Nombre:</span>
+                                    </div>
+                                    <div class="col-8">
+                                        <span>{{ usuario.nombre if usuario else 'Nombre no disponible' }}</span>
+                                    </div>
+                                </div>
+                                <div class="row align-items-center">
+                                    <div class="col-4 text-end">
+                                        <span class="fw-bold">Apellidos:</span>
+                                    </div>
+                                    <div class="col-8">
+                                        <span>{{ usuario.apellidos if usuario else 'Apellidos no disponibles' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="POST" action="">
+                        <!-- Información Personal -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h4 class="h5 fw-bold mb-3 border-bottom pb-2">Información personal</h4>
+                                <div class="ps-3">
+                                    <div class="row mb-3">
+                                        <div class="col-4 text-end d-flex align-items-center justify-content-end">
+                                            <label class="fw-bold">Correo electrónico:</label>
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="email" class="form-control" name="email" value="" placeholder="Ingresa tu correo">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cambio de Contraseña -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h4 class="h5 fw-bold mb-3 border-bottom pb-2">Cambiar contraseña</h4>
+                                <div class="ps-3">
+                                    <div class="row mb-3">
+                                        <div class="col-4 text-end d-flex align-items-center justify-content-end">
+                                            <label class="fw-bold">Contraseña actual:</label>
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="password" class="form-control" name="current_password" placeholder="Ingresa tu contraseña actual">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-4 text-end d-flex align-items-center justify-content-end">
+                                            <label class="fw-bold">Nueva contraseña:</label>
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="password" class="form-control" name="new_password" placeholder="Ingresa tu nueva contraseña">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-4 text-end d-flex align-items-center justify-content-end">
+                                            <label class="fw-bold">Confirmar contraseña:</label>
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirma tu nueva contraseña">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón Guardar -->
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-success px-4 py-2">
+                                    <i class="fas fa-save me-2"></i>Guardar cambios
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    .form-control {
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    .btn-success {
+        background-color: #4CAF50;
+        border-color: #4CAF50;
+        min-width: 200px;
+    }
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+    h4.border-bottom {
+        border-color: #dee2e6 !important;
+    }
+</style>
+{% endblock %}
