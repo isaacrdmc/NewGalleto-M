@@ -23,7 +23,7 @@ class Proveedores(db.Model):    # ?
     __tablename__ = 'proveedores'       # Nombre de la tabla
 
     # Columnas de la tabla 
-    idProveedores = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    idProveedor = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre = db.Column(db.String(30), nullable=False)
     telefono = db.Column(db.String(16), nullable=False)
     correo = db.Column(db.String(60), nullable=False)

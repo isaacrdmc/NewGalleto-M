@@ -6,6 +6,7 @@ from modules.admin.models import Proveedores
 from ..services import actualizar_proveedor, agregar_proveedor, eliminar_proveedor, obtener_proveedores
 from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from ...admin import bp_admistracion
 
 
@@ -18,13 +19,20 @@ from ...admin import bp_admistracion
 # http://127.0.0.1:5000/production/proveedores
 
 
-
+# * nueva ruta, ruta para el CRUD de los proveedores
+@bp_admistracion.route('/agregarProveedor')
+@login_required
+def agregarProv():
+    proveedoresNuevos=agregar_proveedor()
+    return render_template('admin/index.html', proveedores=proveedoresNuevos)
+ 
 
 # * Renderiza la página y trae los datos del arreglo
 # @bp_admistracion.route('/proveedores', methods=['GET'])
 @bp_admistracion.route('/proveedores')
+@login_required
 def proveedores():
-    if 'username' not in session or session['role'] != 'admin':
+    if current_user.rol.nombreRol != 'Administrador':
         return redirect(url_for('shared.login'))
     
     # Obtener la lista de proveedores
@@ -40,8 +48,9 @@ def proveedores():
 
 # ^ Renderiza la página y trae los datos del arreglo        (R)
 @bp_admistracion.route('/proveedores/listar', methods=['GET'])
+@login_required
 def listar_proveedores():
-    if 'username' not in session or session['role'] != 'admin':
+    if current_user.rol.nombreRol != 'Administrador':
         return jsonify({"error": "No autorizado"}), 403
 
     try:
@@ -70,13 +79,9 @@ def listar_proveedores():
         return jsonify({"error": "Error interno del servidor"}), 500
 
 
-
-
-
-
-
 # ^ Agregamos un nuevo porveedor        (C)
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
+@login_required
 def agregar_proveedor():
     try:
         data = request.get_json()
@@ -135,11 +140,10 @@ def agregar_proveedor():
 
 
 
-
-
 # ^ Edita los datos del porveedor        (U)
 # @bp_admistracion.route('/proveedores/editar/<int:id>', methods=['PUT'])
 @bp_admistracion.route('/proveedores/editar/<int:id>', methods=['POST'])
+@login_required
 def editar_proveedor(id):
     try:
         data = request.get_json()

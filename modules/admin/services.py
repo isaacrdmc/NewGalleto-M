@@ -25,7 +25,7 @@ def agregar_proveedor(nombre, telefono, correo, direccion, productosProveedor, t
         correo=correo,  # * --------
         direccion=direccion,  # * --------
         productosProveedor=productosProveedor,
-        tipoProveedor=tipoProveedor
+        tipoProveedor=tipoProveedor,  # * --------
     )
     # * Agregamos al nuevo proveedor a la Base de datos
     db.session.add(nuevo_proveedor)

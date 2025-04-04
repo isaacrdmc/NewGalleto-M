@@ -1,0 +1,53 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show small-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="login-container">
+    <div class="login-box">
+        <h3>Restablecer Contraseña</h3>
+        <form method="POST" action="{{ url_for('shared.reset_password_request') }}" id="resetForm">
+            <label for="email">Correo Electrónico:</label>
+            <input type="email" name="email" id="email" placeholder="Ingresa tu correo" class="input-box" required>
+            
+            <button type="submit" class="btn">Enviar Enlace</button>
+        </form>
+        <div class="border border-1 mt-5"></div>
+        <div class="text-center login-link">
+            <a class="link" href="{{ url_for('shared.login') }}">Volver al inicio de sesión</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('resetForm').addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (!email) {
+            e.preventDefault();
+            alert('Por favor ingresa tu correo electrónico.');
+            return false;
+        }
+        
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            alert('Por favor ingresa un correo electrónico válido.');
+            return false;
+        }
+        
+        return true;
+    });
+</script>
+{% endblock %}

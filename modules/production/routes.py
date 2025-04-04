@@ -4,6 +4,7 @@ from flask import abort, json, render_template, request, Flask, render_template,
 from .services import ProveedorService, GalletaService, InsumoService, RecetaService
 from .models import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from . import bp_production
 
 
@@ -15,11 +16,13 @@ receta_service = RecetaService(db.session)
 
 # Rutas para Proveedor
 @bp_production.route('/proveedores', methods=['GET'])
+@login_required
 def get_all_proveedores():
     proveedores = proveedor_service.get_all_proveedores()
     return jsonify([proveedor.to_dict() for proveedor in proveedores])
 
 @bp_production.route('/proveedor', methods=['POST'])
+@login_required
 def add_proveedor():
     data = request.get_json()
     nuevo_proveedor = proveedor_service.add_proveedor(
@@ -34,6 +37,7 @@ def add_proveedor():
     return jsonify({"error": "No se pudo agregar el proveedor"}), 400
 
 @bp_production.route('/proveedor/<int:id>', methods=['GET'])
+@login_required
 def get_proveedor(id):
     proveedor = proveedor_service.get_proveedor(id)
     if proveedor:
@@ -42,11 +46,13 @@ def get_proveedor(id):
 
 # Rutas para Galleta
 @bp_production.route('/galletas', methods=['GET'])
+@login_required
 def get_all_galletas():
     galletas = galleta_service.get_all_galletas()
     return jsonify([galleta.to_dict() for galleta in galletas])
 
 @bp_production.route('/galleta', methods=['POST'])
+@login_required
 def add_galleta():
     data = request.get_json()
     nueva_galleta = galleta_service.add_galleta(
@@ -63,6 +69,7 @@ def add_galleta():
     return jsonify({"error": "No se pudo agregar la galleta"}), 400
 
 @bp_production.route('/galleta/<int:id>', methods=['GET'])
+@login_required
 def get_galleta(id):
     galleta = galleta_service.get_galleta(id)
     if galleta:
@@ -71,11 +78,13 @@ def get_galleta(id):
 
 # Rutas para Insumo
 @bp_production.route('/insumos', methods=['GET'])
+@login_required
 def get_all_insumos():
     insumos = insumo_service.get_all_insumos()
     return jsonify([insumo.to_dict() for insumo in insumos])
 
 @bp_production.route('/insumo', methods=['POST'])
+@login_required
 def add_insumo():
     data = request.get_json()
     nuevo_insumo = insumo_service.add_insumo(
@@ -89,6 +98,7 @@ def add_insumo():
     return jsonify({"error": "No se pudo agregar el insumo"}), 400
 
 @bp_production.route('/insumo/<int:id>', methods=['GET'])
+@login_required
 def get_insumo(id):
     insumo = insumo_service.get_insumo(id)
     if insumo:
@@ -97,11 +107,13 @@ def get_insumo(id):
 
 # Rutas para Receta
 @bp_production.route('/recetas', methods=['GET'])
+@login_required
 def get_all_recetas():
     recetas = receta_service.get_all_recetas()
     return jsonify([receta.to_dict() for receta in recetas])
 
 @bp_production.route('/receta', methods=['POST'])
+@login_required
 def add_receta():
     data = request.get_json()
     nueva_receta = receta_service.add_receta(
@@ -116,6 +128,7 @@ def add_receta():
     return jsonify({"error": "No se pudo agregar la receta"}), 400
 
 @bp_production.route('/receta/<int:id>', methods=['GET'])
+@login_required
 def get_receta(id):
     receta = receta_service.get_receta(id)
     if receta:
@@ -123,6 +136,7 @@ def get_receta(id):
     return jsonify({"error": "Receta no encontrada"}), 404
 
 @bp_production.route('/inventario', methods=['GET'])
+@login_required
 def inventario():
     # Obtener todos los insumos desde el servicio
     insumos = insumo_service.get_all_insumos()
@@ -131,6 +145,7 @@ def inventario():
     return render_template('produccion/inventario_insumos.html', inventario=insumos)
 
 @bp_production.route('/insumo/detalle/<string:nombre_insumo>', methods=['GET'])
+@login_required
 def detalle_insumo(nombre_insumo):
     # Obtener el insumo según su nombre
     insumo = insumo_service.get_insumo_por_nombre(nombre_insumo)
@@ -144,11 +159,13 @@ def detalle_insumo(nombre_insumo):
     
 
 @bp_production.route('/dashboard_produccion')
+@login_required
 def dashboard_produccion():
-    if 'username' not in session or session['role'] != 'produccion':
+    if current_user.rol.nombreRol != 'Produccion':
         return redirect(url_for('shared.login'))
     return render_template('produccion/produccion.html')
 
 @bp_production.route('/horneado', methods=['GET'])
+@login_required
 def horneado():
     return render_template('hornear_galleta.html')
