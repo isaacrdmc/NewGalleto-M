@@ -16,6 +16,8 @@
     
     <!-- Cargar Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ? Para el sweetalert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 </head>
 
@@ -33,7 +35,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item my-1">
                             <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %} rounded-3" href="{{ url_for('admin.dashboard_admin') }}">
-                                Reportes
+                                Reportes/Estadisticas
                             </a>
                         </li>
                         <li class="nav-item my-1">
@@ -58,7 +60,7 @@
                         </li>
                         <li class="nav-item my-1">
                             <a class="nav-link {% if request.endpoint == 'admin.insumos' %}active{% endif %} rounded-3" href="{{ url_for('admin.insumos') }}">
-                                Gestión de Inventario
+                                --Gestión de Inventario--
                             </a>
                         </li>
                         <li class="nav-item my-4 text-center">
@@ -76,7 +78,7 @@
                 </div>
             </nav>
 
-            <!-- Contenido principal -->
+            <!-- ^ Contenido principal -->
             <div class="container">
                 {% block content %}
                 {% endblock %}
@@ -90,5 +92,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>
