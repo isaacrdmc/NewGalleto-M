@@ -20,195 +20,123 @@
                 <div class="card-body">
                     <h2 class="text-center fw-bold">Hornear galletas</h2>
                     
-                    <!-- Fila de imágenes de galletas y selección -->
+                    <!-- Sección para registrar un nuevo horneado -->
                     <div class="row my-4">
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-center flex-wrap  bg-light">
-                                {% for cookie in cookies_in_process %}
-                                <div class="m-1 p-2 border border-warning rounded cookie-in-oven" title="{{ cookie.type }} - En proceso desde {{ cookie.process_started_at }}">
-                                    <img src="{{ url_for('static', filename='img/galleta.png') }}" alt="{{ cookie.type }}" width="50" height="50">
-                                </div>
-                                {% endfor %}
-                                
-                                <!-- Espacios vacíos para completar 10 galletas -->
-                                {% for i in range(10 - cookies_in_process|length) %}
-                                <div class="m-1 p-2 border border-secondary rounded empty-slot">
-                                    <img src="{{ url_for('static', filename='img/empty-cookie.png') }}" alt="Espacio vacío" width="50" height="50" class="opacity-25">
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header bg-warning">
-                                    <h5 class="mb-0">Agregar a la cola</h5>
+                                    <h5 class="mb-0">Registrar Horneado</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form action="{{ url_for('production.add_to_queue') }}" method="post">
+                                    <form action="{{ url_for('production.registrar_horneado') }}" method="post">
                                         <div class="mb-3">
-                                            <label for="cookieType" class="form-label">Tipo de galleta:</label>
-                                            <select class="form-select" id="cookieType" name="cookie_type" required>
+                                            <label for="id_receta" class="form-label">Receta:</label>
+                                            <select class="form-select" id="id_receta" name="id_receta" required>
                                                 <option value="" selected disabled>Seleccionar...</option>
-                                                {% for type in cookie_types %}
-                                                <option value="{{ type }}">{{ type }}</option>
+                                                {% for receta in recetas %}
+                                                <option value="{{ receta.id }}">{{ receta.nombre }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        <button type="submit" class="btn btn-success w-100">Agregar a cola</button>
+                                        <div class="mb-3">
+                                            <label for="temperatura" class="form-label">Temperatura (°C):</label>
+                                            <input type="number" class="form-control" id="temperatura" name="temperatura" required min="100" max="250">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo" class="form-label">Tiempo (minutos):</label>
+                                            <input type="number" class="form-control" id="tiempo" name="tiempo" required min="5" max="60">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="cantidad" class="form-label">Cantidad a producir:</label>
+                                            <input type="number" class="form-control" id="cantidad" name="cantidad" required min="1">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="observaciones" class="form-label">Observaciones:</label>
+                                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">Registrar Horneado</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Tablas de información -->
-                    <div class="row">
-                        <!-- Tabla de Galleta y Atender (Cola) -->
-                        <div class="col-md-4">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-6 bg-warning text-dark py-2 text-center fw-bold">Galleta</div>
-                                        <div class="col-6 bg-warning text-dark py-2 text-center fw-bold">Atender</div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0">
-                                    <table class="table table-bordered m-0">
-                                        <tbody>
-                                            {% for cookie in cookies_queue %}
-                                            <tr>
-                                                <td class="align-middle">{{ cookie.type }}</td>
-                                                <td class="text-center align-middle">
-                                                    <form action="{{ url_for('production.start_process', cookie_id=cookie.id) }}" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-success btn-sm">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ url_for('production.delete_cookie') }}" method="post" class="d-inline">
-                                                        <input type="hidden" name="cookie_id" value="{{ cookie.id }}">
-                                                        <input type="hidden" name="list_type" value="queue">
-                                                        <button type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fa-solid fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                            
-                                            <!-- Filas vacías para completar la tabla -->
-                                            {% for i in range(6 - cookies_queue|length) %}
-                                            <tr class="empty-row">
-                                                <td class="align-middle"></td>
-                                                <td class="align-middle"></td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
                         
-                        <!-- Tabla de Galleta y Proceso -->
-                        <div class="col-md-4">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-6 bg-warning text-dark py-2 text-center fw-bold">Galleta</div>
-                                        <div class="col-6 bg-warning text-dark py-2 text-center fw-bold">Proceso</div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Visualización de Horno</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-center flex-wrap bg-light p-3 rounded">
+                                        <!-- Aquí representamos visualmente el horno -->
+                                        <img src="{{ url_for('static', filename='img/horno.png') }}" alt="Horno" class="img-fluid mb-3" style="max-height: 200px;">
+                                        
+                                        <!-- Indicador de temperatura -->
+                                        <div class="progress w-100 mb-3" style="height: 30px;">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" id="temp-indicator">
+                                                0°C
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Botones para simular -->
+                                        <button type="button" class="btn btn-danger me-2" id="btn-calentar">
+                                            <i class="fa-solid fa-fire"></i> Calentar
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="btn-enfriar">
+                                            <i class="fa-solid fa-snowflake"></i> Enfriar
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="card-body p-0">
-                                    <table class="table table-bordered m-0">
-                                        <tbody>
-                                            {% for cookie in cookies_in_process %}
-                                            <tr>
-                                                <td class="align-middle">{{ cookie.type }}</td>
-                                                <td class="text-center align-middle">
-                                                    <form action="{{ url_for('production.finish_process', cookie_id=cookie.id) }}" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-success btn-sm">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ url_for('production.delete_cookie') }}" method="post" class="d-inline">
-                                                        <input type="hidden" name="cookie_id" value="{{ cookie.id }}">
-                                                        <input type="hidden" name="list_type" value="process">
-                                                        <button type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fa-solid fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                            
-                                            <!-- Filas vacías para completar la tabla -->
-                                            {% for i in range(6 - cookies_in_process|length) %}
-                                            <tr class="empty-row">
-                                                <td class="align-middle"></td>
-                                                <td class="align-middle"></td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Tabla de Lote, Galleta y Estatus -->
-                        <div class="col-md-4">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-4 bg-warning text-dark py-2 text-center fw-bold">Lote</div>
-                                        <div class="col-4 bg-warning text-dark py-2 text-center fw-bold">Galleta</div>
-                                        <div class="col-4 bg-warning text-dark py-2 text-center fw-bold">Estatus</div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0">
-                                    <table class="table table-bordered m-0">
-                                        <tbody>
-                                            {% for cookie in finished_cookies %}
-                                            <tr>
-                                                <td class="align-middle">{{ cookie.batch }}</td>
-                                                <td class="align-middle">{{ cookie.type }}</td>
-                                                <td class="text-center align-middle">
-                                                    <div class="d-flex justify-content-center">
-                                                        <span class="badge bg-success mx-1">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </span>
-                                                        <form action="{{ url_for('production.delete_cookie') }}" method="post" class="d-inline">
-                                                            <input type="hidden" name="cookie_id" value="{{ cookie.id }}">
-                                                            <input type="hidden" name="list_type" value="finished">
-                                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                                <i class="fa-solid fa-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                            
-                                            <!-- Filas vacías para completar la tabla -->
-                                            {% for i in range(5 - finished_cookies|length) %}
-                                            <tr class="empty-row">
-                                                <td class="align-middle"></td>
-                                                <td class="align-middle"></td>
-                                                <td class="align-middle"></td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Botón para actualizar manualmente la página -->
-                    <div class="row mt-3">
-                        <div class="col-12 text-center">
-                            <a href="{{ url_for('production.horneado') }}" class="btn btn-primary">
-                                <i class="fa-solid fa-refresh"></i> Actualizar estado
-                            </a>
+                    <!-- Mostrar los horneados recientes -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Últimos Horneados</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <table class="table table-striped table-hover m-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Receta</th>
+                                                <th>Temperatura</th>
+                                                <th>Tiempo</th>
+                                                <th>Cantidad</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for horneado in horneados_recientes %}
+                                            <tr>
+                                                <td>{{ horneado.fecha_horneado.strftime('%d/%m/%Y %H:%M') }}</td>
+                                                <td>{{ horneado.receta.nombre }}</td>
+                                                <td>{{ horneado.temperatura_horno }}°C</td>
+                                                <td>{{ horneado.tiempo_horneado }} min</td>
+                                                <td>{{ horneado.cantidad_producida }}</td>
+                                                <td>
+                                                    <a href="{{ url_for('production.detalle_horneado', id_horneado=horneado.id) }}" class="btn btn-info btn-sm">
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="6" class="text-center">No hay horneados registrados recientemente</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer text-center">
+                                    <a href="{{ url_for('production.historial') }}" class="btn btn-primary">
+                                        <i class="fa-solid fa-history"></i> Ver historial completo
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -216,4 +144,53 @@
         </div>
     </div>
 </div>
+
+<!-- JavaScript para la simulación de temperatura -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnCalentar = document.getElementById('btn-calentar');
+        const btnEnfriar = document.getElementById('btn-enfriar');
+        const tempIndicator = document.getElementById('temp-indicator');
+        const temperaturaInput = document.getElementById('temperatura');
+        
+        let tempActual = 25; // Temperatura ambiente en °C
+        
+        // Actualizar el indicador de temperatura
+        function actualizarTemperatura() {
+            const porcentaje = Math.min(100, (tempActual / 250) * 100);
+            tempIndicator.style.width = porcentaje + '%';
+            tempIndicator.textContent = tempActual + '°C';
+            
+            // Cambiar color según temperatura
+            if (tempActual < 100) {
+                tempIndicator.className = 'progress-bar bg-info';
+            } else if (tempActual < 180) {
+                tempIndicator.className = 'progress-bar bg-warning';
+            } else {
+                tempIndicator.className = 'progress-bar bg-danger';
+            }
+        }
+        
+        // Evento para calentar
+        btnCalentar.addEventListener('click', function() {
+            if (tempActual < 250) {
+                tempActual += 10;
+                actualizarTemperatura();
+                temperaturaInput.value = tempActual;
+            }
+        });
+        
+        // Evento para enfriar
+        btnEnfriar.addEventListener('click', function() {
+            if (tempActual > 25) {
+                tempActual -= 10;
+                actualizarTemperatura();
+                temperaturaInput.value = tempActual;
+            }
+        });
+        
+        // Inicializar temperatura
+        actualizarTemperatura();
+    });
+</script>
 {% endblock %}
