@@ -4,6 +4,8 @@ env/
 ENV/
 .env
 .venv
+# config.py
+# config.py
 env.bak/
 venv.bak/
 .Python

@@ -1,0 +1,399 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E8C6A7;
+    margin: 0;
+    padding-top: 70px;
+}
+
+/* Navbar */
+.navbar {
+    background-color: #2C2C2C;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+/* Logo */
+.navbar-brand.logo {
+    margin-right: 0;
+    padding-right: 0;
+    z-index: 1051;
+}
+
+/* Tamaño aumentado del logo */
+.navbar-brand.logo img {
+    width: 100px;
+    height: auto;
+    transition: all 0.3s ease;
+}
+
+/* Título centrado */
+.navbar-title-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-weight: bold;
+    font-size: 1.8em;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Título pegado al logo */
+.navbar-title-left {
+    margin-left: 70px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.8em;
+    margin: 0;
+}
+
+/* REEMPLAZA tus estilos de botones circulares con esto */
+.btn-icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffd47ed5 !important;
+    margin-right: 15px;
+    border: none !important;
+    overflow: hidden;
+    /* Nuevas propiedades para asegurar */
+    min-width: 50px !important;
+    min-height: 50px !important;
+    line-height: 0 !important;
+}
+
+.btn-icon-circle-sm {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 45px !important;
+    min-height: 45px !important;
+    border-radius: 50% !important;
+}
+
+.btn-icon-circle img,
+.btn-icon-circle-sm img {
+    width: 70% !important;
+    height: auto !important;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Offcanvas */
+.offcanvas.offcanvas-end {
+    z-index: 1050;
+    height: calc(100vh) !important;
+    transform: translateX(100%) !important;
+    top: 0;
+}
+
+.offcanvas.show:not(.hiding) {
+    transform: translateX(0) !important;
+}
+
+.offcanvas.show.hiding {
+    transform: translateX(100%) !important;
+}
+
+.offcanvas-backdrop {
+    z-index: 1040;
+}
+
+/* Contenedor principal del login */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #603A1E;
+    color: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    justify-content: center;
+    align-items: center;
+    margin: 80px auto 20px;
+    font-weight: bold;
+}
+
+/* Estilos del título */
+.login-box h3 {
+    text-align: center;
+    margin: 10px 0 40px 0;
+    font-weight: bold;
+}
+
+/* Estilos de los inputs */
+.input-box {
+    width: 90%;
+    margin: 0 0 50px 15px;
+    border: none;
+    border-radius: 20px;
+    background-color: #FFFFFF;
+    color: black;
+    font-size: 0.9em;
+    padding: 0 10px;
+}
+
+.input-box::placeholder {
+    color: #876b4a;
+}
+
+.login-box label {
+    font-size: 0.8em;
+    margin: 0 30px;
+}
+
+/* Estilos del botón */
+.btn {
+    background-color: #C4A484;
+    color: white;
+    margin: 0 0 0 15px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 90%;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #B08B65;
+}
+
+/* Estilo de las tarjetas en el dashboard */
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.dashboard-card {
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 20px;
+    background-color: #E8C6A7;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    text-align: center;
+}
+
+.dashboard-card .card-body {
+    padding: 20px;
+}
+
+.dashboard-card .card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #2C2C2C;
+}
+
+.dashboard-card .card-text {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* Estilo para enlaces */
+.register-link,
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #ffffff;
+    text-align: center;
+}
+
+.register-link .link,
+.login-link .link {
+    color: #d38585;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link .link:hover,
+.login-link .link:hover {
+    text-decoration: underline;
+}
+
+/* Contenedor del registro */
+.register-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #603A1E;
+    color: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    justify-content: center;
+    align-items: center;
+    margin: 80px auto 20px;
+    font-weight: bold;
+}
+
+/* Caja de registro */
+.register-box {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Título del registro */
+.register-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333333;
+}
+
+/* Estilos del formulario de registro */
+.register-form .form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.register-form label {
+    font-size: 14px;
+    color: #555555;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 992px) {
+    .navbar-brand.logo img {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .navbar-title-left {
+        margin-left: 65px;
+    }
+    
+    .navbar-title-center {
+        font-size: 1.3em;
+    }
+
+    .btn-icon-circle {
+        width: 45px;
+        height: 45px;
+    }
+
+    .btn-icon-circle-sm {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-brand.logo img {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .navbar-title-left {
+        margin-left: 55px;
+        font-size: 1.2em;
+    }
+    
+    .navbar-title-center {
+        font-size: 1.2em;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .login-container {
+        width: 90%;
+    }
+    
+    .dashboard-container {
+        justify-content: center;
+    }
+    
+    .dashboard-card {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        padding-top: 60px;
+    }
+    
+    .navbar-brand.logo img {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .navbar-title-left {
+        margin-left: 50px;
+        font-size: 1.1em;
+    }
+    
+    .navbar-title-center {
+        font-size: 1.1em;
+        max-width: 150px;
+    }
+
+    .btn-icon-circle {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+    }
+
+    .btn-icon-circle-sm {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-brand.logo img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .navbar-title-left {
+        margin-left: 45px;
+        font-size: 1em;
+    }
+    
+    .navbar-title-center {
+        font-size: 1em;
+        max-width: 120px;
+    }
+    
+    .login-container,
+    .register-box {
+        width: 100%;
+        padding: 20px;
+    }
+    
+    .btn {
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    
+    .input-box {
+        font-size: 0.8em;
+    }
+}
