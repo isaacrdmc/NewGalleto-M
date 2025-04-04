@@ -41,12 +41,12 @@ def index():
         if session['role'] == 'admin':
             return redirect(url_for('admin.dashboard_admin'))
         elif session['role'] == 'produccion':
-            return redirect(url_for('shared.produccion'))
+            return redirect(url_for('produccion.produccion'))
         elif session['role'] == 'ventas':
-            return redirect(url_for('shared.ventas'))
+            return redirect(url_for('ventas.ventas'))
         elif session['role'] == 'cliente':
-            return redirect(url_for('shared.portal_cliente'))
-    return redirect(url_for('shared.login'))
+            return redirect(url_for('cliente.portal_cliente'))
+    return redirect(url_for('shas-red.login'))
 
 
 # Ruta para el login

@@ -1,63 +1,127 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
-<!-- Título del Portal -->
-<div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-12 text-center mb-4">
-            <h1>Bienvenido {{ session['role' ]}}!</h1>
-            <p class="lead">¡Disfruta de nuestros productos y realiza tus pedidos fácilmente!</p>
-        </div>
-    </div>
+<style>
+    .card-inventario {
+        border-radius: 15px;
+        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s;
+    }
 
-    <!-- Fila de tarjetas con acciones -->
-    <div class="row">
-        <!-- Mis Pedidos -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-lg">
-                <div class="card-body">
-                    <h5 class="card-title">Mis Pedidos</h5>
-                    <p class="card-text">Aquí puedes ver todos los pedidos que has realizado.</p>
-                    <a href="#" class="btn btn-primary">Ver Pedidos</a>
+    .card-inventario:hover {
+        transform: translateY(-5px);
+    }
+
+    .btn-agregar {
+        background-color: #e60000;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .titulo-inventario {
+        text-align: center;
+        font-weight: bold;
+        font-size: 40px;
+        margin: 30px 0;
+    }
+</style>
+
+<h1 class="titulo-inventario">Inventario</h1>
+
+<div class="container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+
+        {% set productos = [
+            {'nombre': 'Galleta de Chocolate', 'precio': 8, 'imagen': 'galleta_chocolate.png'},
+            {'nombre': 'Galleta de Vainilla', 'precio': 7, 'imagen': 'galleta_vainilla.png'},
+            {'nombre': 'Galleta de Avena', 'precio': 9, 'imagen': 'galleta_avena.png'},
+            {'nombre': 'Galleta con Chispas', 'precio': 10, 'imagen': 'galleta_chispas.png'},
+            {'nombre': 'Galleta Integral', 'precio': 6, 'imagen': 'galleta_integral.png'},
+            {'nombre': 'Galleta Marmoleada', 'precio': 8, 'imagen': 'galleta_marmoleada.png'},
+            {'nombre': 'Galleta con Coco', 'precio': 7, 'imagen': 'galleta_coco.png'},
+            {'nombre': 'Galleta con Nuez', 'precio': 9, 'imagen': 'galleta_nuez.png'},
+            {'nombre': 'Galleta Glaseada', 'precio': 11, 'imagen': 'galleta_glaseada.png'},
+            {'nombre': 'Galleta de Mantequilla', 'precio': 6, 'imagen': 'galleta_mantequilla.png'},
+            {'nombre': 'Galleta Red Velvet', 'precio': 10, 'imagen': 'galleta_redvelvet.png'},
+            {'nombre': 'Galleta de Café', 'precio': 8, 'imagen': 'galleta_cafe.png'}
+        ] %}
+
+        {% for producto in productos %}
+        <div class="col">
+            <div class="card card-inventario h-100">
+                <img src="{{ url_for('static', filename='img/galletas.png') }}" class="card-img-top" alt="Galleta de Café">
+                <div class="card-body text-center">
+                    <p class="mb-0"><small>Galletas</small></p>
+                    <h5 class="card-title mb-2">{{ producto.nombre }}</h5>
+                    <p class="card-text fw-bold">${{ producto.precio }}</p>
+                    <button class="btn btn-agregar">Agregar al carrito</button>
                 </div>
             </div>
         </div>
+        {% endfor %}
 
-        <!-- Realizar Pedido -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-lg">
-                <div class="card-body">
-                    <h5 class="card-title">Realizar Pedido</h5>
-                    <p class="card-text">Puedes realizar un nuevo pedido de nuestras deliciosas galletas.</p>
-                    <a href="#" class="btn btn-success">Nuevo Pedido</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Ofertas Especiales (opcional) -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card text-white bg-warning mb-4">
-                <div class="card-body bg-warning">
-                    <h5 class="card-title">¡Ofertas Especiales!</h5>
-                    <p class="card-text">No te pierdas nuestras ofertas exclusivas en galletas. ¡Aprovecha ahora!</p>
-                    <a href="#" class="btn btn-light">Ver Ofertas</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Información de Contacto -->
-    <div class="row">
-        <div class="col-12r">
-            <div class="text-center">
-                <h3>Contacto</h3>
-                <p>¿Tienes alguna pregunta? ¡Contáctanos!</p>
-            </div>
-            <a href="#" class="btn btn-info">Ir a Contacto</a>
-        </div>
     </div>
 </div>
-
+<!-- Modal de confirmación actualizado -->
+<div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-0" style="border-radius: 15px; overflow: hidden;">
+        
+        <!-- Header oscuro -->
+        <div class="bg-dark text-white text-center py-3">
+          <h5 class="m-0 fw-bold">Solicitud</h5>
+        </div>
+  
+        <!-- Contenido -->
+        <div class="modal-body text-center" style="background-color: #e4c396;">
+          <p class="fw-semibold mb-3">¿Deseas agregar esta galleta al ticket?</p>
+          <img id="imgGalletaModal" src="" alt="Galleta" class="rounded-circle mb-3" style="width: 110px; height: 110px; object-fit: cover;">
+          
+          <div class="d-flex justify-content-around px-3 mt-3">
+            <button class="btn btn-danger w-100 me-2" data-bs-dismiss="modal" style="font-weight: bold;">Cancelar</button>
+            <button class="btn btn-success w-100 ms-2" id="btnSeleccionarPresentacion" style="font-weight: bold;">Aceptar</button>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </div>  
+  
+  <!-- Modal para elegir presentación -->
+  <div class="modal fade" id="modalPresentacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-4" style="background-color: #fff7e6; border-radius: 15px;">
+        <h5 class="fw-bold mb-3">Selecciona la presentación</h5>
+        <form id="formPresentacion">
+          <div class="mb-3">
+            <select class="form-select" id="tipoVenta" required>
+              <option value="" disabled selected>Selecciona tipo de venta</option>
+              <option value="pieza">1, 2, 5 piezas</option>
+              <option value="gramos">100, 250, 500 g</option>
+              <option value="empacado">Empaque 1kg o 700g</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <select class="form-select" id="opcionVenta" required>
+              <option value="">Selecciona una opción</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Agregar al carrito</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de éxito -->
+  <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-4" style="background-color: #d4fcd4; border-radius: 15px;">
+        <h5 class="fw-bold">¡Agregado con éxito!</h5>
+        <p>La galleta fue agregada al ticket.</p>
+        <button class="btn btn-outline-success" data-bs-dismiss="modal">Aceptar</button>
+      </div>
+    </div>
+  </div>  
 {% endblock %}
