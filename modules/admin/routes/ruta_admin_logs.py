@@ -9,7 +9,7 @@ from ...admin import bp_admistracion
 # @bp_admistracion.route('/logs', methods=['GET'], endpoint='logs')
 @bp_admistracion.route('/logs', methods=['GET'])
 def ver_logs():
-
+ 
     #  
     if 'username' not in session or session['rol'] != 'admin':
         LogService.log_segurdidad("Intento de acceso no autorizado a los logs del sistema", current_user if 'username' in session else None)
