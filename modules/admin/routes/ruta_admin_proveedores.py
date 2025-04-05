@@ -1,5 +1,5 @@
 import re
-from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import current_app, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import current_user
 
 from modules.admin.forms.proveedores import ProveedoresForm
@@ -95,10 +95,16 @@ def listar_proveedores():
 # ^ Agregamos un nuevo porveedor        (C)
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
 def agregar_proveedor():
-    # ~ Verificamos sus credenciales
+    # ~ Verificamos sus credenciales y gauradmos el log
     if 'username' not in session or session['role'] != 'admin':
-        LogService.log_segurdidad(f"Intneto de acceso no autorizado a la creación de porveedores",
-                                  current_user if 'username' in session else None)      # Obtenemos el usuario para registrar jjunto ocn el log
+        current_app.logger.warning(
+            "Intento de acceso no autorizado a la creación de proveedores",
+            extra={
+                'user': current_user.username if hasattr(current_user, 'username') else None,
+                'ip': request.remote_addr,
+                'tipo_log': 'SECURITY'
+            }
+        )
         return jsonify({"error": "No autorizado"}), 403
 
     try:
@@ -106,7 +112,14 @@ def agregar_proveedor():
 
         # Validar los datos enviados
         if not all(key in data for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
-            LogService.log_error(f"Datos incompletos al intentar agregar proveedor: {data}", current_user)
+            current_app.logger.error(
+                "Datos incompletos al intentar agregar proveedor",
+                extra={
+                    'data': data,
+                    'user': current_user.username,
+                    'tipo_log': 'ERROR'
+                }
+            )
             return jsonify({'error': 'Datos incompletos'}), 400
         
         # ? Validación adicional del correo

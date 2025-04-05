@@ -2,6 +2,7 @@
 # ? Acá es donde configuraremos las acciónes dentro de la sección de admisntrador
 
 # Importamos la conexión
+from datetime import datetime
 from enum import Enum
 
 from flask_login import UserMixin
@@ -13,12 +14,6 @@ from database.conexion import db
 
 # ~ Tabla para los logs de la sección de admin:
 
-# & Clase para los logs del sistema
-class TipoLog(Enum):
-    ERROR = 'Error'
-    SEGURIDAD = 'Seguridad'
-    ACCESO = 'Acceso'
-    OPERACION = 'Operacion'
 
 # & Clase para la tabla de los roles de los usuarios
 class Roles(db.Model):
@@ -47,20 +42,39 @@ class Usuario(db.Model, UserMixin):
     logs = db.relationship('LogsSistema', backref='usuario_log', lazy=True)
 
 
-# & Clase para la tabla de los logs del sistema
-class LogsSistema(db.Model):
-    # ? Nombre de la tabla
-    __tablename__ = 'LogsSistema'
 
-    # * Columnas de la tabla
-    idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tipoLog = db.Column(db.Enum(TipoLog, name='tipo_log_enum'), nullable=False)
-    descripcionLog = db.Column(db.Text, nullable=False)
-    fechaHora = db.Column(db.DateTime, nullable=False, server_default=db.func.now()) # * Fecha y hora actual
-    ipOrigen = db.Column(db.String(45), nullable=True) # * Obtenemos la ip del ciente
 
-    idUsuario = db.Column(db.Integer, db.ForeignKey('usuario.idUser', ondelete='SET NULL')) # * Obtenemos el id del usuario que hizo la acción
 
+# Niveles de log personalizados que incluyen los estándares y los específicos del negocio
+class LogLevel(Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARNING = 'WARNING'
+    ERROR = 'ERROR'
+    CRITICAL = 'CRITICAL'
+    SECURITY = 'SECURITY'  # Para eventos específicos de seguridad
+    OPERATION = 'OPERATION'  # Para operaciones administrativas
+
+class SystemLog(db.Model):
+    """Modelo para registrar logs del sistema en la base de datos"""
+    __tablename__ = 'system_logs'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    level = db.Column(db.Enum(LogLevel, name='log_level_enum'), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    
+    # Relación opcional con el usuario
+    user = db.relationship('User', backref='logs')
+    
+    # Datos adicionales en formato JSON
+    extra_data = db.Column(db.JSON, nullable=True)
+
+    # ? ???
+    def __repr__(self):
+        return f'<SystemLog {self.id} [{self.level}] {self.timestamp}>'
 
 
 # ~ Tabla para los porveedores

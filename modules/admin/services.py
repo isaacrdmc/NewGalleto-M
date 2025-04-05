@@ -5,7 +5,7 @@ from flask import request, session
 from .models import LogsSistema, Proveedores
 from database.conexion import db
 
-
+"""
 # ~ Sección para los logs del sistema
 
 # Registro d elos logs al sistema
@@ -45,7 +45,7 @@ def obtener_logs(usuario_id=None, tipo_Log=None, limite=100):
     return query.limit(limite).all()
 
 
-
+"""
 
 
 # ~ Seccion de los reportes de las gallletass
