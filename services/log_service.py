@@ -4,7 +4,7 @@
 from datetime import datetime
 from flask import request
 # from app.models import LogsSistema, TipoLog
-from app import db
+from database.conexion import db
 from modules.admin.models import LogsSistema, TipoLog
 
 class LogService:

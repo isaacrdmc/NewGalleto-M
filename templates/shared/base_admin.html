@@ -58,9 +58,14 @@
                                 Gestión de Recetas
                             </a>
                         </li>
-                        <li class="nav-item my-1">
+                        <!-- <li class="nav-item my-1">
                             <a class="nav-link {% if request.endpoint == 'admin.insumos' %}active{% endif %} rounded-3" href="{{ url_for('admin.insumos') }}">
                                 --Gestión de Inventario--
+                            </a>
+                        </li> -->
+                        <li class="nav-item my-1">
+                            <a class="nav-link {% if request.endpoint == 'admin.insumos' %}active{% endif %} rounded-3" href="{{ url_for('admin.logs') }}">
+                                Logs del sistema completo
                             </a>
                         </li>
                         <li class="nav-item my-4 text-center">

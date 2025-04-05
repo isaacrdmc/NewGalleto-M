@@ -174,16 +174,24 @@ def editar_proveedor(id):
     
     try:
         # ? Obtenemos el id del usuairo para enviarlo junto con el log:
-        proveedorID = Proveedores.query.get(id)
+        proveedor_actual = Proveedores.query.get(id)
+        if not proveedor_actual:
+            LogService.log_error(f"Intento de editar proveedor inexistente: ID {id}", current_user)
+            return jsonify({"error": "Proveedor no encontrado#}), 404"})
         
+        # * Guardamos el nombre anterior para el log
+        nombre_anterior = proveedor_actual.nombre
+        
+
+
         data = request.get_json()
         
         # Validación básica
         if not all(key in data for key in ['empresa', 'telefono', 'correo']):
-            LogService.log_error(f"Datos incompletos al intentar modificar proveedor: {data}", current_user)
+            LogService.log_error(f"Datos incompletos al intentar modificar proveedor ID{id}: {data}", current_user)
             return jsonify({'error': 'Datos requeridos faltantes'}), 400
         
-        # Usamos la función de servicio para actualizar el porveedor
+        # ? Usamos la función de servicio para actualizar el porveedor
         proveedor = actualizar_proveedor(
             proveedor_id=id,
             empresa=data['empresa'],
@@ -195,7 +203,7 @@ def editar_proveedor(id):
 
         # * Registramos el log de la operación exitosa
         LogService.log_operacion(
-            f"Usuario {session['username']} agregó nuevo proveedor: {data['empresa']}",
+            f"Usuario {session['username']} actualizó proveedor ID {id}: {nombre_anterior} -> {data['empresa']}",
             current_user
         )
         
@@ -209,13 +217,15 @@ def editar_proveedor(id):
                 "id": proveedor.idProveedores,
                 "nombre": proveedor.nombre,
                 "telefono": proveedor.telefono,
-                "correo": proveedor.correo
+                "correo": proveedor.correo,
+                'direccion': proveedor.direccion,
+                'productos': proveedor.productosProveedor
             }
         })
     except Exception as e:
         db.session.rollback()
         # Registramos el error capturado
-        LogService.log_error(f"Error al agregar proveedor: {str(e)}", current_user)
+        LogService.log_error(f"Error al actualizar proveedor ID {id}: {str(e)}", current_user)
         return jsonify({"error": str(e)}), 500
 
 
@@ -230,33 +240,45 @@ def editar_proveedor(id):
 def eliminar_proveedor_route(id):
     # ~ Verificamos sus credenciales
     if 'username' not in session or session['role'] != 'admin':
-        LogService.log_segurdidad(f"Intneto de acceso no autorizado para eliminar al porveedor seleccionado",
+        LogService.log_segurdidad(f"Intneto de acceso no autorizado para eliminar proveedor ID {id}",
                                   current_user if 'username' in session else None)      # Obtenemos el usuario para registrar jjunto ocn el log
         return jsonify({"error": "No autorizado"}), 403
     
     try:
         # ? Obtenemos el id del usuairo para enviarlo junto con el log:
-        proveedorID = Proveedores.query.get(id)
+        proveedor = Proveedores.query.get(id)
 
+        if not proveedor:
+            LogService.log_error(f"Intento de eliminar proveedor inexistente: ID {id}", current_user)
+            return jsonify({"error": "Proveedor no encontrado"}), 404
+        
+        
+        # * Guardmos los datos antes de elimminar para el log y respuesta
+        proveedo_infor =  {
+            'id': proveedor.idProveedores,
+            'nombre': proveedor.nombre,
+            'telefono': proveedor.telefono,
+            'correo': proveedor.correo
+        }
 
-        # ? Usamos la función de servicio para eliminar el proveedor
-        proveedorEliminar = eliminar_proveedor(id)
+        # ? Llamamos a la función del servicio para poder eleiminar al proveedor
+        eliminar_proveedor(id)
 
-        # * Retornamos el mensaje de exito
+        # * Registramos el log de la operación exitosa
+        LogService.log_operacion(
+            f"Usuario {session['username']} eliminó proveedor ID {proveedor.idProveedores}: {proveedo_infor['nombre']}",
+            current_user            
+        )
+
+        # ? RETORNAMOS EL MENSAJE DE EXITO
         return jsonify({
-            # ? Mensaje de exito (Mensaje importante del 'jsonify')
-            "mensaje": "Proveedor eliminado",   
-
-            # & Datos del proveedor eleiminado
-            "proveedor": {
-                "id": proveedorEliminar.idProveedores,
-                "nombre": proveedorEliminar.nombre,
-                "telefono": proveedorEliminar.telefono,
-                "correo": proveedorEliminar.correo
-            }
+            "mensaje": "Proveedor eliminado",
+            "proveedor": proveedo_infor
         })
+    
     except Exception as e:
         db.session.rollback()
+        LogService.log_error(f"Error al eliminar proveedor ID {id}: {str(e)}", current_user)
         return jsonify({"error": str(e)}), 500
 
 
