@@ -9,13 +9,17 @@ from database.conexion import db
 # ^ Creamos una clase con el nombre de la tabla para poder utilizarl más adelante
 
 # ~ Tabla para los logs de la sección de admin:
-# class LogsSistema(db.Model):
-#     # ? Nombre de la tabla
-#     __tablename__ = 'LogsSistema'
+class LogsSistema(db.Model):
+    # ? Nombre de la tabla
+    __tablename__ = 'LogsSistema'
 
-#     # * Columnas de la tabla
-#     idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     tipoLog = db.column(db.enmum())
+    # * Columnas de la tabla
+    idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tipoLog = db.column(db.enmum('Error', 'Seguridad', 'Acceso', 'Operacion'), nullable=False)
+    descripcionLog = db.Column(db.Text, nullable=False)
+    fechaHora = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp()) # * Fecha y hora actual
+    ipOrigen = db.Column(db.String(45), nullable=True) # * Ip del origen
+    idUsuario = db.Column(db.Integer, db.ForeignKey('usuario.idUser'), nullable=True) # * Id del usuario que genera el log 
 
 
 # ~ Tabla para los porveedores
@@ -33,6 +37,13 @@ class Proveedores(db.Model):    # ?
 
 # ~ Tabla para los innsumos (El inventario)
 
+"""
+* Presentación de la empresa (1 diapositiva)
+* Descripción del producto o servicio que se ofrece (1 diapositiva)
+* Estimación del Costo del Sistema (1 diapositiva)
+* Mercado potencial (1 diapositiva)
+* Descripción del sistema (2 diapositivas: la primera diapositiva para funciones generales, la segunda diapositiva información general del DASHBORD)
+"""
 
 # ~ Tabla para las recetas
 
