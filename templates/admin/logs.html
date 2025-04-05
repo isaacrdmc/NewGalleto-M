@@ -1,181 +1,167 @@
-{% extends "admin/base.html" %}
-
-{% block title %}Logs del Sistema{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Logs del Sistema</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Logs del Sistema</li>
-    </ol>
+<div class="container mt-4">
+    <h2>Registros del Sistema</h2>
     
     <!-- Filtros -->
     <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-filter me-1"></i>
-            Filtrar Logs
-        </div>
         <div class="card-body">
-            <form action="{{ url_for('admin.ver_logs') }}" method="get" class="row g-3">
-                <div class="col-md-3">
-                    <label for="tipo" class="form-label">Tipo de Log</label>
-                    <select class="form-select" id="tipo" name="tipo">
-                        <option value="" {% if not filtro_actual.tipo %}selected{% endif %}>Todos</option>
-                        {% for tipo in tipos_log %}
-                        <option value="{{ tipo.value }}" {% if filtro_actual.tipo == tipo.value %}selected{% endif %}>{{ tipo.value }}</option>
-                        {% endfor %}
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="tipo_log" class="mr-2">Tipo de Log:</label>
+                    <select name="tipo_log" id="tipo_log" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="ERROR" {% if request.args.get('tipo_log') == 'ERROR' %}selected{% endif %}>Errores</option>
+                        <option value="SECURITY" {% if request.args.get('tipo_log') == 'SECURITY' %}selected{% endif %}>Seguridad</option>
+                        <option value="OPERATION" {% if request.args.get('tipo_log') == 'OPERATION' %}selected{% endif %}>Operaciones</option>
+                        <option value="INFO" {% if request.args.get('tipo_log') == 'INFO' %}selected{% endif %}>Información</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="usuario_id" class="form-label">Usuario</label>
-                    <select class="form-select" id="usuario_id" name="usuario_id">
-                        <option value="" {% if not filtro_actual.usuario_id %}selected{% endif %}>Todos</option>
+                
+                <div class="form-group mr-3">
+                    <label for="usuario_id" class="mr-2">Usuario:</label>
+                    <select name="usuario_id" id="usuario_id" class="form-control">
+                        <option value="">Todos</option>
                         {% for usuario in usuarios %}
-                        <option value="{{ usuario.idUser }}" {% if filtro_actual.usuario_id|int == usuario.idUser %}selected{% endif %}>{{ usuario.nombre }} {{ usuario.apellP }}</option>
+                            <option value="{{ usuario.id }}" {% if request.args.get('usuario_id') == usuario.id|string %}selected{% endif %}>
+                                {{ usuario.username }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label for="limite" class="form-label">Límite</label>
-                    <select class="form-select" id="limite" name="limite">
-                        <option value="50" {% if filtro_actual.limite == 50 %}selected{% endif %}>50</option>
-                        <option value="100" {% if filtro_actual.limite == 100 %}selected{% endif %}>100</option>
-                        <option value="250" {% if filtro_actual.limite == 250 %}selected{% endif %}>250</option>
-                        <option value="500" {% if filtro_actual.limite == 500 %}selected{% endif %}>500</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{{ url_for('admin.ver_logs') }}" class="btn btn-secondary w-100">Limpiar Filtros</a>
-                </div>
+                
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{{ url_for('bp_admistracion.ver_logs') }}" class="btn btn-secondary ml-2">Limpiar</a>
             </form>
         </div>
     </div>
     
-    <!-- Tabla de Logs -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-table me-1"></i>
-            Registros de Actividad
-        </div>
+    <!-- Tabla de logs -->
+    <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped" id="logsTable">
-                    <thead class="table-dark">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Tipo</th>
-                            <th>Descripción</th>
                             <th>Fecha/Hora</th>
+                            <th>Tipo</th>
                             <th>Usuario</th>
-                            <th>IP Origen</th>
+                            <th>Mensaje</th>
+                            <th>IP</th>
+                            <th>Detalles</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for log in logs %}
-                        <tr class="{% if log.tipoLog.value == 'Error' %}table-danger{% elif log.tipoLog.value == 'Seguridad' %}table-warning{% elif log.tipoLog.value == 'Operacion' %}table-info{% else %}table-light{% endif %}">
-                            <td>{{ log.idLog }}</td>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                             <td>
-                                <span class="badge {% if log.tipoLog.value == 'Error' %}bg-danger{% elif log.tipoLog.value == 'Seguridad' %}bg-warning text-dark{% elif log.tipoLog.value == 'Operacion' %}bg-info text-dark{% else %}bg-primary{% endif %}">
-                                    {{ log.tipoLog.value }}
+                                <span class="badge 
+                                    {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}badge-danger
+                                    {% elif log.level == 'WARNING' or log.level == 'SECURITY' %}badge-warning
+                                    {% elif log.level == 'INFO' or log.level == 'OPERATION' %}badge-info
+                                    {% else %}badge-secondary{% endif %}">
+                                    {{ log.level }}
                                 </span>
                             </td>
-                            <td>{{ log.descripcionLog }}</td>
-                            <td>{{ log.fechaHora.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                             <td>
-                                {% if log.usuario_log %}
-                                    {{ log.usuario_log.nombre }} {{ log.usuario_log.apellP }}
+                                {% if log.user %}
+                                    {{ log.user.username }}
                                 {% else %}
-                                    <span class="text-muted">N/A</span>
+                                    Sistema
                                 {% endif %}
                             </td>
-                            <td>{{ log.ipOrigen }}</td>
+                            <td>{{ log.message|truncate(50) }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#logDetails{{ log.id }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </td>
                         </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center">No se encontraron registros</td>
-                        </tr>
+                        
+                        <!-- Modal para detalles -->
+                        <div class="modal fade" id="logDetails{{ log.id }}" tabindex="-1" role="dialog" aria-labelledby="logDetailsLabel{{ log.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="logDetailsLabel{{ log.id }}">Detalles del Log #{{ log.id }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Fecha/Hora:</strong> {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                                <p><strong>Tipo:</strong> <span class="badge 
+                                                    {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}badge-danger
+                                                    {% elif log.level == 'WARNING' or log.level == 'SECURITY' %}badge-warning
+                                                    {% elif log.level == 'INFO' or log.level == 'OPERATION' %}badge-info
+                                                    {% else %}badge-secondary{% endif %}">
+                                                    {{ log.level }}
+                                                </span></p>
+                                                <p><strong>Usuario:</strong> {% if log.user %}{{ log.user.username }}{% else %}Sistema{% endif %}</p>
+                                                <p><strong>IP:</strong> {{ log.ip_address }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Mensaje completo:</strong></p>
+                                                <div class="alert alert-light">
+                                                    {{ log.message }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if log.extra_data %}
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <p><strong>Datos adicionales:</strong></p>
+                                                <pre>{{ log.extra_data|tojson(indent=2) }}</pre>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-    
-    <!-- Tarjetas de resumen -->
-    <div class="row">
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-primary text-white mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>Accesos</div>
-                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Acceso')|list|length }}</div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Acceso') }}">Ver detalles</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-info text-white mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>Operaciones</div>
-                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Operacion')|list|length }}</div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Operacion') }}">Ver detalles</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-warning text-white mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>Seguridad</div>
-                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Seguridad')|list|length }}</div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Seguridad') }}">Ver detalles</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-danger text-white mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>Errores</div>
-                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Error')|list|length }}</div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Error') }}">Ver detalles</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
+            
+            <!-- Paginación -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=logs.prev_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if logs.page == page_num %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=page_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=logs.next_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">Siguiente</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    $(document).ready(function() {
-        $('#logsTable').DataTable({
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-            },
-            order: [[3, 'desc']] // Ordenar por fecha/hora descendente
-        });
-    });
-</script>
 {% endblock %}

@@ -124,12 +124,26 @@ def agregar_proveedor():
         
         # ? Validación adicional del correo
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', data['correo']):
-            LogService.log_error(f"Correo electrónico inválido al agregar proveedor: {data['correo']}", current_user)
+            current_app.logger.error(
+                "Correo electrónico inválido al agregar proveedor",
+                extra={
+                    'correo': data['correo'],
+                    'user': current_user.username,
+                    'tipo_log': 'ERROR'
+                }
+            )
             return jsonify({'error': 'Correo electrónico no válido'}), 400
         
         # ? Validación adicional del teléfono (solo números y algunos caracteres especiales)
         if not re.match(r'^[\d\s()+.-]+$', data['telefono']):
-            LogService.log_error(f"Teléfono inválido al agregar proveedor: {data['telefono']}", current_user)
+            current_app.logger.error(
+                "Teléfono inválido al agregar proveedor",
+                extra={
+                    'telefono': data['telefono'],
+                    'user': current_user.username,
+                    'tipo_log': 'ERROR'
+                }
+            )
             return jsonify({'error': 'Teléfono no válido. Solo números y los caracteres ()+-.'}), 400
         
 
@@ -145,9 +159,13 @@ def agregar_proveedor():
         db.session.commit()
 
         # * Registramos un log de operación exitosa
-        LogService.log_operacion(
-            f"Usuario {session['username']} agregó nuevo proveedor: {data['empresa']}", 
-            current_user
+        current_app.logger.info(
+            f"Usuario {session['username']} agregó nuevo proveedor: {data['empresa']}",
+            extra={
+                'proveedor_id': nuevo_proveedor.idProveedores,
+                'user': current_user.username,
+                'tipo_log': 'OPERATION'
+            }
         )
 
 
@@ -170,7 +188,14 @@ def agregar_proveedor():
     except Exception as e:
         db.session.rollback()
         # Registrar error
-        LogService.log_error(f"Error al agregar proveedor: {str(e)}", current_user)
+        current_app.logger.critical(
+            "Error al agregar proveedor",
+            extra={
+                'error': str(e),
+                'user': current_user.username if hasattr(current_user, 'username') else None,
+                'tipo_log': 'ERROR'
+            }
+        )
         return jsonify({"error": str(e)}), 500
 
 

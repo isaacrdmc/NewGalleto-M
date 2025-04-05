@@ -1,7 +1,7 @@
-from flask import redirect, render_template, jsonify, request, session, url_for
+from flask import current_app, redirect, render_template, jsonify, request, session, url_for
 from flask_login import current_user
 
-from modules.admin.models import TipoLog
+from modules.admin.models import SystemLog, TipoLog
 from services.log_service import LogService
 from ..services import obtener_logs
 from ...admin import bp_admistracion
@@ -9,52 +9,33 @@ from ...admin import bp_admistracion
 # @bp_admistracion.route('/logs', methods=['GET'], endpoint='logs')
 @bp_admistracion.route('/logs', methods=['GET'])
 def ver_logs():
- 
-    #  
-    if 'username' not in session or session['rol'] != 'admin':
-        LogService.log_segurdidad("Intento de acceso no autorizado a los logs del sistema", current_user if 'username' in session else None)
-        
-        # ? Devolvemos al login si no tiene acceso (pal lobi hermano)
-        return redirect(url_for('shared.login'))
+    if 'username' not in session or session['role'] != 'admin':
+        current_app.logger.warning(
+            "Intento de acceso no autorizado a los logs del sistema",
+            extra={
+                'user': current_user.username if hasattr(current_user, 'username') else None,
+                'ip': request.remote_addr,
+                'tipo_log': 'SECURITY'
+            }
+        )
+        return redirect(url_for('login'))
     
-    # ? Parámetros de filtro
-    tipo_log = request.args.get('tipo')
-    usuario_id = request.args.get('usuario_id')
-    limite = int(request.args.get('limite', 100))
+    # Obtener parámetros de filtrado
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    tipo_log = request.args.get('tipo_log', None)
+    usuario_id = request.args.get('usuario_id', None)
     
-    # * Registrar acceso
-    LogService.log_acceso(f"Usuario {session['username']} consultó los logs del sistema", current_user)
-
-    # ? Obtenemos los logs del sistema segun los filtros
+    # Construir consulta
+    query = SystemLog.query.order_by(SystemLog.timestamp.desc())
+    
     if tipo_log:
-        # Convertir string a enum
-        tipo_enum = next((t for t in TipoLog if t.value == tipo_log), None)
-        logs = LogService.obtener_logs(
-            usuario_id=usuario_id if usuario_id else None, 
-            tipo_log=tipo_enum,
-            limite=limite
-        )
-    else:
-        logs = LogService.obtener_logs(
-            usuario_id=usuario_id if usuario_id else None,
-            limite=limite
-        )
-
-    # * Listamos los usuarios para el filtro de los datos
-    usuario = usuario.query.all()
-
-    # * 
-    return render_template(
-        'admin/logs.html',
-        logs=logs,
-        usuarios=usuario,
-        tipo_log=TipoLog,
-        filtro_actual={
-            'tipo': tipo_log,
-            'usuario_id': usuario_id,
-            'limite': limite
-        }
-        
-
-    )
-
+        query = query.filter(SystemLog.level == tipo_log.upper())
+    
+    if usuario_id:
+        query = query.filter(SystemLog.user_id == usuario_id)
+    
+    # Paginación
+    logs = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return render_template('admin/logs.html', logs=logs)
