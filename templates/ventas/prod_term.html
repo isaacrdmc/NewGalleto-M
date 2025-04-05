@@ -1,127 +1,189 @@
-{% extends "shared/base.html" %}
+{% extends "ventas/base_ventas.html" %}
 
 {% block content %}
 <style>
-    .card-inventario {
-        border-radius: 15px;
-        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
-        transition: transform 0.2s;
+    .seccion {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
     }
 
-    .card-inventario:hover {
-        transform: translateY(-5px);
-    }
+    .seccion-compacta {
+      width: 55%;
+      border-radius: 10px;
+      margin-bottom: 20px;
+  }
 
-    .btn-agregar {
-        background-color: #e60000;
-        color: white;
-        font-size: 12px;
-        padding: 5px 10px;
-        border-radius: 20px;
-    }
+  .seccion-compacta-total {
+    width: 70%;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    margin-top: -220px;
+    margin-left: 400px;
+}
+  
 
-    .titulo-inventario {
+    .titulo {
         text-align: center;
         font-weight: bold;
         font-size: 40px;
         margin: 30px 0;
     }
+
+    .input-sm {
+        width: 100px;
+    }
+
+    .btn-checkmark {
+        background-color: #8bc34a;
+        border: none;
+        padding: 10px 20px;
+        color: white;
+        font-weight: bold;
+        border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+  }
+  th {
+      background-color: #f8b74a;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+  }
+  td {
+      background-color: #f9f9f9;
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+  }
+
+    .btn-eliminar {
+        background-color: #e74c3c;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: white;
+    }
+
+    .total-box {
+        background-color: white;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .btn-aceptar {
+        background-color: #8bc34a;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        border: none;
+        padding: 10px 30px;
+        margin-top: 15px;
+        border-radius: 5px;
+    }
 </style>
 
-<h1 class="titulo-inventario">Inventario</h1>
+<h1 class="titulo">Generar venta</h1>
 
 <div class="container">
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <!-- Método de venta -->
+    <div class="seccion seccion-compacta">
+      <h5><strong>Método de venta</strong></h5>
+      <select class="form-select w-auto" id="metodoVentaSelect">
+          <option selected>Por gramo</option>
+          <option>Por unidad</option>
+          <option>Empacado</option>
+      </select>
+  </div>   
+    <!-- Detalle de venta -->
+    <div class="seccion seccion-compacta">
+        <h5><strong>Detalle de venta</strong></h5>
+        <form class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="galleta" class="col-form-label">Galleta:</label>
+                <select id="galleta" class="form-select">
+                    <option selected disabled>Selecciona una galleta</option>
+                    <option>Nuez</option>
+                    <option>Chocolate</option>
+                    <option>Vainilla</option>
+                    <option>Avena</option>
+                    <option>Chispas</option>
+                    <option>Integral</option>
+                    <option>Marmoleada</option>
+                    <option>Coco</option>
+                    <option>Glaseada</option>
+                    <option>Mantequilla</option>
+                    <option>Red Velvet</option>
+                    <option>Café</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="cantidad" class="col-form-label">Cantidad:</label>
+                <input type="text" id="cantidad" class="form-control input-sm" value="50gr">
+            </div>
+            <div class="col-auto">
+                <label for="gramos" class="col-form-label">Gramos:</label>
+                <input type="text" id="gramos" class="form-control input-sm" value="50gr">
+            </div>
+            <div class="col-auto">
+                <label for="subtotal" class="col-form-label">Subtotal:</label>
+                <input type="text" id="subtotal" class="form-control input-sm">
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button type="submit" class="btn btn-checkmark">✔️</button>
+            </div>
+        </form>
+    </div>
 
-        {% set productos = [
-            {'nombre': 'Galleta de Chocolate', 'precio': 8, 'imagen': 'galleta_chocolate.png'},
-            {'nombre': 'Galleta de Vainilla', 'precio': 7, 'imagen': 'galleta_vainilla.png'},
-            {'nombre': 'Galleta de Avena', 'precio': 9, 'imagen': 'galleta_avena.png'},
-            {'nombre': 'Galleta con Chispas', 'precio': 10, 'imagen': 'galleta_chispas.png'},
-            {'nombre': 'Galleta Integral', 'precio': 6, 'imagen': 'galleta_integral.png'},
-            {'nombre': 'Galleta Marmoleada', 'precio': 8, 'imagen': 'galleta_marmoleada.png'},
-            {'nombre': 'Galleta con Coco', 'precio': 7, 'imagen': 'galleta_coco.png'},
-            {'nombre': 'Galleta con Nuez', 'precio': 9, 'imagen': 'galleta_nuez.png'},
-            {'nombre': 'Galleta Glaseada', 'precio': 11, 'imagen': 'galleta_glaseada.png'},
-            {'nombre': 'Galleta de Mantequilla', 'precio': 6, 'imagen': 'galleta_mantequilla.png'},
-            {'nombre': 'Galleta Red Velvet', 'precio': 10, 'imagen': 'galleta_redvelvet.png'},
-            {'nombre': 'Galleta de Café', 'precio': 8, 'imagen': 'galleta_cafe.png'}
-        ] %}
-
-        {% for producto in productos %}
-        <div class="col">
-            <div class="card card-inventario h-100">
-                <img src="{{ url_for('static', filename='img/galletas.png') }}" class="card-img-top" alt="Galleta de Café">
-                <div class="card-body text-center">
-                    <p class="mb-0"><small>Galletas</small></p>
-                    <h5 class="card-title mb-2">{{ producto.nombre }}</h5>
-                    <p class="card-text fw-bold">${{ producto.precio }}</p>
-                    <button class="btn btn-agregar">Agregar al carrito</button>
-                </div>
+    <!-- Total -->
+    <div class="row mb-4 seccion-compacta-total">
+        <div class="col-md-6 offset-md-6">
+            <div class="total-box">
+                Total<br>$0.00
+                <br>
+                <button class="btn-aceptar mt-3">✔️ Aceptar</button>
             </div>
         </div>
-        {% endfor %}
+    </div>
 
-    </div>
+    <!-- Tabla de ventas -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Método de venta</th>
+                    <th>Galleta</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Por gramos</td>
+                    <td>Nuez</td>
+                    <td>100</td>
+                    <td>100.00</td>
+                    <td>
+                        <button class="btn-eliminar">🗑️</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Por unidad</td>
+                    <td>Chocolate</td>
+                    <td>100</td>
+                    <td>100.00</td>
+                    <td>
+                        <button class="btn-eliminar">🗑️</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 </div>
-<!-- Modal de confirmación actualizado -->
-<div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content p-0" style="border-radius: 15px; overflow: hidden;">
-        
-        <!-- Header oscuro -->
-        <div class="bg-dark text-white text-center py-3">
-          <h5 class="m-0 fw-bold">Solicitud</h5>
-        </div>
-  
-        <!-- Contenido -->
-        <div class="modal-body text-center" style="background-color: #e4c396;">
-          <p class="fw-semibold mb-3">¿Deseas agregar esta galleta al ticket?</p>
-          <img id="imgGalletaModal" src="" alt="Galleta" class="rounded-circle mb-3" style="width: 110px; height: 110px; object-fit: cover;">
-          
-          <div class="d-flex justify-content-around px-3 mt-3">
-            <button class="btn btn-danger w-100 me-2" data-bs-dismiss="modal" style="font-weight: bold;">Cancelar</button>
-            <button class="btn btn-success w-100 ms-2" id="btnSeleccionarPresentacion" style="font-weight: bold;">Aceptar</button>
-          </div>
-        </div>
-  
-      </div>
-    </div>
-  </div>  
-  
-  <!-- Modal para elegir presentación -->
-  <div class="modal fade" id="modalPresentacion" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content text-center p-4" style="background-color: #fff7e6; border-radius: 15px;">
-        <h5 class="fw-bold mb-3">Selecciona la presentación</h5>
-        <form id="formPresentacion">
-          <div class="mb-3">
-            <select class="form-select" id="tipoVenta" required>
-              <option value="" disabled selected>Selecciona tipo de venta</option>
-              <option value="pieza">1, 2, 5 piezas</option>
-              <option value="gramos">100, 250, 500 g</option>
-              <option value="empacado">Empaque 1kg o 700g</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <select class="form-select" id="opcionVenta" required>
-              <option value="">Selecciona una opción</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-success w-100">Agregar al carrito</button>
-        </form>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Modal de éxito -->
-  <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content text-center p-4" style="background-color: #d4fcd4; border-radius: 15px;">
-        <h5 class="fw-bold">¡Agregado con éxito!</h5>
-        <p>La galleta fue agregada al ticket.</p>
-        <button class="btn btn-outline-success" data-bs-dismiss="modal">Aceptar</button>
-      </div>
-    </div>
-  </div>  
 {% endblock %}

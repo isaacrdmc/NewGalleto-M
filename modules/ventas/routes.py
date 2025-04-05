@@ -12,10 +12,16 @@ from . import bp_ventas
 def ventas():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('shared.login'))
-    return render_template('ventas/ventas.html')
+    return render_template('ventas/prod_term.html')
 
-@bp_ventas.route('/inventario_galletas')
-def inventario_galletas():
+@bp_ventas.route('/historial_ventas')
+def historial_ventas():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('shared.login'))
-    return render_template('ventas/prod_term.html')
+    return render_template('ventas/historial_ventas.html')
+
+@bp_ventas.route('/pedidos_clientes')
+def pedidos_clientes():
+    if 'username' not in session or session['role'] != 'ventas':
+        return redirect(url_for('shared.login'))
+    return render_template('ventas/pedidos_clientes.html')

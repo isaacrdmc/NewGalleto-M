@@ -1,0 +1,138 @@
+{% extends "ventas/base_ventas.html" %}
+{% block content %}
+<div class="main-container">
+    <h1 class="title">Pedidos de clientes</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Galleta</th>
+                <th>Fecha a entregar</th>
+                <th>Fecha solicitud</th>
+                <th>Fecha a entregar</th>
+                <th>Ver Detalles</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Cesar</td>
+                <td>Vainilla</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>
+                    <button class="details-button">
+                        <img src="{{ url_for('static', filename='img/factura.png') }}" class="details-icon" alt="Ver detalles">
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Erik</td>
+                <td>Chocolate</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>
+                    <button class="details-button">
+                        <img src="{{ url_for('static', filename='img/factura.png') }}" class="details-icon" alt="Ver detalles">
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Gera</td>
+                <td>Fresa</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>
+                    <button class="details-button">
+                        <img src="{{ url_for('static', filename='img/factura.png') }}" class="details-icon" alt="Ver detalles">
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Gera</td>
+                <td>Frambuesa</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>21/11/24</td>
+                <td>
+                    <button class="details-button">
+                        <img src="{{ url_for('static', filename='img/factura.png') }}" class="details-icon" alt="Ver detalles">
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<style>
+    body {
+        background-color: #f2d2a9;
+        padding: 20px;
+    }
+    .main-container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+    .title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+    .search-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .search-input {
+        width: 60%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .filter-button {
+        background-color: #f8b74a;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 15px;
+        cursor: pointer;
+    }
+    h1 {
+        margin-top: 100px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th {
+        background-color: #f8b74a;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+    td {
+        background-color: #f9f9f9;
+        padding: 10px;
+        text-align: center;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .details-button {
+        background-color: #f9f9f9;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+    .details-icon {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+{% endblock %}
