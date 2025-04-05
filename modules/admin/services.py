@@ -1,12 +1,51 @@
 
 # ? Acá es donde estaremos realizando la soperaciónes lógicas del sistema, como las consultas con la BD
 
-from .models import Proveedores
+from flask import request, session
+from .models import LogsSistema, Proveedores
 from database.conexion import db
 
+"""
+# ~ Sección para los logs del sistema
+
+# Registro d elos logs al sistema
+def registrar_log(tipo_log, descripcion_log, ip_origen):
+    
+    # * Primero obtenemos la IP del usuario
+    ip_origen = request.remote_addr
+
+    # * Ahora creamos el nuevo log:
+    nuevo_log = LogsSistema(
+        tipoLog=tipo_log,
+        descripcionLog=descripcion_log,
+        ipOrigen=ip_origen,
+        idUsuario=session['idUser'] # * Obtenemos el id del usuario que se encuntra logeado
+    )
+
+    # ? Guardamos el nuevo log dentro de la Base de datos
+    db.session.add(nuevo_log)  # * Agregamos el nuevo log a la base de datos
+    db.session.commit()
 
 
 
+# Nos traemos los logs del sistema
+def obtener_logs(usuario_id=None, tipo_Log=None, limite=100):
+    # ? De primeras nos traemos todos los logs del sistema
+    query = LogsSistema.query.order_by(LogsSistema.fechaHora.desc())
+
+    # ? Si se le pase un ID de un usuario mostraremos los logs de este:
+    if usuario_id:
+        query = query.filter_by(idUsuario=usuario_id)
+    
+    # ? Si se le pasa un tipo de log, mostraremos los logs de este
+    if tipo_Log:
+        query = query.filter_by(tipo_Log=tipo_Log)
+
+    # * Retornamos solo 100 logs por defecto, pero podemos modiicar la cantidad de los que queremos ver
+    return query.limit(limite).all()
+
+
+"""
 
 
 # ~ Seccion de los reportes de las gallletass

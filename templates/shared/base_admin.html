@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
     <title>Don Galleto</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo3.png') }}">
 
@@ -58,9 +58,15 @@
                                 Gestión de Recetas
                             </a>
                         </li>
-                        <li class="nav-item my-1">
+                        <!-- <li class="nav-item my-1">
                             <a class="nav-link {% if request.endpoint == 'admin.insumos' %}active{% endif %} rounded-3" href="{{ url_for('admin.insumos') }}">
                                 --Gestión de Inventario--
+                            </a>
+                        </li> -->
+                        <li class="nav-item my-1">
+                            <a class="nav-link {% if request.endpoint == 'logs' %}active{% endif %} rounded-3" href="{{ url_for('admin.ver_logs') }}">
+                            <!-- <a class="nav-link {% if request.endpoint == 'admin.ver_logs' %}active{% endif %} rounded-3" href="{{ url_for('admin.ver_logs') }}"> -->
+                                Logs del sistema completo
                             </a>
                         </li>
                         <li class="nav-item my-4 text-center">
