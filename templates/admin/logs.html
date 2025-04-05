@@ -1,0 +1,181 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Logs del Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Logs del Sistema</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Logs del Sistema</li>
+    </ol>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-filter me-1"></i>
+            Filtrar Logs
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin.ver_logs') }}" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="tipo" class="form-label">Tipo de Log</label>
+                    <select class="form-select" id="tipo" name="tipo">
+                        <option value="" {% if not filtro_actual.tipo %}selected{% endif %}>Todos</option>
+                        {% for tipo in tipos_log %}
+                        <option value="{{ tipo.value }}" {% if filtro_actual.tipo == tipo.value %}selected{% endif %}>{{ tipo.value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="usuario_id" class="form-label">Usuario</label>
+                    <select class="form-select" id="usuario_id" name="usuario_id">
+                        <option value="" {% if not filtro_actual.usuario_id %}selected{% endif %}>Todos</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.idUser }}" {% if filtro_actual.usuario_id|int == usuario.idUser %}selected{% endif %}>{{ usuario.nombre }} {{ usuario.apellP }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="limite" class="form-label">Límite</label>
+                    <select class="form-select" id="limite" name="limite">
+                        <option value="50" {% if filtro_actual.limite == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if filtro_actual.limite == 100 %}selected{% endif %}>100</option>
+                        <option value="250" {% if filtro_actual.limite == 250 %}selected{% endif %}>250</option>
+                        <option value="500" {% if filtro_actual.limite == 500 %}selected{% endif %}>500</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{{ url_for('admin.ver_logs') }}" class="btn btn-secondary w-100">Limpiar Filtros</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tabla de Logs -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Registros de Actividad
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="logsTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Fecha/Hora</th>
+                            <th>Usuario</th>
+                            <th>IP Origen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="{% if log.tipoLog.value == 'Error' %}table-danger{% elif log.tipoLog.value == 'Seguridad' %}table-warning{% elif log.tipoLog.value == 'Operacion' %}table-info{% else %}table-light{% endif %}">
+                            <td>{{ log.idLog }}</td>
+                            <td>
+                                <span class="badge {% if log.tipoLog.value == 'Error' %}bg-danger{% elif log.tipoLog.value == 'Seguridad' %}bg-warning text-dark{% elif log.tipoLog.value == 'Operacion' %}bg-info text-dark{% else %}bg-primary{% endif %}">
+                                    {{ log.tipoLog.value }}
+                                </span>
+                            </td>
+                            <td>{{ log.descripcionLog }}</td>
+                            <td>{{ log.fechaHora.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                {% if log.usuario_log %}
+                                    {{ log.usuario_log.nombre }} {{ log.usuario_log.apellP }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.ipOrigen }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No se encontraron registros</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tarjetas de resumen -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Accesos</div>
+                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Acceso')|list|length }}</div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Acceso') }}">Ver detalles</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Operaciones</div>
+                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Operacion')|list|length }}</div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Operacion') }}">Ver detalles</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Seguridad</div>
+                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Seguridad')|list|length }}</div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Seguridad') }}">Ver detalles</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Errores</div>
+                        <div class="fs-4">{{ logs|selectattr('tipoLog.value', 'equalto', 'Error')|list|length }}</div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('admin.ver_logs', tipo='Error') }}">Ver detalles</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#logsTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+            },
+            order: [[3, 'desc']] // Ordenar por fecha/hora descendente
+        });
+    });
+</script>
+{% endblock %}

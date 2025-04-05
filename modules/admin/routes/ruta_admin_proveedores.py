@@ -29,6 +29,8 @@ def proveedores():
     if 'username' not in session or session['role'] != 'admin':
         LogService.log_segurdidad(f"Intneto de acceso no autorizado a la admistración de porveedores",
                                   current_user if 'username' in session else None)      # Obtenemos el usuario para registrar jjunto ocn el log
+        
+        # ? Devolvemos al login si no tiene acceso (pal lobi hermano)
         return redirect(url_for('shared.login'))
 
     #  Registrar acceso exitos
