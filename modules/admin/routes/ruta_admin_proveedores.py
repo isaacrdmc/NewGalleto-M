@@ -4,7 +4,7 @@ from flask_login import current_user
 
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
-from services.log_service import LogService
+# from services.log_service import LogService
 from ..services import actualizar_proveedor, agregar_proveedor, eliminar_proveedor, obtener_proveedores
 from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
@@ -19,7 +19,6 @@ from ...admin import bp_admistracion
 
 # http://127.0.0.1:5000/production/proveedores
 
-22
 
 
 # * Renderiza la página y trae los datos del arreglo

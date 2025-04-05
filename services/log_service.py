@@ -2,11 +2,13 @@
 
 # ? En esta parte es donde tnedremos la calse para poder registrar los logs del sistema
 from datetime import datetime
-from flask import logging, request
+from flask import current_app, logging, request
 from flask_login import current_user
 # from app.models import LogsSistema, TipoLog
-from app import db
-from modules.admin.models import LogsSistema, TipoLog
+from database.conexion import db
+# from modules.admin.models import LogsSistema, LogLevel
+from modules.admin.models import SystemLog, LogLevel
+
 """
 class LogService:
     # ? Creamos los metodos para poder crear un nuevo log del sistema
@@ -108,19 +110,33 @@ class DatabaseHandle(logging.Handler):
     #  ^ Método para inicializar el handler
     def emit(self, record):
         try:
-            # * Obtenemos información sobre sis el usuario esta autenticado
-            user_id = current_user.idUser if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None
+
+            # * Obtener el contexto de la aplicación Flask
+            app = current_app._get_current_object()
+
+            with app.app_context():
+                # Obtener información del usuario si está autenticado
+                user_id = None
+                if hasattr(current_app, 'login_manager'):
+                    from flask_login import current_user
+                    if current_user.is_authenticated:
+                        user_id = current_user.idUser
 
             # * Obtenemos la IP del cliente
             ip = request.remote_addr if request else None
 
             # * Creamos el registro de la Base de datos
-            log_entry = LogsSistema(
-                TipoLog=record.levelname,       # Tipo de log (ERROR, SEGURIDAD, ACCESO, OPERACION)
-                descripcionLog=record.getMessage(),     # Descripción del log
-                fechaHora=datetime.now(),       # Fechay la hora actual
-                ipOrigen=ip,        # La IP del cliente
-                ipUser=user_id      # ID del usuario que hizo la acción
+            log_entry = SystemLog(
+                level=record.levelname,  # Nivel del log (INFO, WARNING, ERROR, etc.)
+                message=record.getMessage(),  # Mensaje del log
+                timestamp=datetime.utcnow(),  # Usamos UTC para consistencia
+                ip_address=ip,
+                user_id=user_id,
+                extra_data={
+                    'module': record.module,
+                    'funcName': record.funcName,
+                    'lineno': record.lineno
+                }
             )
 
             # * Guardamos el log dentro de la base de datos
@@ -135,33 +151,37 @@ class DatabaseHandle(logging.Handler):
 
 
 
-    # ^ Método para configurar el logger
-    def setup_logging(app):
+# ^ Método para configurar el logger
+def setup_logging(app):
         
-        # * Configuración básica del logging
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger('don_galleto')
-
-        # * Eliminamos handlers existentes para evitar duplicados
-        if logger.handlers:
-            logger.handlers = []
-
-
-        # * Crear y configurar el handler para la base de datos
-        db_handler = DatabaseHandle()
-        db_handler.setLevel(logging.INFO)
-
-        # * Formato del log
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        db_handler.setFormatter(formatter)
-
-        # * Añadimos el handler al logger
-        logger.addHandler(db_handler)
-
-        return logger
+    """Configura el sistema de logging para la aplicación"""
     
+    # Eliminar handlers existentes del logger root
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
 
-    # ? logger = setup_logging(app)
-    logger = setup_logging()
+    # Configurar el logger específico de la aplicación
+    logger = logging.getLogger('don_galleto')
+    logger.setLevel(logging.INFO)
     
+    # Eliminar handlers existentes para evitar duplicados
+    logger.handlers = []
+
+    # Crear y configurar el handler para la base de datos
+    db_handler = DatabaseHandler()
+    db_handler.setLevel(logging.INFO)
+
+    # Formato para los logs
+    formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s'
+    )
+    db_handler.setFormatter(formatter)
+
+    # Añadir el handler al logger
+    logger.addHandler(db_handler)
+
+    # Configurar el logger de Flask
+    app.logger = logger
+
+    return logger
 

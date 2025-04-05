@@ -1,7 +1,7 @@
 from flask import current_app, redirect, render_template, jsonify, request, session, url_for
 from flask_login import current_user
 
-from modules.admin.models import SystemLog, TipoLog
+from modules.admin.models import SystemLog, LogLevel
 from services.log_service import LogService
 from ..services import obtener_logs
 from ...admin import bp_admistracion

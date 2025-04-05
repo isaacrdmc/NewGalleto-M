@@ -7,7 +7,7 @@ from enum import Enum
 
 from flask_login import UserMixin
 from database.conexion import db
- 
+
 
 
 # ^ Creamos una clase con el nombre de la tabla para poder utilizarl más adelante
@@ -52,8 +52,9 @@ class LogLevel(Enum):
     WARNING = 'WARNING'
     ERROR = 'ERROR'
     CRITICAL = 'CRITICAL'
-    SECURITY = 'SECURITY'  # Para eventos específicos de seguridad
+    SECURITY = 'SECURITY'  # Para eventos de seguridad
     OPERATION = 'OPERATION'  # Para operaciones administrativas
+    ACCESS = 'ACCESS'  # Para accesos al sistema
 
 class SystemLog(db.Model):
     """Modelo para registrar logs del sistema en la base de datos"""
@@ -71,10 +72,6 @@ class SystemLog(db.Model):
     
     # Datos adicionales en formato JSON
     extra_data = db.Column(db.JSON, nullable=True)
-
-    # ? ???
-    def __repr__(self):
-        return f'<SystemLog {self.id} [{self.level}] {self.timestamp}>'
 
 
 # ~ Tabla para los porveedores

@@ -2,7 +2,7 @@
 # ? Acá es donde estaremos realizando la soperaciónes lógicas del sistema, como las consultas con la BD
 
 from flask import request, session
-from .models import LogsSistema, Proveedores
+from .models import Proveedores
 from database.conexion import db
 
 """
