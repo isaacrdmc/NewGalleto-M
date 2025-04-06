@@ -9,6 +9,7 @@ from database.conexion import db
 from flask_login import login_required, current_user
 from ...admin import bp_admistracion
 from ...logs.log_config import loggerPersonalizado
+# from ...logs.log_config import loggerPersonalizado
 
 # * nueva ruta, ruta para el CRUD de los proveedores
 @bp_admistracion.route('/agregarProveedor')

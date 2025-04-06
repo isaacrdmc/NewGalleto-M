@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import logging, request
 from flask_login import current_user
 # from app.models import LogsSistema, TipoLog
-from app import db
+from database.conexion import db
 from modules.admin.models import LogsSistema, TipoLog
 
 
