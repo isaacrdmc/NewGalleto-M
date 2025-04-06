@@ -8,36 +8,50 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Inicializar la base de datos
+    # * Inicializar la base de datos
     db.init_app(app)
 
-    # Configurar Flask-Login
+
+
+
+
+
+
+
+    # ^ Configurar Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'shared.login'
 
-    # Importar modelos después de crear la app para evitar importaciones circulares
+    # ? Importar modelos después de crear la app para evitar importaciones circulares
     from modules.shared.models import User
 
+    # ? Configurar el cargador de usuarios
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Importar blueprints
+
+
+
+
+
+    # ^ Importar blueprints
     from modules.admin import bp_admistracion
     from modules.client import bp_clientes
     from modules.production import bp_production
     from modules.ventas import bp_ventas
     from modules.shared import bp_shared
 
-    # Registrar blueprints
+    #  *Registrar blueprints
     app.register_blueprint(bp_admistracion, url_prefix='/admin')
     app.register_blueprint(bp_clientes, url_prefix='/cliente')
     app.register_blueprint(bp_production, url_prefix='/production')
     app.register_blueprint(bp_ventas, url_prefix='/ventas')
     app.register_blueprint(bp_shared, url_prefix='/shared')
 
-    # Configurar ruta principal
+
+    # ~ Configurar ruta principal
     @app.route('/')
     def index():
         return redirect(url_for('shared.login'))    
@@ -50,4 +64,5 @@ def create_app():
     #     print("========================")
 
 
+    # * Ejecución de la APP
     return app

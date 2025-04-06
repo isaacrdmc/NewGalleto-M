@@ -1,6 +1,6 @@
 import re
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-
+ 
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
 from ..services import actualizar_proveedor, agregar_proveedor, eliminar_proveedor, obtener_proveedores
@@ -8,16 +8,7 @@ from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
 from ...admin import bp_admistracion
-
-
-# ? En esta sección ira la parte de las rutas para el CRUD de los proveedores:
-    # * Agregar nuevos proveedores a la BD
-    # * Mostrar los proveedores de la BD
-    # * Modificar los proveedores en la BD
-    # * Actualizar nuevos proveedores a la BD
-
-# http://127.0.0.1:5000/production/proveedores
-
+from ...logs.log_config import loggerPersonalizado
 
 # * nueva ruta, ruta para el CRUD de los proveedores
 @bp_admistracion.route('/agregarProveedor')
@@ -51,6 +42,7 @@ def proveedores():
 @login_required
 def listar_proveedores():
     if current_user.rol.nombreRol != 'Administrador':
+        loggerPersonalizado.error(f'Acceso no autorizado a listar proveedores por el usuario')
         return jsonify({"error": "No autorizado"}), 403
 
     try:
@@ -190,11 +182,8 @@ def eliminar_proveedor_route(id):
 
         # * Retornamos el mensaje de exito
         return jsonify({
-            # ? Mensaje de exito (Mensaje importante del 'jsonify')
-            "mensaje": "Proveedor eliminado",   
-
-            # & Datos del proveedor eleiminado
-            "proveedor": {
+            "mensaje": "Proveedor eliminado",       # ? Mensaje de exito (Mensaje importante del 'jsonify')
+            "proveedor": {  # & Datos del proveedor eleiminado
                 "id": proveedorEliminar.idProveedores,
                 "nombre": proveedorEliminar.nombre,
                 "telefono": proveedorEliminar.telefono,

@@ -9,3 +9,4 @@ from . import ruta_admin_Inventario
 from . import ruta_admin_proveedores
 from . import ruta_admin_recetas
 from . import ruta_admin_usuario
+from . import ruta_admin_logs

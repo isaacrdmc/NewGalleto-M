@@ -14,6 +14,9 @@ from database.conexion import db
 
 
 
+# ~ Sección de los logs del sistema
+
+
 # ~ Seccion de proveedores
 
 # ^ Agregamos un proveedor  (C)
