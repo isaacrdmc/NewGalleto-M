@@ -34,6 +34,11 @@ def create_app():
 
 
 
+    # ^ Configuración de los logs
+    from modules.logs.log_config import configure_logging
+    configure_logging(app) # Activamos el logger
+
+
 
 
     # ^ Importar blueprints

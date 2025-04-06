@@ -8,15 +8,6 @@ from database.conexion import db
 
 # ^ Creamos una clase con el nombre de la tabla para poder utilizarl más adelante
 
-# ~ Tabla para los logs de la sección de admin:
-# class LogsSistema(db.Model):
-#     # ? Nombre de la tabla
-#     __tablename__ = 'LogsSistema'
-
-#     # * Columnas de la tabla
-#     idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     tipoLog = db.column(db.enmum())
-
 
 # ~ Tabla para los porveedores
 class Proveedores(db.Model):    # ? 

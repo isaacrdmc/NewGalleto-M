@@ -6,7 +6,7 @@ class LogSistema(db.Model):
     __tablename__ = 'logsSistema'
 
     # * Columnas de la tabla
-    idLog = db.Column(db.Integr, primary_key=True)
+    idLog = db.Column(db.Integer, primary_key=True)
     tipoLog = db.Column(db.Enum(
                     'INFO', 'WARNING', 'ERROR', 
                     'CRITICAL', 'DEBUG', 'SECURITY',
@@ -22,21 +22,3 @@ class LogSistema(db.Model):
 
     def __repr__(self):
         return f'<log {self.idLog} - {self.tipoLog}>'
-    
-
-
-
-
-"""
-CREATE TABLE logsSistema (
-    idLog INT AUTO_INCREMENT PRIMARY KEY,
-    tipoLog ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL', 'DEBUG', 'SECURITY') NOT NULL,
-    descripcionLog TEXT NOT NULL,
-    fechaHora DATETIME NOT NULL DEFAULT current_timestamp,
-    ipOrigen VARCHAR(45),
-    
-    idUser INT,
-    FOREIGN KEY (idUser) REFERENCES usuarios(idUser)
-);
-
-"""

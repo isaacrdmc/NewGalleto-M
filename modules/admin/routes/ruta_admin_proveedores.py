@@ -1,5 +1,5 @@
 import re
-from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import current_app, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
  
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
@@ -8,7 +8,7 @@ from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
 from ...admin import bp_admistracion
-from ...logs.log_config import loggerPersonalizado
+# from ...logs.log_config import loggerPersonalizado
 # from ...logs.log_config import loggerPersonalizado
 
 # * nueva ruta, ruta para el CRUD de los proveedores
@@ -25,6 +25,7 @@ def agregarProv():
 @login_required
 def proveedores():
     if current_user.rol.nombreRol != 'Administrador':
+        current_app.logger.error(f'Acceso no autorizado a la página de proveedores poer el usuario')
         return redirect(url_for('shared.login'))
     
     # Obtener la lista de proveedores
@@ -43,7 +44,7 @@ def proveedores():
 @login_required
 def listar_proveedores():
     if current_user.rol.nombreRol != 'Administrador':
-        loggerPersonalizado.error(f'Acceso no autorizado a listar proveedores por el usuario')
+        current_app.logger.error(f'Acceso no autorizado a listar proveedores por el usuario')
         return jsonify({"error": "No autorizado"}), 403
 
     try:
