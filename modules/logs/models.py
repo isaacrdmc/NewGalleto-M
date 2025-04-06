@@ -8,8 +8,8 @@ class LogSistema(db.Model):
     # * Columnas de la tabla
     idLog = db.Column(db.Integer, primary_key=True)
     tipoLog = db.Column(db.Enum(
-                    'INFO', 'WARNING', 'ERROR', 
-                    'CRITICAL', 'DEBUG', 'SECURITY',
+                    'NOTSET', 'DEBUG', 'INFO', 'WARNING', 
+                    'ERROR', 'CRITICAL', 'SECURITY',
                     name='tipo_log_enum'), nullable=False)
     descripcionLog = db.Column(db.Text, nullable=False)
     fechaHora = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

@@ -25,7 +25,7 @@ class DatabaseHandle(logging.Handler):
                     descripcionLog=record.getMessage(),     # ~ Descripción del log
                     fechaHora=datetime.now(),       # Fechay la hora actual
                     ipOrigen=request.remote_addr if request else None,        # La IP del cliente
-                    ipUser=current_user.id if current_user.is_authenticated else None   # ~ ID del usuario que hizo la acción
+                    idUser=current_user.idUser if current_user.is_authenticated else None   # ~ ID del usuario que hizo la acción
                 )
 
             # * Guardamos el log dentro de la base de datos
