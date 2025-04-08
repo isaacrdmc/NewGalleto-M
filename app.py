@@ -10,3 +10,4 @@ if __name__ == '__main__':
 
 # app = Flask(__name__)
 # app.secret_key = 'mySecretKey'  # Necesario para manejar las sesiones
+ 

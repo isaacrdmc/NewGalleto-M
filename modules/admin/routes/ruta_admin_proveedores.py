@@ -25,6 +25,7 @@ def agregarProv():
 @login_required
 def proveedores():
     if current_user.rol.nombreRol != 'Administrador':
+        # 
         current_app.logger.error(f'Acceso no autorizado a la página de proveedores poer el usuario')
         return redirect(url_for('shared.login'))
     

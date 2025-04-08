@@ -12,4 +12,4 @@ def dashboard_admin():
         current_app.logger.error(f'Acceso no autorizado a la página del dashboard por el usuario {current_user.username}')
         return redirect(url_for('shared.index'))
     current_app.logger.info(f'Acceso autorizado a la página del dashboard por el usuario {current_user.username}')
-    return render_template('admin/dashboard.html')
+    return render_template('admin/dashboard.html') 
