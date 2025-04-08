@@ -7,57 +7,16 @@
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
         <h1 class="mb-4">Historial de Eventos del Sistema</h1>
 
-        
-        <!-- Filtro por fecha -->
-        <!-- <div class="row mb-4 g-3">
-            <div class="col-md-3">
-                <label for="fecha_desde" class="form-label">Desde:</label>
-                <input type="date" id="fecha_desde" name="fecha_desde" class="form-control" 
-                    value="{{ request.args.get('fecha_desde', '') }}">
-            </div>
-            <div class="col-md-3">
-                <label for="fecha_hasta" class="form-label">Hasta:</label>
-                <input type="date" id="fecha_hasta" name="fecha_hasta" class="form-control"
-                    value="{{ request.args.get('fecha_hasta', '') }}">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Aplicar</button>
-            </div>
-        </div> -->
-    
-        <!-- ^ Filtramso por el tipo de log -->
-        <!-- <div class="mb-4">
-            <form method="GET" action="{{ url_for('admin.logs_admin') }}" class="row g-3">
-                <div class="col-md-3">
-                    <select name="tipo_log" class="form-select">
-                        <option value="">Todos los tipos</option>
-                        <option value="NOTSET" {% if request.args.get('tipo_log') == 'NOTSET' %}selected{% endif %}>NOTSET</option>
-                        <option value="DEBUG" {% if request.args.get('tipo_log') == 'DEBUG' %}selected{% endif %}>DEBUG</option>
-                        <option value="INFO" {% if request.args.get('tipo_log') == 'INFO' %}selected{% endif %}>INFO</option>
-                        <option value="WARNING" {% if request.args.get('tipo_log') == 'WARNING' %}selected{% endif %}>WARNING</option>
-                        <option value="ERROR" {% if request.args.get('tipo_log') == 'ERROR' %}selected{% endif %}>ERROR</option>
-                        <option value="CRITICAL" {% if request.args.get('tipo_log') == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
-                        <option value="SECURITY" {% if request.args.get('tipo_log') == 'SECURITY' %}selected{% endif %}>SECURITY</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <a href="{{ url_for('admin.logs_admin') }}" class="btn btn-secondary">Limpiar</a>
-                </div>
-            </form>
-        </div> -->
-
-
-
-
 
         <!-- ~ Filtros del sistema -->
         <div class="column mb-4">
             <form method="GET" action="{{ url_for('admin.logs_admin') }}" class="row g-3 align-items-end">
-                <!-- Filtro por tipo de log -->
+                
+                <!-- ? iltramsod deacuerdo al tipo de log que estamos buscando -->
                 <div class="col-md-3">
                     <label for="tipo_log" class="form-label">Tipo de log:</label>
                     <select name="tipo_log" class="form-select">
+                        <!-- Al selecciónar un tipo de log se realiza el comparador para mostrar los logs del sistema -->
                         <option value="">Todos los tipos</option>
                         <option value="NOTSET" {% if request.args.get('tipo_log') == 'NOTSET' %}selected{% endif %}>NOTSET</option>
                         <option value="DEBUG" {% if request.args.get('tipo_log') == 'DEBUG' %}selected{% endif %}>DEBUG</option>
@@ -69,13 +28,16 @@
                     </select>
                 </div>
                 
-                <!-- Botones del primer filtro -->
+                <!-- * Los botones para el firltdo del tipo de log -->
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">Filtrar</button>
                     <a href="{{ url_for('admin.logs_admin') }}" class="btn btn-secondary">Limpiar</a>
                 </div>
                 
-                <!-- Filtro por fechas -->
+
+
+
+                <!-- ? Sección para el filtro por fechas -->
                 <div class="col-md-3">
                     <label for="fecha_desde" class="form-label">Desde:</label>
                     <input type="date" id="fecha_desde" name="fecha_desde" class="form-control" 
@@ -118,6 +80,8 @@
                         <th>Usuario</th>
                     </tr>
                 </thead>
+
+                <!-- * Recorremos los datos par amostrarlos en la tabla -->
                 <tbody>
                     {% for log in logs %}
                     <tr>

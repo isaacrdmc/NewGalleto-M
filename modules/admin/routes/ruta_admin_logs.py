@@ -18,39 +18,43 @@ from ...admin import bp_admistracion
 @bp_admistracion.route('/logs_admin')
 # @login_required
 def logs_admin():
-    # Verificación de permisos
+    # ?  Pirmero verificación de permisos
     if current_user.rol.nombreRol != 'Administrador':
         flash('No tienes permisos para acceder a esta sección', 'danger')
         current_app.logger.error(f'Acceso no autorizado a logs por {current_user.username}')
         return redirect(url_for('shared.index'))
 
-    # Filtros
-    tipo_log = request.args.get('tipo_log', '')
-    search_query = request.args.get('q', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = 15  # Items por página
+    # * Filtros dle sistema
+    tipo_log = request.args.get('tipo_log', '')     #  Filtramos le tipo de log, y si no hay nada, que traiga todos los logs 
+    search_query = request.args.get('q', '')     #  Filtramos le tipo de log, y si no hay nada, que traiga todos los logs 
+    page = request.args.get('page', 1, type=int)    # Númmero de página actual a la que se accede
+    per_page = 15  # Cantidad de logs por página de la pagínación
 
-    # Consulta base con join a usuarios
+    # ? COnusltamos la base de datos y hacemo un join para traernos el nombre dle usuario
     query = LogSistema.query.outerjoin(LogSistema.usuario)
 
-    # Aplicar filtros
+
+    # ? Filtramos los logs por el tipo de log
     if tipo_log:
         query = query.filter(LogSistema.tipoLog == tipo_log)
-    if search_query:
-        query = query.filter(or_(
-            LogSistema.descripcionLog.ilike(f'%{search_query}%'),
-            LogSistema.ipOrigen.ilike(f'%{search_query}%'),
-            LogSistema.usuario.has(username=search_query)
-        ))
 
-    # Ordenar por fecha descendente (los más recientes primero)
+    # # ? Filtramos los logs por el nombre del usuario
+    # if search_query:
+    #     query = query.filter(or_(
+    #         LogSistema.descripcionLog.ilike(f'%{search_query}%'),
+    #         LogSistema.ipOrigen.ilike(f'%{search_query}%'),
+    #         LogSistema.usuario.has(username=search_query)
+    #     ))
+
+    # ? Ordemos la salida de la ocnsulta de fomra descendente
     query = query.order_by(LogSistema.fechaHora.desc())
 
-    # Paginación
+
+
+    # ? Si tenemos un query de búsqueda, apicamos el flitro
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     logs = pagination.items
 
-    current_app.logger.info(f'Acceso a logs por {current_user.username}')
-    return render_template('admin/logs.html', 
-                         logs=logs,
-                         pagination=pagination)
+    # ? Si no hay logs, mostramos un mensaje
+    current_app.logger.info(f'Acceso a Eventos por {current_user.username}')
+    return render_template('admin/logs.html', logs=logs, pagination=pagination) # Renderizamos el HTML y le pasamos los logs y la pagínación
