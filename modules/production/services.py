@@ -1,8 +1,11 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-from .models import Galleta, Insumo, Receta,Horneado,Usuario, db
-from modules.admin.models import Proveedores
+from .models import Galleta, Insumo, Receta,Horneado, db, TransaccionCompra, DetalleCompraInsumo, Notificacion, Merma
+from modules.admin.models import Proveedores as Proveedor
+from modules.shared.models import Rol as Role
+from modules.shared.models import User as Usuario
 from datetime import datetime, timedelta
+from sqlalchemy import text
 from sqlalchemy import func, and_, desc
 
 
@@ -61,7 +64,7 @@ class ProveedorService(BaseService):
         super().__init__(db_session)
 
     def add_proveedor(self, nombre, telefono, correo, direccion, productosProveedor):
-        proveedor = Proveedores(
+        proveedor = proveedor(
             nombre=nombre,
             telefono=telefono,
             correo=correo,
@@ -71,10 +74,10 @@ class ProveedorService(BaseService):
         return self.add(proveedor)
 
     def get_proveedor(self, id_proveedor):
-        return self.get(Proveedores, id_proveedor)
+        return self.get(Proveedor, id_proveedor)
 
     def get_all_proveedores(self):
-        return self.get_all(Proveedores)
+        return self.get_all(Proveedor)
 
 # Servicio para manejar las galletas
 class GalletaService(BaseService):
@@ -160,11 +163,10 @@ class HorneadoService(BaseService):
         Registra un nuevo horneado utilizando el procedimiento almacenado sp_RegistrarHorneado
         """
         try:
-            # Usamos SQLAlchemy para ejecutar el procedimiento almacenado
             result = self.db_session.execute(
-                """
-                CALL sp_RegistrarHorneado(:temperatura, :tiempo, :cantidad, :observaciones, :id_receta, :id_usuario)
-                """,
+                text("""
+                    CALL sp_RegistrarHorneado(:temperatura, :tiempo, :cantidad, :observaciones, :id_receta, :id_usuario)
+                """),
                 {
                     'temperatura': temperatura_horno,
                     'tiempo': tiempo_horneado,
@@ -257,3 +259,221 @@ class HorneadoService(BaseService):
                 'galletas_por_receta': [],
                 'horneados_por_dia': []
             }
+            
+            
+###########################################
+
+class CompraService:
+    def __init__(self, db_session):
+        self.db_session = db_session
+    
+    def get_all_proveedores(self):
+        """
+        Obtiene todos los proveedores registrados
+        """
+        try:
+            return self.db_session.query(Proveedor).order_by(Proveedor.nombre).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener proveedores: {e}")
+            return []
+    
+    def get_proveedor(self, id_proveedor):
+        """
+        Obtiene un proveedor por su ID
+        """
+        try:
+            return self.db_session.query(Proveedor).get(id_proveedor)
+        except SQLAlchemyError as e:
+            print(f"Error al obtener proveedor: {e}")
+            return None
+    
+    def get_all_insumos(self):
+        """
+        Obtiene todos los insumos registrados
+        """
+        try:
+            return self.db_session.query(Insumo).order_by(Insumo.nombre).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener insumos: {e}")
+            return []
+    
+    def registrar_compra(self, id_proveedor, fecha_compra=None):
+        if fecha_compra is None:
+            fecha_compra = datetime.now().date()
+
+        try:
+            # Inicializar la variable de salida
+            self.db_session.execute(text("SET @id_transaccion = 0"))
+            
+            # Llamada al procedimiento almacenado
+            self.db_session.execute(
+                text("CALL RegistrarCompraInsumo(:p_idProveedor, :p_fechaCompra, @id_transaccion)"),
+                {
+                    'p_idProveedor': id_proveedor,
+                    'p_fechaCompra': fecha_compra
+                }
+            )
+
+            # Obtener el valor de la variable de salida
+            id_transaccion = self.db_session.execute(text("SELECT @id_transaccion")).scalar()
+            
+            # Verificar que se haya obtenido un ID válido
+            if not id_transaccion:
+                print("No se pudo obtener un ID de transacción válido")
+                return None
+                
+            self.db_session.commit()
+            return id_transaccion
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al registrar compra: {e}")
+            return None
+
+            
+            
+
+    
+    def agregar_detalle_compra(self, id_compra, id_insumo, cant_cajas, cant_unidades_caja, 
+                      cant_merma_unidad, costo_caja, unidad_insumo, 
+                      fecha_registro=None, fecha_caducidad=None):
+        if fecha_registro is None:
+            fecha_registro = datetime.now().date()
+
+        try:
+            # Asegurarnos de que unidad_insumo sea un string
+            unidad_str = str(unidad_insumo)
+            
+            # Validar que sea uno de los valores válidos
+            if unidad_str not in ['Gr', 'mL', 'Pz']:
+                print(f"Error: Unidad de insumo inválida: {unidad_str}")
+                return False
+                
+            # Llamar al procedimiento almacenado
+            self.db_session.execute(
+                text("""CALL AgregarDetalleCompraInsumo(
+                    :p_idCompra, :p_idInsumo, :p_cantCajas, :p_cantUnidadesXcaja, 
+                    :p_cantMermaPorUnidad, :p_CostoPorCaja, :p_unidadInsumo, 
+                    :p_fechaRegistro, :p_fechaCaducidad)"""),
+                {
+                    'p_idCompra': id_compra,
+                    'p_idInsumo': id_insumo,
+                    'p_cantCajas': cant_cajas,
+                    'p_cantUnidadesXcaja': cant_unidades_caja,
+                    'p_cantMermaPorUnidad': cant_merma_unidad,
+                    'p_CostoPorCaja': costo_caja,
+                    'p_unidadInsumo': unidad_str,
+                    'p_fechaRegistro': fecha_registro,
+                    'p_fechaCaducidad': fecha_caducidad
+                }
+            )
+            self.db_session.commit()
+            print(f"Detalle de compra registrado exitosamente para insumo {id_insumo}.")
+            return True
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al agregar detalle de compra para insumo {id_insumo}: {e}")
+            return False
+
+    
+    def get_compras(self, limit=100):
+        """
+        Obtiene las últimas compras realizadas
+        """
+        try:
+            return self.db_session.query(TransaccionCompra)\
+                .order_by(TransaccionCompra.fecha_compra.desc())\
+                .limit(limit).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener compras: {e}")
+            return []
+    
+    def get_compra(self, id_compra):
+        """
+        Obtiene una compra por su ID
+        """
+        try:
+            return self.db_session.query(TransaccionCompra).get(id_compra)
+        except SQLAlchemyError as e:
+            print(f"Error al obtener compra: {e}")
+            return None
+    
+    def get_detalles_compra(self, id_compra):
+        """
+        Obtiene los detalles de una compra
+        """
+        try:
+            return self.db_session.query(DetalleCompraInsumo)\
+                .filter(DetalleCompraInsumo.id_compra == id_compra)\
+                .all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener detalles de compra: {e}")
+            return []
+    
+    def get_notificaciones(self, estatus=None, limit=10):
+        """
+        Obtiene las notificaciones del sistema
+        """
+        try:
+            query = self.db_session.query(Notificacion).order_by(Notificacion.fecha_creacion.desc())
+            
+            if estatus:
+                query = query.filter(Notificacion.estatus == estatus)
+            
+            return query.limit(limit).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener notificaciones: {e}")
+            return []
+    
+    def marcar_notificacion_vista(self, id_notificacion):
+        """
+        Marca una notificación como vista
+        """
+        try:
+            notificacion = self.db_session.query(Notificacion).get(id_notificacion)
+            if notificacion:
+                notificacion.estatus = 'Vista'
+                notificacion.fecha_visto = datetime.now()
+                self.db_session.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al marcar notificación como vista: {e}")
+            return False
+    
+    def resolver_notificacion(self, id_notificacion):
+        """
+        Marca una notificación como resuelta
+        """
+        try:
+            notificacion = self.db_session.query(Notificacion).get(id_notificacion)
+            if notificacion:
+                notificacion.estatus = 'Resuelto'
+                self.db_session.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al resolver notificación: {e}")
+            return False
+    
+    def obtener_mermas(self, tipo_merma=None, fecha_inicio=None, fecha_fin=None):
+        """
+        Obtiene las mermas registradas con filtros opcionales
+        """
+        try:
+            query = self.db_session.query(Merma).order_by(Merma.fecha_merma.desc())
+            
+            if tipo_merma:
+                query = query.filter(Merma.tipo_merma == tipo_merma)
+            
+            if fecha_inicio:
+                query = query.filter(Merma.fecha_merma >= fecha_inicio)
+            
+            if fecha_fin:
+                query = query.filter(Merma.fecha_merma <= fecha_fin)
+            
+            return query.all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener mermas: {e}")
+            return []

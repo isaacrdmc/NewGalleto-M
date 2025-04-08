@@ -110,7 +110,8 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for horneado in horneados_recientes %}
+                                            {% if horneados %}
+                                            {% for horneado in horneados %}
                                             <tr>
                                                 <td>{{ horneado.fecha_horneado.strftime('%d/%m/%Y %H:%M') }}</td>
                                                 <td>{{ horneado.receta.nombre }}</td>
@@ -123,11 +124,12 @@
                                                     </a>
                                                 </td>
                                             </tr>
+                                            {% endfor %}
                                             {% else %}
                                             <tr>
                                                 <td colspan="6" class="text-center">No hay horneados registrados recientemente</td>
                                             </tr>
-                                            {% endfor %}
+                                            {% endif %}
                                         </tbody>
                                     </table>
                                 </div>

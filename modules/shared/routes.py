@@ -43,7 +43,7 @@ def index():
         # Redirigir según rol
         role_redirects = {
             'Administrador': 'admin.dashboard_admin',
-            'Produccion': 'production.produccion',
+            'Produccion': 'production.dashboard_produccion',
             'Ventas': 'ventas.ventas',
             'Cliente': 'cliente.portal_cliente'
         }
