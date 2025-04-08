@@ -60,9 +60,13 @@
                         </li>
                         <li class="nav-item my-1">
                             <a class="nav-link {% if request.endpoint == 'admin.logs_admin' %}active{% endif %} rounded-3" href="{{ url_for('admin.logs_admin') }}"> 
-                                Logs del sistema
+                                Eventos del sistema
                             </a>
                         </li> 
+
+
+
+                        
                         <li class="nav-item my-4 text-center">
                             <a class="nav-link" href="#" style="background-color: #603A1E;">
                                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="30">
