@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()  # Carga las variables del archivo .env
-print("Usuario de MySQL en Flask:", os.getenv("USUARIO_MYSQL"))  # Verifica qué está cargando Flask
+print("Usuario de MySQL en Flask:", os.getenv("USUARIO_MYSQL"))  # 🕵️‍♂️ Verifica qué está cargando Flask
 
 class Config:
     # ? Clave de seguridad para evitar ataques CSRF

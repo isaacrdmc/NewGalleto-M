@@ -1,9 +1,7 @@
-
+# __init__.py de shared
 from flask import Blueprint
 
-# ? Vamos a crear lo blue prints para las rutas dentro de la sección de adminstración
 bp_shared = Blueprint('shared', __name__)
 
-
-# * Archivo con las rutas de la sección
-from . import routes    # ~ podemos importar más de uno en este archivo '__init__'
+# Importar rutas después de definir el blueprint para evitar circular imports
+from . import routes

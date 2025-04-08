@@ -1,0 +1,196 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-warning">
+                    <h2 class="text-center fw-bold mb-0 py-2"><i class="fa-solid fa-history me-2"></i>Historial de Horneadas</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Filtros -->
+                    <div class="row mb-4">
+                        <div class="col-md-8 offset-md-2">
+                            <div class="card shadow-sm">
+                                <div class="card-body py-3">
+                                    <form action="{{ url_for('production.historial') }}" method="get" class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="fecha_inicio" class="form-label">Fecha inicio:</label>
+                                            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                                                value="{{ request.args.get('fecha_inicio', '') }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="fecha_fin" class="form-label">Fecha fin:</label>
+                                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin"
+                                                value="{{ request.args.get('fecha_fin', '') }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="receta" class="form-label">Tipo de galleta:</label>
+                                            <select class="form-select" id="receta" name="receta">
+                                                <option value="">Todos</option>
+                                                {% for receta in recetas %}
+                                                <option value="{{ receta.id }}" {% if request.args.get('receta')|int == receta.id %}selected{% endif %}>
+                                                    {{ receta.nombre }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-12 text-center">
+                                            <button type="submit" class="btn btn-primary px-4">
+                                                <i class="fa-solid fa-filter me-2"></i>Filtrar
+                                            </button>
+                                            <a href="{{ url_for('production.historial') }}" class="btn btn-outline-secondary px-4">
+                                                <i class="fa-solid fa-times me-2"></i>Limpiar
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de resultados -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Fecha</th>
+                                    <th scope="col">Galleta</th>
+                                    <th scope="col">Temperatura</th>
+                                    <th scope="col">Tiempo (min)</th>
+                                    <th scope="col">Cantidad</th>
+                                    <th scope="col">Panadero</th>
+                                    <th scope="col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if horneados %}
+                                    {% for horneado in horneados %}
+                                    <tr>
+                                        <th scope="row">{{ horneado.id }}</th>
+                                        <td>{{ horneado.fecha_horneado.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>{{ horneado.receta.nombre }}</td>
+                                        <td>{{ horneado.temperatura_horno }}°C</td>
+                                        <td>{{ horneado.tiempo_horneado }}</td>
+                                        <td>{{ horneado.cantidad_producida }}</td>
+                                        <td>{{ horneado.usuario.username }}</td>
+                                        <td>
+                                            <a href="{{ url_for('production.detalle_horneado', id_horneado=horneado.id) }}" class="btn btn-sm btn-info">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <p class="text-muted mb-0">No se encontraron registros de horneado</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Gráficas de estadísticas -->
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <h4 class="text-center mb-4">Estadísticas de Producción</h4>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Producción por día</h5>
+                                    <canvas id="chartProduccionDiaria"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Producción por tipo de galleta</h5>
+                                    <canvas id="chartProduccionPorTipo"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar estadísticas para las gráficas mediante AJAX
+    fetch('{{ url_for("production.estadisticas_horneado") }}')
+        .then(response => response.json())
+        .then(data => {
+            // Configurar gráfica de producción diaria
+            const ctxDiaria = document.getElementById('chartProduccionDiaria').getContext('2d');
+            new Chart(ctxDiaria, {
+                type: 'line',
+                data: {
+                    labels: data.horneados_por_dia.map(item => item.fecha),
+                    datasets: [{
+                        label: 'Galletas producidas',
+                        data: data.horneados_por_dia.map(item => item.total),
+                        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Configurar gráfica de producción por tipo
+            const ctxTipo = document.getElementById('chartProduccionPorTipo').getContext('2d');
+            new Chart(ctxTipo, {
+                type: 'pie',
+                data: {
+                    labels: data.galletas_por_receta.map(item => item.nombre),
+                    datasets: [{
+                        data: data.galletas_por_receta.map(item => item.total),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        })
+        .catch(error => console.error('Error al cargar estadísticas:', error));
+});
+</script>
+{% endblock %}

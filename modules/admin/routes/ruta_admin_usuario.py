@@ -1,8 +1,7 @@
 
 
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from ..services import agregar_proveedor, obtener_proveedores
-#  ~ Importamos el archvio con el nombre del Blueprint para la sección
+from flask_login import login_required, current_user
 from ...admin import bp_admistracion
 
 
@@ -27,6 +26,8 @@ from ...admin import bp_admistracion
 
 @bp_admistracion.route('/usuarios')
 def usuarios():
+    if current_user.rol.nombreRol != 'Administrador':
+        return redirect(url_for('shared.login'))
     return render_template('admin/usuarios.html')
 # ~ Sección para el porveedores
  

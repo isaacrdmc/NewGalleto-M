@@ -1,0 +1,198 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Hornear galletas</h2>
+                    
+                    <!-- Sección para registrar un nuevo horneado -->
+                    <div class="row my-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Registrar Horneado</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ url_for('production.registrar_horneado') }}" method="post">
+                                        <div class="mb-3">
+                                            <label for="id_receta" class="form-label">Receta:</label>
+                                            <select class="form-select" id="id_receta" name="id_receta" required>
+                                                <option value="" selected disabled>Seleccionar...</option>
+                                                {% for receta in recetas %}
+                                                <option value="{{ receta.id }}">{{ receta.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="temperatura" class="form-label">Temperatura (°C):</label>
+                                            <input type="number" class="form-control" id="temperatura" name="temperatura" required min="100" max="250">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo" class="form-label">Tiempo (minutos):</label>
+                                            <input type="number" class="form-control" id="tiempo" name="tiempo" required min="5" max="60">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="cantidad" class="form-label">Cantidad a producir:</label>
+                                            <input type="number" class="form-control" id="cantidad" name="cantidad" required min="1">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="observaciones" class="form-label">Observaciones:</label>
+                                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">Registrar Horneado</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Visualización de Horno</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-center flex-wrap bg-light p-3 rounded">
+                                        <!-- Aquí representamos visualmente el horno -->
+                                        <img src="{{ url_for('static', filename='img/horno.png') }}" alt="Horno" class="img-fluid mb-3" style="max-height: 200px;">
+                                        
+                                        <!-- Indicador de temperatura -->
+                                        <div class="progress w-100 mb-3" style="height: 30px;">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" id="temp-indicator">
+                                                0°C
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Botones para simular -->
+                                        <button type="button" class="btn btn-danger me-2" id="btn-calentar">
+                                            <i class="fa-solid fa-fire"></i> Calentar
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="btn-enfriar">
+                                            <i class="fa-solid fa-snowflake"></i> Enfriar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mostrar los horneados recientes -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Últimos Horneados</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <table class="table table-striped table-hover m-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Receta</th>
+                                                <th>Temperatura</th>
+                                                <th>Tiempo</th>
+                                                <th>Cantidad</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if horneados %}
+                                            {% for horneado in horneados %}
+                                            <tr>
+                                                <td>{{ horneado.fecha_horneado.strftime('%d/%m/%Y %H:%M') }}</td>
+                                                <td>{{ horneado.receta.nombre }}</td>
+                                                <td>{{ horneado.temperatura_horno }}°C</td>
+                                                <td>{{ horneado.tiempo_horneado }} min</td>
+                                                <td>{{ horneado.cantidad_producida }}</td>
+                                                <td>
+                                                    <a href="{{ url_for('production.detalle_horneado', id_horneado=horneado.id) }}" class="btn btn-info btn-sm">
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="6" class="text-center">No hay horneados registrados recientemente</td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer text-center">
+                                    <a href="{{ url_for('production.historial') }}" class="btn btn-primary">
+                                        <i class="fa-solid fa-history"></i> Ver historial completo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para la simulación de temperatura -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnCalentar = document.getElementById('btn-calentar');
+        const btnEnfriar = document.getElementById('btn-enfriar');
+        const tempIndicator = document.getElementById('temp-indicator');
+        const temperaturaInput = document.getElementById('temperatura');
+        
+        let tempActual = 25; // Temperatura ambiente en °C
+        
+        // Actualizar el indicador de temperatura
+        function actualizarTemperatura() {
+            const porcentaje = Math.min(100, (tempActual / 250) * 100);
+            tempIndicator.style.width = porcentaje + '%';
+            tempIndicator.textContent = tempActual + '°C';
+            
+            // Cambiar color según temperatura
+            if (tempActual < 100) {
+                tempIndicator.className = 'progress-bar bg-info';
+            } else if (tempActual < 180) {
+                tempIndicator.className = 'progress-bar bg-warning';
+            } else {
+                tempIndicator.className = 'progress-bar bg-danger';
+            }
+        }
+        
+        // Evento para calentar
+        btnCalentar.addEventListener('click', function() {
+            if (tempActual < 250) {
+                tempActual += 10;
+                actualizarTemperatura();
+                temperaturaInput.value = tempActual;
+            }
+        });
+        
+        // Evento para enfriar
+        btnEnfriar.addEventListener('click', function() {
+            if (tempActual > 25) {
+                tempActual -= 10;
+                actualizarTemperatura();
+                temperaturaInput.value = tempActual;
+            }
+        });
+        
+        // Inicializar temperatura
+        actualizarTemperatura();
+    });
+</script>
+{% endblock %}

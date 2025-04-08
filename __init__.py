@@ -1,42 +1,47 @@
-
-# TODO __init__.py principal de la app, es donde creamos y configuramos la APP de flask
-
-
+# __init__.py principal de la app
 from flask import Flask, redirect, url_for
 from config import Config
 from database.conexion import db
+from flask_login import LoginManager
 
-
-# ? Definimos una función que es donde iran todos los brueprint del sistio
 def create_app():
-    app = Flask(__name__)   # * Creamos una variable para instanciar Flask
-    app.config.from_object(Config)  # ^ Configuración de la app
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
-    # ^ Inicializmos la conexión con la BD
+    # Inicializar la base de datos
     db.init_app(app)
 
+    # Configurar Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'shared.login'
 
-    # ? Importamos los Blueprints de cada módulo
+    # Importar modelos después de crear la app para evitar importaciones circulares
+    from modules.shared.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # Importar blueprints
     from modules.admin import bp_admistracion
     from modules.client import bp_clientes
     from modules.production import bp_production
     from modules.ventas import bp_ventas
     from modules.shared import bp_shared
- 
-    # ? Registramos los bluebrints de cada módulo importado
-    app.register_blueprint(bp_admistracion, url_prefix='/admin')    # Nombre de la ruta:  admin
-    app.register_blueprint(bp_clientes, url_prefix='/cliente')    # Nombre de la ruta:  cliente
-    app.register_blueprint(bp_production, url_prefix='/production')    # Nombre de la ruta:  production
-    app.register_blueprint(bp_ventas, url_prefix='/ventas')    # Nombre de la ruta:  ventas
-    app.register_blueprint(bp_shared, url_prefix='/shared')    # Nombre de la ruta:  shared
 
+    # Registrar blueprints
+    app.register_blueprint(bp_admistracion, url_prefix='/admin')
+    app.register_blueprint(bp_clientes, url_prefix='/cliente')
+    app.register_blueprint(bp_production, url_prefix='/production')
+    app.register_blueprint(bp_ventas, url_prefix='/ventas')
+    app.register_blueprint(bp_shared, url_prefix='/shared')
 
-    
-    # ? Cuando la app se ejecute nos enviara a la ruta del login 
+    # Configurar ruta principal
     @app.route('/')
     def index():
-        return redirect(url_for('shared.login'))  # Asegúrate de que 'login' es el nombre correcto de la vista
-
+        return redirect(url_for('shared.login'))    
+    
     # @app.before_first_request
     # def show_routes():
     #     print("=== Rutas registradas ===")
@@ -45,9 +50,4 @@ def create_app():
     #     print("========================")
 
 
-    # * Ejecutamos la app
     return app
-
-
-
-    # * Ahora los utilizamos
