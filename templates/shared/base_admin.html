@@ -63,6 +63,13 @@
                                 Otras vistas
                             </a>
                         </li>
+                        <li class="nav-item my-1">
+                            <a class="nav-link {% if request.endpoint == 'admin.logs_admin' %}active{% endif %} rounded-3" href="{{ url_for('admin.logs_admin') }}"> 
+                                Eventos del sistema
+                            </a>
+                        </li> 
+
+                        
                         <li class="nav-item mt-3">
                             <a class="nav-link rounded-5 py-1" style="background-color: #b88277;" href="{{ url_for('shared.logout') }}">
                                 <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50" class="me-2">
