@@ -2,23 +2,39 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Reportes
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="text-white fw-normal fs-6">
+            <h1>Dashboard del Administrador</h1>
+        </div>
+
+        <!-- Botón de notificaciones -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
     </div>
 
     <!-- Contenido del Dashboard -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
-        <h1 class="my-4">Dashboard del Administrador - Don Galleto</h1>
-
         <!-- Fila de estadísticas -->
         <div class="row">
-            <!-- Ventas Diarias -->
+            <!-- Ventas Semanales -->
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Ventas Diarias</h5>
-                        <h3 class="card-text text-success">$10,000</h3>
-                        <p class="text-muted">Hoy</p>
+                        <h5 class="card-title">Ventas Semanales</h5>
+                        <h3 class="card-text text-success">${{ "%.2f"|format(ventas_semanales.get('total_ventas', 0)) }}</h3>
+                        <p class="text-muted">{{ ventas_semanales.get('cantidad_ventas', 0) }} transacciones</p>
                     </div>
                 </div>
             </div>
@@ -27,9 +43,15 @@
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Productos Más Vendidos</h5>
-                        <h3 class="card-text text-warning">Galleta de Chocolate</h3>
-                        <p class="text-muted">Superando todas las expectativas</p>
+                        <h5 class="card-title">Top 3 Galletas</h5>
+                        <ol class="ps-3">
+                            {% for galleta in top_galletas %}
+                            <li>{{ galleta.get('nombre', 'N/A') }} <span class="text-success">(${{ "%.2f"|format(galleta.get('total_ventas', 0)) }})</span></li>
+                            {% else %}
+                            <li>No hay datos disponibles</li>
+                            {% endfor %}
+                        </ol>
+                        <p class="text-muted">Por ganancias totales</p>
                     </div>
                 </div>
             </div>
@@ -38,20 +60,42 @@
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Presentaciones Más Vendidas</h5>
-                        <h3 class="card-text text-primary">Paquete de 1kg</h3>
-                        <p class="text-muted">La más popular entre nuestros clientes</p>
+                        <h5 class="card-title">Top Presentaciones</h5>
+                        <ol class="ps-3">
+                            {% for presentacion in top_presentaciones %}
+                            <li>
+                                {% if presentacion.get('formaVenta') == 'Por pieza' %}
+                                    Por Pieza
+                                {% elif presentacion.get('formaVenta') == 'Por precio' %}
+                                    Por Gramos
+                                {% else %}
+                                    {{ presentacion.get('formaVenta', 'Paquete/Caja') }}
+                                {% endif %}
+                                <span class="text-success">(${{ "%.2f"|format(presentacion.get('total_ventas', 0)) }})</span>
+                            </li>
+                            {% else %}
+                            <li>No hay datos disponibles</li>
+                            {% endfor %}
+                        </ol>
+                        <p class="text-muted">Por ganancias totales</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Inventario Actual -->
+            <!-- Estimación de Costos -->
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Inventario Actual</h5>
-                        <h3 class="card-text text-danger">1,500 Paquetes</h3>
-                        <p class="text-muted">Disponible para distribución</p>
+                        <h5 class="card-title">Estimación Semanal</h5>
+                        <p class="mb-1">Ventas: <span class="text-success">${{ "%.2f"|format(estimacion_costos.get('ventas', 0)) }}</span></p>
+                        <p class="mb-1">Compras: <span class="text-danger">${{ "%.2f"|format(estimacion_costos.get('compras', 0)) }}</span></p>
+                        <p class="mb-1">Mermas: <span class="text-warning">${{ "%.2f"|format(estimacion_costos.get('mermas', 0)) }}</span></p>
+                        <hr>
+                        <h6 class="mb-0">Ganancia: 
+                            <span class="{% if estimacion_costos.get('ganancia', 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ${{ "%.2f"|format(estimacion_costos.get('ganancia', 0)) }}
+                            </span>
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -63,100 +107,59 @@
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Ventas Semanales</h5>
-                        <!-- Aquí puedes integrar un gráfico con Chart.js -->
+                        <h5 class="card-title">Ventas Últimas 4 Semanas</h5>
                         <canvas id="ventasSemanales"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráfico de Productos Más Vendidos -->
+            <!-- Gráfico de Ventas por Día -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Productos Más Vendidos</h5>
-                        <!-- Otro gráfico para productos más vendidos -->
-                        <canvas id="productosVendidos"></canvas>
+                        <h5 class="card-title">Ventas por Día (Última Semana)</h5>
+                        <canvas id="ventasDiarias"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de distribución de ventas -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Distribución por Tipo de Galleta</h5>
+                        <canvas id="distribucionVentas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de pastel -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top 5 Galletas (Ventas Totales)</h5>
+                        <canvas id="graficoPastel"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Gráficos de desempeño -->
-        <div class="row">
-            <!-- Desempeño de la Producción -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Desempeño de la Producción</h5>
-                        <p class="text-muted">Comparación de la producción diaria frente a las metas de la semana</p>
-                        <!-- Aquí puedes integrar otro gráfico -->
-                        <canvas id="desempenoProduccion"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Análisis de Demanda -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Análisis de Demanda</h5>
-                        <p class="text-muted">Demanda de productos a lo largo del mes</p>
-                        <!-- Gráfico para analizar la demanda -->
-                        <canvas id="analisisDemanda"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Generación de datos aleatorios para los gráficos (Ejemplo)
-    function generarDatosVentasSemanales() {
-        return [12000, 15000, 13000, 18000, 17000, 19000]; // Ventas de cada semana
-    }
-
-    function generarDatosProductosVendidos() {
-        return [250, 300, 450, 500, 600, 550]; // Cantidad de productos vendidos por semana
-    }
-
-    // Configuración de gráficos con Chart.js
     document.addEventListener('DOMContentLoaded', function () {
+        // Gráfico 1: Ventas semanales (barras)
         var ctxVentasSemanales = document.getElementById('ventasSemanales').getContext('2d');
-        var ventasSemanalesChart = new Chart(ctxVentasSemanales, {
-            type: 'line',
+        new Chart(ctxVentasSemanales, {
+            type: 'bar',
             data: {
-                labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5', 'Semana 6'],
+                labels: JSON.parse('{{ historial_ventas.semanas|tojson|safe }}'),
                 datasets: [{
                     label: 'Ventas en $',
-                    data: generarDatosVentasSemanales(),
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        var ctxProductosVendidos = document.getElementById('productosVendidos').getContext('2d');
-        var productosVendidosChart = new Chart(ctxProductosVendidos, {
-            type: 'bar',
-            data: {
-                labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5', 'Semana 6'],
-                datasets: [{
-                    label: 'Productos Vendidos',
-                    data: generarDatosProductosVendidos(),
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    data: JSON.parse('{{ historial_ventas.datos|tojson|safe }}'),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
                 }]
             },
@@ -164,53 +167,107 @@
                 responsive: true,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
                     }
                 }
             }
         });
 
-        var ctxDesempenoProduccion = document.getElementById('desempenoProduccion').getContext('2d');
-        var desempenoProduccionChart = new Chart(ctxDesempenoProduccion, {
+        // Gráfico 2: Ventas diarias (línea)
+        var ctxVentasDiarias = document.getElementById('ventasDiarias').getContext('2d');
+        new Chart(ctxVentasDiarias, {
             type: 'line',
             data: {
-                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+                labels: JSON.parse('{{ ventas_por_dia.fechas|tojson|safe }}'),
                 datasets: [{
-                    label: 'Producción Diaria',
-                    data: [200, 300, 250, 350, 400],
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    tension: 0.3
+                    label: 'Ventas en $',
+                    data: JSON.parse('{{ ventas_por_dia.datos|tojson|safe }}'),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 scales: {
                     y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico 3: Distribución por tipo de galleta (barras horizontales)
+        var ctxDistribucionVentas = document.getElementById('distribucionVentas').getContext('2d');
+        new Chart(ctxDistribucionVentas, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
+                datasets: [{
+                    label: 'Cantidad Vendida',
+                    data: JSON.parse('{{ distribucion_ventas.cantidades|tojson|safe }}'),
+                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: {
+                    x: {
                         beginAtZero: true
                     }
                 }
             }
         });
 
-        var ctxAnalisisDemanda = document.getElementById('analisisDemanda').getContext('2d');
-        var analisisDemandaChart = new Chart(ctxAnalisisDemanda, {
-            type: 'bar',
+        // Gráfico 4: Top 5 galletas (pastel)
+        var ctxGraficoPastel = document.getElementById('graficoPastel').getContext('2d');
+        new Chart(ctxGraficoPastel, {
+            type: 'pie',
             data: {
-                labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5', 'Semana 6'],
+                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
                 datasets: [{
-                    label: 'Demanda de Productos',
-                    data: [100, 150, 200, 250, 300, 350],
-                    backgroundColor: 'rgba(255, 159, 64, 0.5)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
+                    data: JSON.parse('{{ distribucion_ventas.totales|tojson|safe }}'),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.raw || 0;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = Math.round((value / total) * 100);
+                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }

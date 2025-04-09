@@ -1,34 +1,377 @@
 {% extends "shared/base_admin.html" %}
 
+{% block title %}Gestión de Usuarios{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar Usuarios
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="text-white fw-normal fs-6">
+            <h1>Gestión de Usuarios</h1>
+        </div>
+
+        <!-- Botón de notificaciones -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <!-- Aquí se listan las notificaciones -->
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
     </div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
-        <h1>Gestión de Usuarios</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Rol</th>
-                    <>Acciones</ th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Juan Pérez</td>
-                    <td>Administrador</td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="#" class="btn btn-success">Agregar Usuario</a>
+        <div class="container mt-3">
+            <!-- Botón y búsqueda -->
+            <div class="d-flex justify-content-between mb-3">
+                <!-- Botón para agregar un nuevo usuario -->
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalUsuario"
+                    onclick="limpiarFormularioUsuario()">
+                    ➕ Nuevo usuario
+                </button>
+
+                <!-- Búsqueda de usuarios -->
+                <input type="text" id="buscarUsuario" placeholder="Buscar" class="form-control"
+                    style="max-width: 200px;" onkeyup="filtrarUsuarios()">
+            </div>
+
+            <div class="table-responsive rounded rounded-3 shadow-sm">
+                <!-- Tabla de usuarios -->
+                <table class="table table-bordered table-striped table-hover bg-white text-center">
+                    <thead style="background-color: #d6b7a1;">
+                        <tr>
+                            <th>Acción</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Registro</th>
+                            <th>Último acceso</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuarios">
+                        {% for u in usuarios %}
+                        <tr id="row-{{ u.idUser }}">
+                            <td>
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#modalUsuario" onclick="editarUsuario('{{ u.idUser }}')">
+                                    ✏️
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                    onclick="eliminarUsuario('{{ u.idUser }}', '{{ u.username }}')">
+                                    ❌
+                                </button>
+                            </td>
+                            <td>{{ u.username }}</td>
+                            <td>{{ u.rol.nombreRol }}</td>
+                            <td>{{ u.fechaRegistro.strftime('%d/%m/%Y') if u.fechaRegistro else 'N/A' }}</td>
+                            <td>{{ u.ultimoAcceso.strftime('%d/%m/%Y %H:%M') if u.ultimoAcceso else 'Nunca' }}</td>
+                            <td>
+                                <span
+                                    class="badge bg-{% if u.estado == 'Activo' %}success{% elif u.estado == 'Bloqueado' %}danger{% else %}secondary{% endif %}">
+                                    {{ u.estado }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal para agregar/editar usuarios -->
+        <div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header text-white" style="background-color: #603A1E">
+                        <h5 class="modal-title fs-5" id="modalUsuarioLabel">Agregar un usuario</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form id="formUsuario" class="needs-validation" novalidate>
+                            <input type="hidden" id="idUsuario" name="idUsuario">
+                            {{ form.hidden_tag() }}
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label fw-bold">Nombre de usuario</label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                        <div class="invalid-feedback">Por favor ingrese un nombre de usuario</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label fw-bold">Contraseña</label>
+                                        <input type="password" class="form-control" id="password" name="password">
+                                        <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres
+                                        </div>
+                                        <small class="text-muted">Dejar en blanco para no cambiar</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- En la parte del modal donde se selecciona el rol -->
+                                    <div class="mb-3">
+                                        <label for="rol" class="form-label fw-bold">Rol</label>
+                                        <select class="form-select" id="rol" name="rol" required>
+                                            {% for rol in form.rol.choices %}
+                                            <option value="{{ rol[0] }}">{{ rol[1] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="estado" class="form-label fw-bold">Estado</label>
+                                        <select class="form-select" id="estado" name="estado" required>
+                                            {% for estado in form.estado.choices %}
+                                            <option value="{{ estado[0] }}">{{ estado[1] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="guardarUsuario()" id="btnGuardarUsuario">
+                            Guardar Usuario
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 </div>
+
+<!-- JavaScript -->
+<script>
+    // Funciones para el CRUD de usuarios
+
+    async function guardarUsuario() {
+    try {
+        Swal.fire({
+            title: 'Procesando...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        const idUsuario = document.getElementById('idUsuario').value;
+        const esEdicion = idUsuario !== '';
+
+        const data = {
+            username: document.getElementById('username').value.trim(),
+            password: document.getElementById('password').value.trim(),
+            rol: document.getElementById('rol').value,
+            estado: document.getElementById('estado').value
+        };
+
+        // Validaciones
+        if (!data.username) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'El nombre de usuario es requerido' });
+            return;
+        }
+
+        if (!esEdicion && !data.password) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'La contraseña es requerida para nuevos usuarios' });
+            return;
+        }
+
+        const url = esEdicion
+            ? `/admin/usuarios/editar/${idUsuario}`
+            : '/admin/usuarios/agregar';
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: result.mensaje,
+            showConfirmButton: false,
+            timer: 1500
+        });
+
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalUsuario'));
+        if (modal) modal.hide();
+        
+        // Limpiar el formulario
+        limpiarFormularioUsuario();
+        
+        // Actualizar la tabla después de un pequeño retraso para asegurar que el modal se cierre
+        actualizarTablaUsuarios();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Error desconocido' });
+    }
+}
+
+    async function editarUsuario(id) {
+        try {
+            const response = await fetch(`/admin/usuarios/obtener/${id}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const usuario = await response.json();
+
+            limpiarFormularioUsuario();
+
+            document.getElementById("idUsuario").value = usuario.id;
+            document.getElementById("username").value = usuario.username;
+            document.getElementById("rol").value = usuario.rol;
+            document.getElementById("estado").value = usuario.estado;
+
+            document.querySelector('#modalUsuario .modal-title').textContent = 'Editar usuario';
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Error al cargar usuario' });
+        }
+    }
+
+    async function eliminarUsuario(id, username) {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: `¿Quieres eliminar al usuario "${username}"? Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const response = await fetch(`/admin/usuarios/eliminar/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            Swal.fire('Eliminado', result.mensaje, 'success');
+            actualizarTablaUsuarios();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire('Error', error.message || 'Error al eliminar usuario', 'error');
+        }
+    }
+
+    function filtrarUsuarios() {
+        const filtro = document.getElementById("buscarUsuario").value.toLowerCase();
+        document.querySelectorAll("#tablaUsuarios tr").forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(filtro) ? "" : "none";
+        });
+    }
+
+    async function actualizarTablaUsuarios() {
+        try {
+            const response = await fetch('/admin/usuarios/listar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const usuarios = await response.json();
+            const tbody = document.querySelector('#tablaUsuarios');
+            tbody.innerHTML = '';
+
+            usuarios.forEach(u => {
+                const row = document.createElement('tr');
+                row.id = `row-${u.idUser}`;
+
+                // Formatear fechas como lo hace Jinja2
+                const fechaRegistro = u.fechaRegistro ?
+                    new Date(u.fechaRegistro).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) :
+                    'N/A';
+
+                let ultimoAcceso = 'Nunca';
+                if (u.ultimoAcceso) {
+                    const fecha = new Date(u.ultimoAcceso);
+                    ultimoAcceso = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                        fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                row.innerHTML = `
+                <td>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
+                        data-bs-target="#modalUsuario" onclick="editarUsuario('${u.idUser}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" 
+                        onclick="eliminarUsuario('${u.idUser}', '${u.username}')">❌</button>
+                </td>
+                <td>${u.username}</td>
+                <td>${u.rol?.nombreRol || 'N/A'}</td>
+                <td>${fechaRegistro}</td>
+                <td>${ultimoAcceso}</td>
+                <td>
+                    <span class="badge bg-${u.estado === 'Activo' ? 'success' :
+                        u.estado === 'Bloqueado' ? 'danger' : 'secondary'}">
+                        ${u.estado}
+                    </span>
+                </td>
+            `;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error al actualizar tabla:', error);
+            Swal.fire('Error', 'No se pudo actualizar la lista de usuarios', 'error');
+        }
+    }
+
+    function limpiarFormularioUsuario() {
+        document.getElementById("formUsuario").reset();
+        document.getElementById("idUsuario").value = '';
+        document.querySelector('#modalUsuario .modal-title').textContent = 'Agregar un usuario';
+    }
+
+    function cerrarModalUsuario() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalUsuario'));
+        if (modal) modal.hide();
+
+        // Limpiar backdrops si persisten
+        const backdrops = document.getElementsByClassName('modal-backdrop');
+        while (backdrops.length > 0) {
+            backdrops[0].parentNode.removeChild(backdrops[0]);
+        }
+
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+</script>
 {% endblock %}

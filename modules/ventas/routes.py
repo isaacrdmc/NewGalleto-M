@@ -5,7 +5,7 @@ from . import bp_ventas
 @bp_ventas.route('/ventas')
 @login_required
 def ventas():
-    if current_user.rol.nombreRol != 'Ventas':
+    if current_user.rol.nombreRol not in ['Ventas', 'Administrador']:
         flash('No tienes permisos para acceder a esta sección', 'danger')
         return redirect(url_for('shared.index'))
     return render_template('ventas/ventas.html')

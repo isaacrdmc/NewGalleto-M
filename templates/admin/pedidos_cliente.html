@@ -1,0 +1,101 @@
+{% extends "shared/base_admin.html" %}
+
+{% block title %}Historial de Pedidos - {{ cliente.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{{ url_for('admin.clientes') }}" class="btn btn-secondary">Volver a Clientes</a>
+        </div>
+        <div class="text-white fw-normal fs-6">
+            <h1>Historial de Pedidos</h1>
+        </div>
+
+        <!-- Botón de notificaciones -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Información del Cliente</h5>
+                <p class="card-text">
+                    <strong>Usuario:</strong> {{ cliente.username }}<br>
+                    <strong>Total Pedidos:</strong> {{ pedidos|length }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Total</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.fecha }}</td>
+                        <td>
+                            <span class="badge bg-{% if pedido.estado == 'Entregado' %}success{% elif pedido.estado == 'Cancelado' %}danger{% else %}warning{% endif %}">
+                                {{ pedido.estado }}
+                            </span>
+                        </td>
+                        <td>${{ pedido.total|float }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#detalles-{{ pedido.id }}" aria-expanded="false">
+                                Ver Detalles
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="detalles-{{ pedido.id }}">
+                        <td colspan="5">
+                            <div class="p-3 bg-light">
+                                <h6>Productos:</h6>
+                                <ul class="list-group">
+                                    {% for item in pedido['items'] %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ item.galleta }} - {{ item.presentacion }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ item.cantidad }} x ${{ item.precio_unitario|float }} = ${{ item.subtotal|float }}
+                                        </span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No hay pedidos registrados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+{% endblock %}

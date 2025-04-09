@@ -5,7 +5,7 @@ from flask import Blueprint
 bp_admistracion = Blueprint('admin', __name__)
 
 # * Archivo con las rutas de la sección
-from .routes import ruta_admin_clientes, ruta_admin_dashboard, ruta_admin_proveedores, ruta_admin_Inventario, ruta_admin_recetas, ruta_admin_usuario     # ~ podemos importar más de uno en este archivo '__init__'
+from .routes import ruta_admin_clientes, ruta_admin_dashboard, ruta_admin_proveedores, ruta_admin_recetas, ruta_admin_usuario, ruta_admin_vistas     # ~ podemos importar más de uno en este archivo '__init__'
 
 
 
