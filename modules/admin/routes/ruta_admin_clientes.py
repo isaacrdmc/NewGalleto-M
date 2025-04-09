@@ -45,7 +45,8 @@ def agregar_cliente_route():
             db.session.commit()
 
         
-        current_app.logger.info(f'Cliente agregado correctamente por {current_user.username}')
+        # current_app.logger.info(f'Cliente {cu} agregado correctamente por {current_user.username}')
+        current_app.logger.info(f'Cliente {nuevo_cliente.username} agregado correctamente por {current_user.username}')
         
         return jsonify({
             "mensaje": "Cliente agregado correctamente",
@@ -73,6 +74,8 @@ def editar_cliente(id):
             username=data['username'],
             estado=data['estado']
         )
+
+        current_app.logger.info(f'Cliente {cliente.username} editado correctamente por {current_user.username}')
         
         return jsonify({
             "mensaje": "Cliente actualizado correctamente",
@@ -84,6 +87,7 @@ def editar_cliente(id):
         }), 200
         
     except Exception as e:
+        current_app.logger.error(f'Error al editar el cliente: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/eliminar/<int:id>', methods=['POST'])
@@ -91,6 +95,7 @@ def editar_cliente(id):
 def eliminar_cliente_route(id):
     try:
         cliente = eliminar_cliente(id)
+        current_app.logger.info(f'Cliente {cliente.username} eliminado correctamente po {current_user.username}')
         return jsonify({
             "mensaje": "Cliente eliminado correctamente",
             "cliente": {
@@ -99,6 +104,7 @@ def eliminar_cliente_route(id):
             }
         }), 200
     except Exception as e:
+        current_app.logger.error(f'Error al eliminar el cliente: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/obtener/<int:id>')
@@ -107,8 +113,11 @@ def obtener_cliente(id):
     try:
         cliente = User.query.get_or_404(id)
         if cliente.idRol != 4:
+            current_app.logger.warning(f'Acceso no autorizado a la información del cliente {cliente.username} por {current_user.username}')
             raise ValueError("El usuario no es un cliente")
             
+        current_app.looger.info(f'Acceso a la información del cliente {cliente.username} por {current_user.username}')
+
         return jsonify({
             "id": cliente.idUser,
             "username": cliente.username,
@@ -116,13 +125,20 @@ def obtener_cliente(id):
             "fechaRegistro": cliente.fechaRegistro.strftime('%Y-%m-%d %H:%M:%S') if cliente.fechaRegistro else None,
             "ultimoAcceso": cliente.ultimoAcceso.strftime('%Y-%m-%d %H:%M:%S') if cliente.ultimoAcceso else None
         }), 200
+    
     except Exception as e:
+        current_app.logger.error(f'Error al obtener el cliente: {str(e)}')        
         return jsonify({"error": str(e)}), 404
 
+
+
+
+# TODO Falta el logger de esta ruta
 @bp_admistracion.route('/clientes/pedidos/<int:id>')
 @login_required
 def ver_pedidos_cliente(id):
     if current_user.rol.nombreRol != 'Administrador':
+        current_app.logger.warning(f'Acceso no autorizado a la información de los pedidos del cliente')
         return redirect(url_for('shared.login'))
     
     pedidos = obtener_pedidos_cliente(id)
