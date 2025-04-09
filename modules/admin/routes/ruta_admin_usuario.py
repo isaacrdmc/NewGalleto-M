@@ -28,9 +28,6 @@ def agregar_usuario_route():
     try:
         data = request.get_json()
         
-        if not all(key in data for key in ['username', 'password', 'rol', 'estado']):
-            return jsonify({'error': 'Datos incompletos'}), 400
-            
         nuevo_usuario = agregar_usuario(
             username=data['username'],
             password=data['password'],
@@ -41,13 +38,20 @@ def agregar_usuario_route():
         return jsonify({
             "mensaje": "Usuario agregado correctamente",
             "usuario": {
-                "id": nuevo_usuario.idUser,
+                "idUser": nuevo_usuario.idUser,
                 "username": nuevo_usuario.username,
-                "rol": nuevo_usuario.rol.nombreRol
+                "rol": {
+                    "idRol": nuevo_usuario.rol.idRol,
+                    "nombreRol": nuevo_usuario.rol.nombreRol
+                },
+                "fechaRegistro": nuevo_usuario.fechaRegistro.isoformat(),
+                "ultimoAcceso": nuevo_usuario.ultimoAcceso.isoformat() if nuevo_usuario.ultimoAcceso else None,
+                "estado": nuevo_usuario.estado
             }
         }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
 @bp_admistracion.route('/usuarios/editar/<int:id>', methods=['POST'])
 @login_required
@@ -109,5 +113,30 @@ def obtener_usuario(id):
             "rol": usuario.rol.idRol,
             "estado": usuario.estado
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@bp_admistracion.route('/usuarios/listar')
+@login_required
+def listar_usuarios():
+    try:
+        usuarios = obtener_usuarios()
+        usuarios_data = []
+        
+        for u in usuarios:
+            usuarios_data.append({
+                "idUser": u.idUser,
+                "username": u.username,
+                "rol": {
+                    "idRol": u.rol.idRol,
+                    "nombreRol": u.rol.nombreRol
+                },
+                "fechaRegistro": u.fechaRegistro.isoformat() if u.fechaRegistro else None,
+                "ultimoAcceso": u.ultimoAcceso.isoformat() if u.ultimoAcceso else None,
+                "estado": u.estado
+            })
+            
+        return jsonify(usuarios_data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -41,7 +41,7 @@
                         <span class="navbar-text me-3">
                             Bienvenido, {{ current_user.rol.nombreRol }}
                         </span>
-                        {% if current_user.rol.nombreRol in ['Produccion', 'Administrador'] %}
+                        {% if current_user.rol.nombreRol == 'Produccion' %}
                         <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
                             href="{{ url_for('production.inventario') }}"
                             style="background-color: #ffd47ed5 !important;">
@@ -49,7 +49,7 @@
                         </a>
                         {% endif %}
 
-                        {% if current_user.rol.nombreRol in ['Ventas', 'Administrador'] %}
+                        {% if current_user.rol.nombreRol == 'Ventas' %}
                         <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
                             href="{{ url_for('ventas.inventario_galletas') }}"
                             style="background-color: #ffd47ed5 !important;">
@@ -62,7 +62,7 @@
                     </div>
                     {% endif %}
 
-                    {% if current_user.rol.nombreRol in ['Cliente', 'Administrador'] %}
+                    {% if current_user.rol.nombreRol == 'Cliente' %}
                     <h2 class="navbar-title-center">Don Galleto</h2>
 
                     <div class="d-flex align-items-center ms-auto">

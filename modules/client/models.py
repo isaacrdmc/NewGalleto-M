@@ -8,7 +8,7 @@ class Pedido(db.Model):
     idPedidos = db.Column(db.Integer, primary_key=True, autoincrement=True)
     idCliente = db.Column(db.Integer, db.ForeignKey('usuarios.idUser'), nullable=False)
     fechaPedido = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
-    estado = db.Column(db.Enum('Pendiente', 'Enviado', 'Entregado', 'Cancelado'), default='Pendiente')
+    estadoPedido = db.Column(db.Enum('Pendiente', 'Enviado', 'Entregado', 'Cancelado'), default='Pendiente')
     costoPedido = db.Column(db.Numeric(10,2), nullable=False)
     
     detalles = db.relationship('DetallePedido', backref='pedido', cascade='all, delete-orphan')

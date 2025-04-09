@@ -159,71 +159,77 @@
     // Funciones para el CRUD de usuarios
 
     async function guardarUsuario() {
-        try {
-            Swal.fire({
-                title: 'Procesando...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
+    try {
+        Swal.fire({
+            title: 'Procesando...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
 
-            const idUsuario = document.getElementById('idUsuario').value;
-            const esEdicion = idUsuario !== '';
+        const idUsuario = document.getElementById('idUsuario').value;
+        const esEdicion = idUsuario !== '';
 
-            const data = {
-                username: document.getElementById('username').value.trim(),
-                password: document.getElementById('password').value.trim(),
-                rol: document.getElementById('rol').value,
-                estado: document.getElementById('estado').value
-            };
+        const data = {
+            username: document.getElementById('username').value.trim(),
+            password: document.getElementById('password').value.trim(),
+            rol: document.getElementById('rol').value,
+            estado: document.getElementById('estado').value
+        };
 
-            // Validaciones
-            if (!data.username) {
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'El nombre de usuario es requerido' });
-                return;
-            }
-
-            if (!esEdicion && !data.password) {
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'La contraseña es requerida para nuevos usuarios' });
-                return;
-            }
-
-            const url = esEdicion
-                ? `/admin/usuarios/editar/${idUsuario}`
-                : '/admin/usuarios/agregar';
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-
-            Swal.close();
-            Swal.fire({
-                position: 'center',
-                icon: 'success',
-                title: result.mensaje,
-                showConfirmButton: false,
-                timer: 1500
-            });
-
-            cerrarModalUsuario();
-            limpiarFormularioUsuario();
-            actualizarTablaUsuarios();
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Error desconocido' });
+        // Validaciones
+        if (!data.username) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'El nombre de usuario es requerido' });
+            return;
         }
+
+        if (!esEdicion && !data.password) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'La contraseña es requerida para nuevos usuarios' });
+            return;
+        }
+
+        const url = esEdicion
+            ? `/admin/usuarios/editar/${idUsuario}`
+            : '/admin/usuarios/agregar';
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: result.mensaje,
+            showConfirmButton: false,
+            timer: 1500
+        });
+
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalUsuario'));
+        if (modal) modal.hide();
+        
+        // Limpiar el formulario
+        limpiarFormularioUsuario();
+        
+        // Actualizar la tabla después de un pequeño retraso para asegurar que el modal se cierre
+        actualizarTablaUsuarios();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Error desconocido' });
     }
+}
 
     async function editarUsuario(id) {
         try {
@@ -308,22 +314,43 @@
 
             usuarios.forEach(u => {
                 const row = document.createElement('tr');
-                row.id = `row-${u.id}`;
+                row.id = `row-${u.idUser}`;
+
+                // Formatear fechas como lo hace Jinja2
+                const fechaRegistro = u.fechaRegistro ?
+                    new Date(u.fechaRegistro).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) :
+                    'N/A';
+
+                let ultimoAcceso = 'Nunca';
+                if (u.ultimoAcceso) {
+                    const fecha = new Date(u.ultimoAcceso);
+                    ultimoAcceso = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                        fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                }
+
                 row.innerHTML = `
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarUsuario('${u.id}', '${u.username}')">❌</button>
-                    </td>
-                    <td>${u.username}</td>
-                    <td>${u.rol}</td>
-                    <td>${u.fechaRegistro || 'N/A'}</td>
-                    <td>${u.ultimoAcceso || 'Nunca'}</td>
-                    <td><span class="badge bg-${u.estado === 'Activo' ? 'success' : u.estado === 'Bloqueado' ? 'danger' : 'secondary'}">${u.estado}</span></td>
-                `;
+                <td>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
+                        data-bs-target="#modalUsuario" onclick="editarUsuario('${u.idUser}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" 
+                        onclick="eliminarUsuario('${u.idUser}', '${u.username}')">❌</button>
+                </td>
+                <td>${u.username}</td>
+                <td>${u.rol?.nombreRol || 'N/A'}</td>
+                <td>${fechaRegistro}</td>
+                <td>${ultimoAcceso}</td>
+                <td>
+                    <span class="badge bg-${u.estado === 'Activo' ? 'success' :
+                        u.estado === 'Bloqueado' ? 'danger' : 'secondary'}">
+                        ${u.estado}
+                    </span>
+                </td>
+            `;
                 tbody.appendChild(row);
             });
         } catch (error) {
             console.error('Error al actualizar tabla:', error);
+            Swal.fire('Error', 'No se pudo actualizar la lista de usuarios', 'error');
         }
     }
 

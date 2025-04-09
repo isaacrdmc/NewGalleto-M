@@ -9,6 +9,7 @@ from ...client.models import Pedido, DetallePedido
 from ...ventas.models import Venta, DetalleVenta
 from ...production.models import Galleta
 from sqlalchemy import desc
+from database.conexion import db
 
 @bp_admistracion.route('/clientes')
 @login_required
@@ -32,7 +33,13 @@ def agregar_cliente_route():
         nuevo_cliente = agregar_cliente(
             username=data['username'],
             password=data['password']
+            # No pasar estado aquí si no es necesario
         )
+        
+        # Opcional: Actualizar el estado después si es diferente del default
+        if 'estado' in data:
+            nuevo_cliente.estado = data['estado']
+            db.session.commit()
         
         return jsonify({
             "mensaje": "Cliente agregado correctamente",
@@ -117,19 +124,19 @@ def ver_pedidos_cliente(id):
     
     pedidos_data = []
     for pedido in pedidos:
-        detalles = DetallePedido.query.filter_by(idPedido=pedido.idPedido).all()
+        detalles = DetallePedido.query.filter_by(idPedido=pedido.idPedidos).all()
         items = []
         for detalle in detalles:
             galleta = Galleta.query.get(detalle.idGalleta)  # Obtener la galleta directamente
             items.append({
-                'galleta': galleta.nombreGalleta,
+                'galleta': galleta.nombre,
                 'cantidad': detalle.cantidad,
                 'precio_unitario': detalle.precioUnitario,
                 'subtotal': detalle.subtotal
             })
         
         pedidos_data.append({
-            'id': pedido.idPedido,
+            'id': pedido.idPedidos,
             'fecha': pedido.fechaPedido.strftime('%d/%m/%Y %H:%M'),
             'estado': pedido.estadoPedido,
             'total': pedido.costoPedido,

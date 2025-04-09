@@ -64,14 +64,14 @@
                             <td>{{ cliente.total_pedidos|default(0) }}</td>
                             <td>${{ cliente.total_compras|default(0)|float }}</td>
                             <td>
-                                <a href="{{ url_for('admin.ver_pedidos_cliente', id=cliente.idUser) }}" 
-                                   class="btn btn-info btn-sm" 
-                                   title="Ver historial de pedidos">
+                                <a href="{{ url_for('admin.ver_pedidos_cliente', id=cliente.idUser) }}"
+                                    class="btn btn-info btn-sm" title="Ver historial de pedidos">
                                     📋 Historial
                                 </a>
                             </td>
                             <td>
-                                <span class="badge bg-{% if cliente.estado == 'Activo' %}success{% else %}danger{% endif %}">
+                                <span
+                                    class="badge bg-{% if cliente.estado == 'Activo' %}success{% else %}danger{% endif %}">
                                     {{ cliente.estado }}
                                 </span>
                             </td>
@@ -107,6 +107,7 @@
                                         <label for="estado" class="form-label fw-bold">Estado</label>
                                         <select class="form-select" id="estado" name="estado" required>
                                             <option value="Activo">Activo</option>
+                                            <option value="Bloqueado">Inactivo</option>
                                             <option value="Bloqueado">Bloqueado</option>
                                         </select>
                                     </div>
@@ -115,7 +116,8 @@
                                     <div class="mb-3">
                                         <label for="password" class="form-label fw-bold">Contraseña</label>
                                         <input type="password" class="form-control" id="password" name="password">
-                                        <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres</div>
+                                        <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres
+                                        </div>
                                         <small class="text-muted">Dejar en blanco para no cambiar (solo edición)</small>
                                     </div>
                                 </div>
@@ -123,7 +125,8 @@
                         </form>
                     </div>
                     <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
                     </div>
                 </div>
@@ -148,12 +151,17 @@
 
             const data = {
                 username: document.getElementById('username').value.trim(),
-                email: document.getElementById('email').value.trim(),
                 password: document.getElementById('password').value.trim()
+                // No incluir estado para nuevos clientes
             };
 
+            // Solo incluir estado si es una edición
+            if (esEdicion) {
+                data.estado = document.getElementById('estado').value;
+            }
+
             // Validaciones
-            if (!data.username || !data.email || !data.telefono || !data.direccion) {
+            if (!data.username) {
                 await Swal.fire({ icon: 'error', title: 'Error', text: 'Todos los campos son requeridos' });
                 return;
             }
@@ -218,12 +226,12 @@
             if (!response.ok) {
                 throw new Error('Error al cargar clientes');
             }
-            
+
             const html = await response.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const nuevaTabla = doc.querySelector('#tablaClientes');
-            
+
             if (nuevaTabla) {
                 document.getElementById('tablaClientes').innerHTML = nuevaTabla.innerHTML;
             }
@@ -238,18 +246,15 @@
             if (!response.ok) {
                 throw new Error('Error al obtener cliente');
             }
-            
+
             const cliente = await response.json();
-            
+
             document.getElementById('idCliente').value = cliente.id;
             document.getElementById('username').value = cliente.username;
-            document.getElementById('email').value = cliente.email;
-            document.getElementById('telefono').value = cliente.telefono;
-            document.getElementById('direccion').value = cliente.direccion;
             document.getElementById('estado').value = cliente.estado;
-            
+
             document.querySelector('#modalCliente .modal-title').textContent = 'Editar cliente';
-            
+
         } catch (error) {
             console.error('Error:', error);
             Swal.fire({ icon: 'error', title: 'Error', text: error.message });

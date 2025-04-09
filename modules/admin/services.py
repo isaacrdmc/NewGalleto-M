@@ -34,13 +34,14 @@ def obtener_proveedores():
     """
     return Proveedores.query.order_by(Proveedores.idProveedores.desc()).all()
 
-def actualizar_proveedor(proveedor_id, nombre, telefono, correo, direccion, productosProveedor):
+def actualizar_proveedor(proveedor_id, empresa=None, nombre=None, telefono=None, correo=None, direccion=None, productosProveedor=None):
     """
     Actualiza los datos de un proveedor existente
     """
     try: 
         proveedor = Proveedores.query.get_or_404(proveedor_id)
-        proveedor.nombre = nombre
+        # Usa 'empresa' si se proporciona, de lo contrario usa 'nombre'
+        proveedor.nombre = empresa if empresa is not None else nombre
         proveedor.telefono = telefono
         proveedor.correo = correo
         proveedor.direccion = direccion
@@ -369,27 +370,32 @@ def obtener_roles():
 
 def obtener_clientes():
     """
-    Obtiene todos los clientes con información de pedidos y compras
+    Versión simplificada para obtener clientes con sus estadísticas
     """
-    clientes = db.session.query(
-        User,
-        func.count(Pedido.idPedidos).label('total_pedidos'),
-        func.coalesce(func.sum(Venta.totalVenta), 0).label('total_compras')
-    ).outerjoin(Pedido, User.idUser == Pedido.idCliente
-    ).outerjoin(Venta, User.idUser == Venta.idUsuario
-    ).filter(User.idRol == 4  # Rol Cliente
-    ).group_by(User.idUser
-    ).order_by(User.idUser.desc()).all()
+    clientes = User.query.filter_by(idRol=4).order_by(User.idUser.desc()).all()
     
-    return [{
-        'idUser': user.idUser,
-        'username': user.username,
-        'fechaRegistro': user.fechaRegistro,
-        'ultimoAcceso': user.ultimoAcceso,
-        'estado': user.estado,
-        'total_pedidos': total_pedidos,
-        'total_compras': float(total_compras) if total_compras else 0.0
-    } for user, total_pedidos, total_compras in clientes]
+    resultados = []
+    for cliente in clientes:
+        # Total de pedidos
+        total_pedidos = Pedido.query.filter_by(idCliente=cliente.idUser).count()
+        
+        # Total de compras (suma de costoPedido)
+        total_compras = db.session.query(
+            func.coalesce(func.sum(Pedido.costoPedido), 0)
+        ).filter_by(idCliente=cliente.idUser).scalar()
+        
+        resultados.append({
+            'idUser': cliente.idUser,
+            'username': cliente.username,
+            'fechaRegistro': cliente.fechaRegistro,
+            'ultimoAcceso': cliente.ultimoAcceso,
+            'estado': cliente.estado,
+            'total_pedidos': total_pedidos,
+            'total_compras': float(total_compras) if total_compras else 0.0
+        })
+    
+    return resultados
+
 
 def agregar_cliente(username, password):
     """
