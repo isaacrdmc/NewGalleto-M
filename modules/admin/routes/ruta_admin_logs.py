@@ -28,7 +28,7 @@ def logs_admin():
     tipo_log = request.args.get('tipo_log', '')     #  Filtramos le tipo de log, y si no hay nada, que traiga todos los logs 
     search_query = request.args.get('q', '')     #  Filtramos le tipo de log, y si no hay nada, que traiga todos los logs 
     page = request.args.get('page', 1, type=int)    # Númmero de página actual a la que se accede
-    per_page = 15  # Cantidad de logs por página de la pagínación
+    per_page = 25  # Cantidad de logs por página de la pagínación
 
     # ? COnusltamos la base de datos y hacemo un join para traernos el nombre dle usuario
     query = LogSistema.query.outerjoin(LogSistema.usuario)
