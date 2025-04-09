@@ -60,6 +60,31 @@ class Receta(db.Model):
     # Relación con la tabla 'galletas'
     galleta = db.relationship('Galleta', backref='recetas')
 
+    @property
+    def imagen_url(self):
+        """Propiedad calculada para obtener la URL de la imagen"""
+        from flask import current_app
+        import os
+        
+        # Buscar imagen específica de la receta
+        upload_folder = os.path.join(current_app.root_path, 'static', 'img', 'recetas')
+        if os.path.exists(upload_folder):
+            for ext in ['jpg', 'jpeg', 'png', 'gif']:
+                filename = f"{self.id}_{self.nombre.lower().replace(' ', '_')}.{ext}"
+                filepath = os.path.join(upload_folder, filename)
+                if os.path.exists(filepath):
+                    return f"/static/img/recetas/{filename}"
+        
+        # Si no tiene imagen específica, usar la de la galleta asociada
+        if self.galleta:
+            galleta_img = f"/static/img/{self.galleta.nombre.lower().replace(' ', '_')}.png"
+            galleta_path = os.path.join(current_app.root_path, 'static', 'img', f"{self.galleta.nombre.lower().replace(' ', '_')}.png")
+            if os.path.exists(galleta_path):
+                return galleta_img
+        
+        # Si no hay nada, usar imagen por defecto
+        return '/static/img/receta.jpg'
+
     def to_dict(self, include_galleta=True):
         data = {
             'id': self.id,
@@ -68,7 +93,7 @@ class Receta(db.Model):
             'cantidad_producida': self.cantidad_producida,
             'galletTipo': self.galletTipo,
             'id_galleta': self.id_galleta,
-            'imagen_url': f"/static/img/galletas/{self.galleta.nombre.lower().replace(' ', '_')}.png" if self.galleta else '/static/img/receta.jpg'
+            'imagen_url': self.imagen_url  # Usamos la propiedad
         }
     
         if include_galleta and self.galleta:

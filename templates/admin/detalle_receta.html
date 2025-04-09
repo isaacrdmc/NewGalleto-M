@@ -50,12 +50,15 @@
             <!-- Tarjeta de información general -->
             <div class="card mb-4" style="background-color: #f7e7ce;">
                 <div class="card-header" style="background-color: #e6d3b3;">
-                    <h5 class="mb-0">Descripcion</h5>
+                    <h5 class="mb-0">Descripción</h5>
                 </div>
                 <div class="card-body" style="background-color: #f7e7ce;">
                     <div class="row">
                         <div class="col-md-12">
-                            <p>{{ receta.descripcion }}</p>
+                            <p>Esta receta produce {{ receta.cantidad_producida }} galletas de tipo {{ receta.galletTipo
+                                }}.
+                                Es ideal para {{ receta.galleta.nombre }} y requiere los siguientes pasos detallados en
+                                las instrucciones.</p>
                         </div>
                     </div>
                 </div>
@@ -193,22 +196,160 @@
 
 <!-- JavaScript -->
 <script>
+    async function guardarReceta() {
+        try {
+            // Mostrar loader
+            Swal.fire({
+                title: 'Procesando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const idReceta = document.getElementById('idReceta').value;
+            const esEdicion = idReceta !== '';
+
+            // Obtener valores de los campos
+            const nombre = document.getElementById('nombre')?.value?.trim();
+            const idGalleta = document.getElementById('id_galleta')?.value;
+            const cantidadProducida = parseInt(document.getElementById('cantidad_producida')?.value || 0);
+            const galletTipo = parseInt(document.getElementById('galletTipo')?.value || 0);
+            const instrucciones = document.getElementById('instrucciones')?.value?.trim();
+
+            // Validaciones mejoradas
+            if (!nombre || nombre.length < 2) {
+                throw new Error('El nombre de la receta es requerido y debe tener al menos 2 caracteres');
+            }
+
+            if (!idGalleta || idGalleta === '') {
+                throw new Error('Debe seleccionar una galleta válida');
+            }
+
+            if (isNaN(cantidadProducida) || cantidadProducida < 1) {
+                throw new Error('La cantidad producida debe ser un número mayor a 0');
+            }
+
+            if (isNaN(galletTipo) || galletTipo < 0) {
+                throw new Error('El tipo de galleta debe ser un número no negativo');
+            }
+
+            if (!instrucciones || instrucciones.length < 10) {
+                throw new Error('Las instrucciones son requeridas y deben ser descriptivas (mínimo 10 caracteres)');
+            }
+
+            // Crear FormData para enviar archivos
+            const formData = new FormData(document.getElementById('formReceta'));
+
+            const url = esEdicion
+                ? `/admin/recetas/editar/${idReceta}`
+                : '/admin/recetas/nueva';
+
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Respuesta inesperada del servidor: ${text.substring(0, 100)}`);
+            }
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `Error al ${esEdicion ? 'actualizar' : 'crear'} receta`);
+            }
+
+            // Mostrar mensaje de éxito y actualizar
+            await Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: result.mensaje || (esEdicion ? 'Receta actualizada' : 'Receta creada'),
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            // Cerrar modal y limpiar formulario
+            cerrarModalReceta();
+            limpiarFormularioReceta();
+
+            // Actualizar la tabla de recetas
+            await actualizarTablaRecetas();
+
+            document.querySelectorAll('#recetasContainer .card-img-top').forEach(img => {
+                const src = img.src;
+                img.src = '';
+                img.src = src.split('?')[0] + '?t=' + Date.now();
+            });
+
+            // Actualizar imagen en el modal si es una edición
+            if (esEdicion && result.receta && result.receta.imagen_url) {
+                const preview = document.getElementById('imagenPreview');
+                preview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = result.receta.imagen_url + '?t=' + new Date().getTime();
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '150px';
+                img.className = 'img-thumbnail';
+                preview.appendChild(img);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error desconocido al procesar la receta'
+            });
+        }
+    }
+
     /**
      * Carga los datos de una receta para editarla
      * @param {number} id - ID de la receta a editar
      */
     async function editarReceta(id) {
         try {
-            const response = await fetch(`/admin/recetas/obtener/${id}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            // Mostrar loader mientras se carga
+            Swal.fire({
+                title: 'Cargando receta...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const response = await fetch(`/admin/recetas/obtener/${id}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Respuesta inesperada: ${text.substring(0, 100)}`);
             }
 
             const result = await response.json();
+
+            if (!response.ok || !result.receta) {
+                throw new Error(result.error || 'Receta no encontrada');
+            }
+
+            // Usamos directamente el diccionario recibido
             const receta = result.receta;
 
-            // Llenar formulario con datos de la receta
+            // Limpiar y llenar formulario
+            limpiarFormularioReceta();
             document.getElementById("idReceta").value = receta.id;
             document.getElementById("nombre").value = receta.nombre;
             document.getElementById("id_galleta").value = receta.id_galleta;
@@ -216,12 +357,12 @@
             document.getElementById("galletTipo").value = receta.galletTipo;
             document.getElementById("instrucciones").value = receta.instrucciones;
 
-            // Mostrar imagen actual si existe
+            // Mostrar imagen actual
             const preview = document.getElementById('imagenPreview');
             preview.innerHTML = '';
             if (receta.imagen_url) {
                 const img = document.createElement('img');
-                img.src = receta.imagen_url;
+                img.src = receta.imagen_url + '?t=' + new Date().getTime();
                 img.style.maxWidth = '100%';
                 img.style.maxHeight = '150px';
                 img.className = 'img-thumbnail';
@@ -229,6 +370,7 @@
             }
 
             document.querySelector('#modalReceta .modal-title').textContent = 'Editar Receta';
+            Swal.close();
         } catch (error) {
             console.error('Error:', error);
             Swal.fire({
@@ -240,79 +382,12 @@
     }
 
     /**
-     * Guarda los cambios en la receta editada
-     */
-    async function guardarReceta() {
-        try {
-            // Mostrar loader
-            Swal.fire({
-                title: 'Procesando...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            const idReceta = document.getElementById('idReceta').value;
-
-            // Validar campos requeridos
-            if (!document.getElementById('nombre').value.trim()) {
-                throw new Error('El nombre de la receta es requerido');
-            }
-
-            if (!document.getElementById('id_galleta').value) {
-                throw new Error('Debe seleccionar una galleta');
-            }
-
-            if (!document.getElementById('cantidad_producida').value ||
-                document.getElementById('cantidad_producida').value < 1) {
-                throw new Error('La cantidad producida debe ser al menos 1');
-            }
-
-            // Crear FormData para enviar archivos
-            const formData = new FormData(document.getElementById('formReceta'));
-
-            const response = await fetch(`/admin/recetas/editar/${idReceta}`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
-                }
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
-            }
-
-            // Mostrar mensaje de éxito
-            Swal.close();
-            Swal.fire({
-                position: 'center',
-                icon: 'success',
-                title: result.mensaje || 'Receta actualizada',
-                showConfirmButton: false,
-                timer: 1500
-            }).then(() => {
-                // Recargar la página para ver los cambios
-                window.location.reload();
-            });
-
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Error desconocido'
-            });
-        }
-    }
-
-    /**
      * Elimina una receta después de confirmación
      * @param {number} id - ID de la receta a eliminar
      * @param {string} nombre - Nombre de la receta a eliminar
      */
     async function eliminarReceta(id, nombre) {
+        // Confirmación antes de eliminar
         const { isConfirmed } = await Swal.fire({
             title: '¿Estás seguro?',
             text: `¿Quieres eliminar la receta "${nombre}"? Esta acción no se puede deshacer.`,
@@ -327,7 +402,14 @@
         if (!isConfirmed) return;
 
         try {
-            const response = await fetch(`/admin/recetas/eliminar/${id}`, {
+            // Mostrar loader durante la eliminación
+            Swal.fire({
+                title: 'Eliminando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const response = await fetch(`/admin/recetas/${id}/eliminar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -335,42 +417,175 @@
                 }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`El servidor devolvió una respuesta inesperada: ${text.substring(0, 100)}`);
             }
 
             const result = await response.json();
 
-            Swal.fire('Eliminada', result.mensaje || 'Receta eliminada', 'success')
-                .then(() => {
-                    window.location.href = '/admin/recetas';
-                });
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            // Mostrar mensaje de éxito y actualizar
+            await Swal.fire({
+                icon: 'success',
+                title: 'Eliminada',
+                text: result.mensaje || 'Receta eliminada correctamente',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            // Actualizar la tabla de recetas
+            await actualizarTablaRecetas();
+
         } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', error.message || 'Error al eliminar receta', 'error');
+            console.error('Error al eliminar receta:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error al eliminar receta'
+            });
         }
     }
 
     /**
-     * Previsualización de imagen seleccionada
+     * Filtra las recetas según el texto de búsqueda
      */
-    document.getElementById('imagen')?.addEventListener('change', function (e) {
-        const preview = document.getElementById('imagenPreview');
-        preview.innerHTML = '';
+    function filtrarRecetas() {
+        const filtro = document.getElementById("buscarReceta").value.toLowerCase();
+        document.querySelectorAll("#recetasContainer .card").forEach(card => {
+            const textoCard = card.innerText.toLowerCase();
+            card.parentElement.style.display = textoCard.includes(filtro) ? "" : "none";
+        });
+    }
 
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '150px';
-                img.className = 'img-thumbnail';
-                preview.appendChild(img);
+    async function actualizarTablaRecetas() {
+        try {
+            // Mostrar loader mientras carga
+            const container = document.querySelector('#recetasContainer');
+            container.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Actualizando recetas...</p>
+            </div>
+        `;
+
+            const response = await fetch('/admin/recetas/listar', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-store'
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
             }
-            reader.readAsDataURL(this.files[0]);
+
+            const recetas = await response.json();
+
+            // Limpiar completamente el contenedor
+            container.innerHTML = '';
+
+            if (!recetas || recetas.length === 0) {
+                container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No hay recetas registradas aún.
+                    </div>
+                </div>
+            `;
+                return;
+            }
+
+            // Crear una sola fila contenedora
+            const row = document.createElement('div');
+            row.className = 'row';
+            container.appendChild(row);
+
+            // Agregar todas las tarjetas
+            recetas.forEach(receta => {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-4';
+
+                col.innerHTML = `
+                <div class="card h-100">
+                    <img src="${receta.imagen_url || '/static/img/receta.jpg'}?t=${Date.now()}" 
+                        class="card-img-top" 
+                        alt="${receta.nombre}"
+                        onerror="this.onerror=null; this.src='/static/img/receta.jpg?t=${Date.now()}'">
+                    <div class="card-body">
+                        <h5 class="card-title">${receta.nombre}</h5>
+                        <p class="card-text">Galleta: ${receta.galleta?.nombre || 'N/A'}</p>
+                        <p class="card-text"><small class="text-muted">Rinde: ${receta.cantidad_producida} galletas</small></p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="/admin/recetas/${receta.id}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> Ver Detalles
+                        </a>
+                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
+                            data-bs-target="#modalReceta" onclick="editarReceta('${receta.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarReceta('${receta.id}', '${receta.nombre}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+                row.appendChild(col);
+            });
+
+        } catch (error) {
+            console.error('Error al actualizar recetas:', error);
+            document.querySelector('#recetasContainer').innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    Error al cargar recetas: ${error.message}
+                    <button onclick="actualizarTablaRecetas()" class="btn btn-sm btn-warning float-end">
+                        <i class="fas fa-sync-alt"></i> Reintentar
+                    </button>
+                </div>
+            </div>
+        `;
         }
-    });
+    }
+
+    /**
+     * Limpia el formulario de recetas
+     */
+    function limpiarFormularioReceta() {
+        document.getElementById("formReceta").reset();
+        document.getElementById("idReceta").value = '';
+        document.getElementById('imagenPreview').innerHTML = '';
+        document.querySelector('#modalReceta .modal-title').textContent = 'Agregar Receta';
+    }
+
+    /**
+     * Cierra el modal de recetas y limpia los backdrops
+     */
+    function cerrarModalReceta() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalReceta'));
+        if (modal) modal.hide();
+
+        // Limpiar backdrops si persisten
+        const backdrops = document.getElementsByClassName('modal-backdrop');
+        while (backdrops.length > 0) {
+            backdrops[0].parentNode.removeChild(backdrops[0]);
+        }
+
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+
+    // Event listeners
+    document.getElementById('buscarReceta').addEventListener('keyup', filtrarRecetas);
 </script>
 {% endblock %}

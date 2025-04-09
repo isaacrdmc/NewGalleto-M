@@ -128,32 +128,35 @@ def obtener_receta(id_receta):
     Obtiene una receta específica por su ID
     """
     receta = Receta.query.get_or_404(id_receta)
-    return receta.to_dict(include_galleta=True)
+    return receta.to_dict(include_galleta=True)  # Esto ya devuelve un diccionario
 
 def agregar_receta(data, imagen=None):
-    """
-    Agrega una nueva receta a la base de datos
-    """
+    """Agrega una nueva receta a la base de datos"""
+    # Validar cantidad producida
+    if data['cantidad_producida'] < 1:
+        raise ValueError("La cantidad producida debe ser al menos 1")
+    
+    # Validar tipo de galleta
+    if data['galletTipo'] < 0:
+        raise ValueError("El tipo de galleta no puede ser negativo")
+    
     nueva_receta = Receta(
-        nombreReceta=data['nombre'],
-        instruccionReceta=data['instrucciones'],
-        cantGalletasProduction=data['cantidad_producida'],
+        nombre=data['nombre'],
+        instrucciones=data['instrucciones'],
+        cantidad_producida=data['cantidad_producida'],
         galletTipo=data['galletTipo'],
-        idGalleta=data['id_galleta']
+        id_galleta=data['id_galleta']
     )
     
     db.session.add(nueva_receta)
     db.session.commit()
     
     if imagen:
-        from flask import current_app
-        import os
-        upload_folder = os.path.join(current_app.root_path, 'static', 'img', 'galletas')
-        os.makedirs(upload_folder, exist_ok=True)
-        filename = f"{nueva_receta.idReceta}_{data['nombre'].lower().replace(' ', '_')}.{imagen.filename.split('.')[-1]}"
-        imagen.save(os.path.join(upload_folder, filename))
+        # Solo guardamos la imagen en el sistema de archivos
+        guardar_imagen_receta(nueva_receta, imagen, data['nombre'])
     
     return nueva_receta
+
 
 def actualizar_receta(id_receta, data, imagen=None):
     """
@@ -161,20 +164,62 @@ def actualizar_receta(id_receta, data, imagen=None):
     """
     receta = Receta.query.get_or_404(id_receta)
     
-    receta.nombreReceta = data['nombre']
-    receta.instruccionReceta = data['instrucciones']
-    receta.cantGalletasProduction = data['cantidad_producida']
+    receta.nombre = data['nombre']
+    receta.instrucciones = data['instrucciones']
+    receta.cantidad_producida = data['cantidad_producida']
     receta.galletTipo = data['galletTipo']
-    receta.idGalleta = data['id_galleta']
+    receta.id_galleta = data['id_galleta']
+    
+    if imagen:
+        guardar_imagen_receta(receta, imagen, data['nombre'])
     
     db.session.commit()
     return receta
+
+
+def guardar_imagen_receta(receta, imagen, nombre_receta):
+    from flask import current_app
+    import os
+    from werkzeug.utils import secure_filename
+    
+    upload_folder = os.path.join(current_app.root_path, 'static', 'img', 'recetas')
+    
+    # Debug: Imprime la ruta para verificar
+    print(f"Intentando guardar imagen en: {upload_folder}")
+    
+    # Asegurar que el directorio existe
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    # Generar nombre de archivo seguro
+    ext = imagen.filename.split('.')[-1].lower()
+    filename = secure_filename(f"receta_{receta.id}.{ext}")
+    filepath = os.path.join(upload_folder, filename)
+    
+    # Debug: Imprime información del archivo
+    print(f"Guardando imagen como: {filename}")
+    print(f"Ruta completa: {filepath}")
+    
+    # Guardar la imagen
+    imagen.save(filepath)
+    
+    # Verificar que el archivo se creó
+    if os.path.exists(filepath):
+        print("Archivo guardado exitosamente")
+    else:
+        print("Error: El archivo no se guardó correctamente")
+    
+    return f"/static/img/recetas/{filename}"
+
 
 def eliminar_receta(id_receta):
     """
     Elimina una receta de la base de datos
     """
     receta = Receta.query.get_or_404(id_receta)
+    
+    # Eliminar ingredientes asociados primero
+    IngredienteReceta.query.filter_by(idReceta=id_receta).delete()
+    
     db.session.delete(receta)
     db.session.commit()
     return receta
@@ -276,7 +321,7 @@ def obtener_horneados_receta(id_receta):
     """
     Obtiene todos los horneados asociados a una receta
     """
-    return Horneado.query.filter_by(idReceta=id_receta).order_by(Horneado.fechaHorneado.desc()).all()
+    return Horneado.query.filter_by(id_receta=id_receta).order_by(Horneado.fecha_horneado.desc()).all()
 
 # ==============================================
 # SECCIÓN DE MERMAS
