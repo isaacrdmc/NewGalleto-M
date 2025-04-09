@@ -4,6 +4,8 @@ from werkzeug.security import generate_password_hash,check_password_hash
 from . import bp_ventas
 from modules.ventas.services import obtener_historial_ventas
 from modules.ventas.models import Venta
+from modules.ventas.services import obtener_pedidos_clientes
+from modules.ventas.models import Pedido
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
 
@@ -63,4 +65,47 @@ def obtener_detalles_venta(id_venta):
 def pedidos_clientes():
     if 'username' not in session or session['role'] != 'ventas':
         return redirect(url_for('shared.login'))
-    return render_template('ventas/pedidos_clientes.html')
+    
+    pedidos = obtener_pedidos_clientes()
+    return render_template('ventas/pedidos_clientes.html', pedidos=pedidos)
+
+@bp_ventas.route('/pedidos_clientes/detalles/<int:id_pedido>')
+def obtener_detalles_pedido(id_pedido):
+    pedido = Pedido.query.get(id_pedido)
+
+    if not pedido or not pedido.detalles:
+        return jsonify({"success": False, "mensaje": "Pedido no encontrado o sin detalles"}), 404
+
+    detalles = []
+    for d in pedido.detalles:
+        detalles.append({
+            "producto": d.galleta.nombreGalleta if d.galleta else "Producto desconocido",
+            "cantidad": d.cantidad,
+            "precio_unitario": float(d.precioUnitario),
+            "subtotal": float(d.subtotal)
+        })
+
+    return jsonify({"success": True, "detalles": detalles})
+
+@bp_ventas.route('/galletas_disponibles')
+def galletas_disponibles():
+    from modules.ventas.models import Galleta
+
+    galletas = Galleta.query.with_entities(Galleta.idGalleta, Galleta.nombreGalleta).all()
+    lista = [{"id": g.idGalleta, "nombre": g.nombreGalleta} for g in galletas]
+    return jsonify(lista)
+
+@bp_ventas.route('/galleta/<int:id_galleta>')
+def obtener_info_galleta(id_galleta):
+    from modules.ventas.models import Galleta
+
+    galleta = Galleta.query.get(id_galleta)
+    if not galleta:
+        return jsonify({"success": False}), 404
+
+    return jsonify({
+        "success": True,
+        "cantidadDisponible": galleta.cantidadDisponible,
+        "gramaje": float(galleta.gramajeGalleta),
+        "precio": float(galleta.precioUnitario)
+    })

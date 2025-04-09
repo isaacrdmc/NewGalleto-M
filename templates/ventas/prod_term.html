@@ -110,23 +110,13 @@
                 <label for="galleta" class="col-form-label">Galleta:</label>
                 <select id="galleta" class="form-select">
                     <option selected disabled>Selecciona una galleta</option>
-                    <option>Nuez</option>
-                    <option>Chocolate</option>
-                    <option>Vainilla</option>
-                    <option>Avena</option>
-                    <option>Chispas</option>
-                    <option>Integral</option>
-                    <option>Marmoleada</option>
-                    <option>Coco</option>
-                    <option>Glaseada</option>
-                    <option>Mantequilla</option>
-                    <option>Red Velvet</option>
-                    <option>Café</option>
                 </select>
             </div>
             <div class="col-auto">
                 <label for="cantidad" class="col-form-label">Cantidad:</label>
-                <input type="text" id="cantidad" class="form-control input-sm" value="50gr">
+                <select id="cantidad" class="form-select input-sm">
+                    <option selected disabled>Selecciona cantidad</option>
+                </select>
             </div>
             <div class="col-auto">
                 <label for="gramos" class="col-form-label">Gramos:</label>
@@ -186,4 +176,71 @@
             </tbody>
         </table>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const galletaSelect = document.getElementById('galleta');
+        const cantidadSelect = document.getElementById('cantidad');
+        const metodoVenta = document.getElementById('metodoVentaSelect');
+
+        // Cargar galletas al iniciar
+        fetch('/ventas/galletas_disponibles')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(g => {
+                    const option = document.createElement('option');
+                    option.value = g.id;
+                    option.textContent = g.nombre;
+                    galletaSelect.appendChild(option);
+                });
+            });
+
+        // Escuchar cambio de galleta para actualizar cantidad
+        galletaSelect.addEventListener('change', () => {
+            const idGalleta = galletaSelect.value;
+            const metodo = metodoVenta.value;
+
+            // Si se seleccionó una galleta y la venta es por unidad
+            if (idGalleta && metodo === 'Por unidad') {
+                fetch(`/ventas/galleta/${idGalleta}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const max = Math.min(data.cantidadDisponible, data.cantidadDisponible); // opcional: limitar a 20
+                            cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
+                            for (let i = 1; i <= max; i++) {
+                                const opt = document.createElement('option');
+                                opt.value = i;
+                                opt.textContent = i;
+                                cantidadSelect.appendChild(opt);
+                            }
+                        }
+                    });
+            }
+        });
+
+        // Escuchar cambio de método de venta
+        metodoVenta.addEventListener('change', () => {
+            const metodo = metodoVenta.value;
+            cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
+
+            if (metodo === 'Por unidad') {
+                // No hace nada aún, espera a que el usuario seleccione una galleta
+            } else if (metodo === 'Por gramo') {
+                ['50gr', '100gr', '150gr', '200gr', '250gr'].forEach(val => {
+                    const option = document.createElement('option');
+                    option.value = val;
+                    option.textContent = val;
+                    cantidadSelect.appendChild(option);
+                });
+            } else if (metodo === 'Empacado') {
+                ['Caja 700gr', 'Caja 1kg'].forEach(val => {
+                    const option = document.createElement('option');
+                    option.value = val;
+                    option.textContent = val;
+                    cantidadSelect.appendChild(option);
+                });
+            }
+        });
+    });
+</script>    
 {% endblock %}

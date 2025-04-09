@@ -109,3 +109,31 @@ class LogSistema(db.Model):
     idUsuario = Column(Integer, ForeignKey('usuario.idUser'))
 
     usuario = relationship('Usuario', back_populates='logs')
+    
+class Pedido(db.Model):
+    __tablename__ = 'pedidos'
+
+    idPedidos = Column(Integer, primary_key=True)
+    fechaPedido = Column(Date)
+    estadoPedido = Column(Enum('Pendiente', 'Enviado', 'Entregado', 'Cancelado'), default='Pendiente')
+    costoPedido = Column(DECIMAL(10,2))
+    idCliente = Column(Integer, ForeignKey('usuario.idUser'))
+
+    cliente = relationship('Usuario')
+    detalles = relationship('DetallePedido', back_populates='pedido')
+
+
+class DetallePedido(db.Model):
+    __tablename__ = 'detallePedido'
+
+    idDetallePedido = Column(Integer, primary_key=True)
+    cantidad = Column(Integer)
+    precioUnitario = Column(DECIMAL(10,2))
+    subtotal = Column(DECIMAL(10,2))
+
+    idPedido = Column(Integer, ForeignKey('pedidos.idPedidos'))
+    idGalleta = Column(Integer, ForeignKey('galletas.idGalleta'))
+
+    pedido = relationship('Pedido', back_populates='detalles')
+    galleta = relationship('Galleta')
+
