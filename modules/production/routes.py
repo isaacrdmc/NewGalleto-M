@@ -1,10 +1,10 @@
 from datetime import datetime
 import os
 from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from .services import ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService
-from .models import db, Horneado, Insumo, DetalleCompraInsumo, Merma, TransaccionCompra
+from .services import ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
+from .models import Receta, SolicitudHorneado, db, Horneado, Insumo, DetalleCompraInsumo, Merma, TransaccionCompra
 from modules.admin.models import Proveedores as Proveedor
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, text
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
 from . import bp_production
@@ -18,6 +18,7 @@ insumo_service = InsumoService(db.session)
 receta_service = RecetaService(db.session)
 horneado_service = HorneadoService(db.session)
 compra_service = CompraService(db.session)
+solicitud_horneado_service = SolicitudHorneadoService(db.session)
 
 
 # Rutas para Proveedor
@@ -147,9 +148,55 @@ def get_receta(id):
 @bp_production.route('/dashboard_produccion')
 @login_required
 def dashboard_produccion():
-    if current_user.rol.nombreRol != 'Produccion':
-        return redirect(url_for('shared.login'))
-    return render_template('produccion/produccion.html')
+    # Obtener producción diaria (galletas producidas hoy)
+    produccion_diaria = db.session.query(
+        func.sum(Horneado.cantidad_producida)
+    ).filter(
+        func.date(Horneado.fecha_horneado) == datetime.now().date()
+    ).scalar() or 0
+
+    # Obtener lotes pendientes (solicitudes aprobadas no completadas)
+    lotes_pendientes = db.session.query(
+        func.count(SolicitudHorneado.id)
+    ).filter(
+        SolicitudHorneado.estado == 'Aprobada'
+    ).scalar() or 0
+
+    # Obtener producciones recientes (últimos 5 horneados o solicitudes)
+    producciones_recientes = db.session.query(
+        Horneado,
+        SolicitudHorneado,
+        Receta
+    ).outerjoin(
+        SolicitudHorneado, Horneado.id == SolicitudHorneado.id_horneado
+    ).join(
+        Receta, Horneado.id_receta == Receta.id
+    ).order_by(
+        Horneado.fecha_horneado.desc()
+    ).limit(5).all()
+
+    # Preparar datos para la tabla
+    producciones_data = []
+    for horneado, solicitud, receta in producciones_recientes:
+        estado = "Completado"
+        if solicitud:
+            estado = solicitud.estado
+            
+        producciones_data.append({
+            'id': horneado.id,
+            'receta': receta.nombre,
+            'cantidad': horneado.cantidad_producida,
+            'estado': estado,
+            'fecha': horneado.fecha_horneado.strftime('%Y-%m-%d')
+        })
+
+    return render_template(
+        'produccion/produccion.html',
+        produccion_diaria=produccion_diaria,
+        lotes_pendientes=lotes_pendientes,
+        producciones_recientes=producciones_data,
+        now=datetime.now()
+    )
 
 # Añadir a routes.py
 
@@ -239,18 +286,6 @@ def registrar_horneado():
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
         return redirect(url_for('production.horneado'))
-
-@bp_production.route('/detalle_horneado/<int:id_horneado>', methods=['GET'])
-def detalle_horneado(id_horneado):
-    # Obtener el horneado por ID
-    horneado = horneado_service.get_horneado(id_horneado)
-    
-    if not horneado:
-        flash('Horneado no encontrado', 'danger')
-        return redirect(url_for('production.historial'))
-    
-    # Renderizar template con los detalles
-    return render_template('produccion/detalle_horneado.html', horneado=horneado)
 
 
 #####################################
@@ -483,3 +518,234 @@ def registrar_merma():
         db.session.rollback()
         flash(f'Error: {str(e)}', 'danger')
         return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo if 'id_insumo' in locals() else 0))
+    
+    #########################################
+    # Añadir al inicio de routes.py, después de los otros servicios
+
+@bp_production.route('/solicitar_horneado', methods=['GET'])
+@login_required
+def solicitar_horneado():
+    # Obtener todas las recetas para el selector
+    recetas = receta_service.get_all_recetas()
+    return render_template('produccion/solicitar_horneado.html', recetas=recetas)
+
+@bp_production.route('/solicitar_horneado', methods=['POST'])
+@login_required
+def procesar_solicitud_horneado():
+    try:
+        id_receta = request.form.get('id_receta', type=int)
+        cantidad_lotes = request.form.get('cantidad_lotes', type=int)
+        
+        if not all([id_receta, cantidad_lotes]):
+            flash('Todos los campos son obligatorios', 'danger')
+            return redirect(url_for('production.solicitar_horneado'))
+        
+        resultado = solicitud_horneado_service.crear_solicitud(
+            id_receta,
+            cantidad_lotes,
+            current_user.idUser
+        )
+        
+        if resultado['success']:
+            flash('Solicitud de horneado enviada exitosamente', 'success')
+            return redirect(url_for('production.ver_mis_solicitudes'))  # Redirigir a la lista de solicitudes
+        else:
+            if 'insumos_faltantes' in resultado:
+                flash('No hay suficientes insumos para completar la solicitud', 'danger')
+            else:
+                flash('Error al enviar la solicitud', 'danger')
+            return redirect(url_for('production.solicitar_horneado'))
+    
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('production.solicitar_horneado'))
+    
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('production.solicitar_horneado'))
+
+@bp_production.route('/solicitudes/pendientes', methods=['GET'])
+@login_required
+def ver_solicitudes_pendientes():
+    if current_user.rol.nombreRol not in ['Administrador', 'Produccion']:
+        abort(403)
+    
+    solicitudes = solicitud_horneado_service.get_solicitudes_pendientes()
+    return render_template('produccion/solicitudes_pendientes.html', solicitudes=solicitudes)
+
+@bp_production.route('/solicitudes/mis_solicitudes', methods=['GET'])
+@login_required
+def ver_mis_solicitudes():
+    print(f"Usuario actual ID: {current_user.idUser}")  # Debug
+    solicitudes = solicitud_horneado_service.get_solicitudes_usuario(current_user.idUser)
+    print(f"Solicitudes a enviar a template: {len(solicitudes)}")  # Debug
+    return render_template('produccion/mis_solicitudes.html', solicitudes=solicitudes)
+
+@bp_production.route('/solicitud/aprobar/<int:id_solicitud>', methods=['POST'])
+@login_required
+def aprobar_solicitud(id_solicitud):
+    if current_user.rol.nombreRol not in ['Administrador', 'Produccion']:
+        abort(403)
+    
+    resultado = solicitud_horneado_service.aprobar_solicitud(
+        id_solicitud,
+        current_user.idUser
+    )
+    
+    if resultado['success']:
+        flash('Solicitud aprobada exitosamente', 'success')
+    else:
+        if 'insumos_faltantes' in resultado:
+            flash('No hay suficientes insumos para aprobar la solicitud', 'danger')
+        else:
+            flash('Error al aprobar la solicitud', 'danger')
+    
+    return redirect(url_for('production.ver_solicitudes_pendientes'))
+
+@bp_production.route('/solicitud/rechazar/<int:id_solicitud>', methods=['POST'])
+@login_required
+def rechazar_solicitud(id_solicitud):
+    if current_user.rol.nombreRol not in ['Administrador', 'Produccion']:
+        abort(403)
+    
+    motivo = request.form.get('motivo', 'Sin motivo especificado')
+    
+    resultado = solicitud_horneado_service.rechazar_solicitud(
+        id_solicitud,
+        current_user.idUser,
+        motivo
+    )
+    
+    if resultado['success']:
+        flash('Solicitud rechazada exitosamente', 'success')
+    else:
+        flash('Error al rechazar la solicitud', 'danger')
+    
+    return redirect(url_for('production.ver_solicitudes_pendientes'))
+
+@bp_production.route('/solicitud/completar/<int:id_solicitud>', methods=['GET', 'POST'])
+@login_required
+def completar_solicitud(id_solicitud):
+    solicitud = solicitud_horneado_service.get_solicitud(id_solicitud)
+    
+    if not solicitud:
+        flash('Solicitud no encontrada', 'danger')
+        return redirect(url_for('production.ver_mis_solicitudes'))
+    
+    if solicitud.id_solicitante != current_user.idUser:
+        abort(403)
+    
+    if solicitud.estado != 'Aprobada':
+        flash('La solicitud no está aprobada', 'danger')
+        return redirect(url_for('production.ver_mis_solicitudes'))
+    
+    if request.method == 'POST':
+        try:
+            datos_horneado = {
+                'temperatura': request.form.get('temperatura', type=int),
+                'tiempo': request.form.get('tiempo', type=int),
+                'observaciones': request.form.get('observaciones', '')
+            }
+            
+            if not all([datos_horneado['temperatura'], datos_horneado['tiempo']]):
+                flash('Temperatura y tiempo son obligatorios', 'danger')
+                return redirect(url_for('production.completar_solicitud', id_solicitud=id_solicitud))
+            
+            resultado = solicitud_horneado_service.completar_solicitud(
+                id_solicitud,
+                datos_horneado
+            )
+            
+            if resultado['success']:
+                flash('Horneado registrado exitosamente', 'success')
+                return redirect(url_for('production.ver_mis_solicitudes'))
+            else:
+                flash('Error al registrar el horneado', 'danger')
+        
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'danger')
+    
+    return render_template('produccion/completar_solicitud.html', solicitud=solicitud)
+
+from sqlalchemy.orm import joinedload  # Añade este import al inicio del archivo
+
+@bp_production.route('/solicitud/detalle/<int:id_solicitud>', methods=['GET'])
+@login_required
+def detalle_solicitud(id_solicitud):
+    # Consulta optimizada que carga la receta en la misma consulta
+    solicitud = db.session.query(SolicitudHorneado)\
+        .options(joinedload(SolicitudHorneado.receta))\
+        .get(id_solicitud)
+    
+    if not solicitud:
+        flash('Solicitud no encontrada', 'danger')
+        return redirect(url_for('production.ver_mis_solicitudes'))
+    
+    # Verificar permisos (solicitante o aprobador)
+    if solicitud.id_solicitante != current_user.idUser and \
+       (solicitud.id_aprobador != current_user.idUser if solicitud.id_aprobador else True) and \
+       current_user.rol.nombreRol not in ['Administrador', 'Produccion']:
+        abort(403)
+    
+    # Obtener detalles de insumos necesarios con información completa
+    insumos = db.session.execute(
+        text("""
+            SELECT 
+                i.idInsumo,
+                i.nombre as nombre, 
+                ir.cantidad as cantidad, 
+                i.unidadInsumo as unidadInsumo, 
+                i.cantidadDisponible as cantidadDisponible
+            FROM ingredientesReceta ir
+            JOIN insumos i ON ir.idInsumo = i.idInsumo
+            WHERE ir.idReceta = :id_receta
+        """),
+        {'id_receta': solicitud.id_receta}
+    ).fetchall()
+    
+    # Convertir el resultado a una lista de diccionarios para facilitar el acceso en la plantilla
+    insumos_data = [{
+        'id': i.idInsumo,
+        'nombre': i.nombre,
+        'cantidad': float(i.cantidad),
+        'unidadInsumo': i.unidadInsumo,
+        'cantidadDisponible': float(i.cantidadDisponible),
+        'total_requerido': float(i.cantidad) * solicitud.cantidad_lotes
+    } for i in insumos]
+    
+    return render_template(
+        'produccion/detalle_solicitud.html',
+        solicitud=solicitud,
+        insumos=insumos_data,
+        cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantidad_producida
+    )
+@bp_production.route('/proceso_horneadas')
+@login_required
+def proceso_horneadas():
+    # Obtener solicitudes aprobadas pendientes de completar
+    solicitudes_pendientes = solicitud_horneado_service.obtener_solicitudes_para_completar(current_user.idUser)
+    
+    # Obtener horneados recientes del usuario (últimos 7 días)
+    fecha_inicio = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    horneados_recientes = horneado_service.get_horneados_filtrados(
+        fecha_inicio=fecha_inicio,
+        id_usuario=current_user.idUser
+    )
+    
+    return render_template(
+        'produccion/proceso_horneadas.html',
+        solicitudes_pendientes=solicitudes_pendientes,
+        horneados_recientes=horneados_recientes
+    )
+    
+@bp_production.route('/detalle_horneado/<int:id_horneado>', methods=['GET'])
+def detalle_horneado(id_horneado):
+    # Obtener el horneado por ID
+    horneado = horneado_service.get_horneado(id_horneado)
+    
+    if not horneado:
+        flash('Horneado no encontrado', 'danger')
+        return redirect(url_for('production.historial'))
+    
+    # Renderizar template con los detalles
+    return render_template('produccion/detalle_horneado.html', horneado=horneado)

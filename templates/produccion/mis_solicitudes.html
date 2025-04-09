@@ -1,0 +1,78 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Mis Solicitudes de Horneado</h2>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    {% if solicitudes %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Receta</th>
+                                    <th>Lotes</th>
+                                    <th>Galletas Totales</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for solicitud in solicitudes %}
+                                <tr>
+                                    <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ solicitud.receta.nombre }}</td>
+                                    <td>{{ solicitud.cantidad_lotes }}</td>
+                                    <td>{{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if solicitud.estado == 'Pendiente' %}bg-warning
+                                            {% elif solicitud.estado == 'Aprobada' %}bg-success
+                                            {% elif solicitud.estado == 'Rechazada' %}bg-danger
+                                            {% elif solicitud.estado == 'Completada' %}bg-info{% endif %}">
+                                            {{ solicitud.estado }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('production.detalle_solicitud', id_solicitud=solicitud.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No has realizado ninguna solicitud
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('production.solicitar_horneado') }}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i> Nueva Solicitud
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

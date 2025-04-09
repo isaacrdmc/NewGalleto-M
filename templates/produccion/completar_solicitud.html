@@ -1,0 +1,87 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Completar Horneado</h2>
+                    
+                    <!-- Mensajes flash -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Detalles de la Solicitud</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Receta:</strong> {{ solicitud.receta.nombre }}</p>
+                                            <p><strong>Lotes:</strong> {{ solicitud.cantidad_lotes }}</p>
+                                            <p><strong>Galletas Totales:</strong> {{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Solicitante:</strong> {{ solicitud.solicitante.username }}</p>
+                                            <p><strong>Aprobada por:</strong> {{ solicitud.aprobador.username }}</p>
+                                            <p><strong>Fecha Aprobación:</strong> {{ solicitud.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Registro del Horneado</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ url_for('production.completar_solicitud', id_solicitud=solicitud.id) }}" method="post">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="temperatura" class="form-label">Temperatura (°C):</label>
+                                                <input type="number" class="form-control" id="temperatura" name="temperatura" required min="100" max="250" value="180">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="tiempo" class="form-label">Tiempo (minutos):</label>
+                                                <input type="number" class="form-control" id="tiempo" name="tiempo" required min="5" max="60" value="15">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="gramos_merma" class="form-label">Merma en gramos:</label>
+                                            <input type="number" class="form-control" id="gramos_merma" name="gramos_merma" min="0" value="0">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="observaciones" class="form-label">Observaciones:</label>
+                                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Detalles del proceso, problemas encontrados, etc."></textarea>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-check-circle me-2"></i> Registrar Horneado
+                                            </button>
+                                            <a href="{{ url_for('production.proceso_horneadas') }}" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i> Volver
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

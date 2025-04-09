@@ -46,6 +46,10 @@ class Receta(db.Model):
     
     # Relación con la tabla 'galletas'
     galleta = db.relationship('Galleta', backref='recetas')
+    @property
+    def cantGalletasProduction(self):
+        """Propiedad para mantener compatibilidad con código existente"""
+        return self.cantidad_producida
 
 
 
@@ -219,4 +223,48 @@ class Merma(db.Model):
             'unidad_merma': self.unidad_merma,
             'cantidad_merma': self.cantidad_merma,
             'fecha_merma': self.fecha_merma.strftime('%Y-%m-%d')
+        }
+        
+#################################
+# Añadir al final de models.py
+
+class SolicitudHorneado(db.Model):
+    __tablename__ = 'solicitudes_horneado'
+    
+    id = db.Column('idSolicitud', db.Integer, primary_key=True)
+    fecha_solicitud = db.Column('fechaSolicitud', db.DateTime, nullable=False, default=datetime.now)
+    cantidad_lotes = db.Column('cantidadLotes', db.Integer, nullable=False)
+    estado = db.Column(db.Enum('Pendiente', 'Aprobada', 'Rechazada', 'Completada'), nullable=False, default='Pendiente')
+    motivo_rechazo = db.Column('motivoRechazo', db.String(255), nullable=True)
+    fecha_aprobacion = db.Column('fechaAprobacion', db.DateTime, nullable=True)
+    fecha_completado = db.Column('fechaCompletado', db.DateTime, nullable=True)
+    
+    # Relaciones
+    id_receta = db.Column('idReceta', db.Integer, db.ForeignKey('recetas.idReceta'), nullable=False)
+    id_solicitante = db.Column('idSolicitante', db.Integer, db.ForeignKey('usuarios.idUser'), nullable=False)
+    id_aprobador = db.Column('idAprobador', db.Integer, db.ForeignKey('usuarios.idUser'), nullable=True)
+    id_horneado = db.Column('idHorneado', db.Integer, db.ForeignKey('historialHorneado.idHorneado'), nullable=True)
+    
+    # Relaciones ORM
+    receta = db.relationship('Receta', backref='solicitudes')
+    solicitante = db.relationship('User', foreign_keys=[id_solicitante], backref='solicitudes_enviadas')
+    aprobador = db.relationship('User', foreign_keys=[id_aprobador], backref='solicitudes_aprobadas')
+    horneado = db.relationship('Horneado', backref='solicitud')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'fecha_solicitud': self.fecha_solicitud.strftime('%Y-%m-%d %H:%M:%S'),
+            'cantidad_lotes': self.cantidad_lotes,
+            'estado': self.estado,
+            'motivo_rechazo': self.motivo_rechazo,
+            'fecha_aprobacion': self.fecha_aprobacion.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_aprobacion else None,
+            'fecha_completado': self.fecha_completado.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_completado else None,
+            'id_receta': self.id_receta,
+            'nombre_receta': self.receta.nombre if self.receta else None,
+            'id_solicitante': self.id_solicitante,
+            'nombre_solicitante': self.solicitante.username if self.solicitante else None,
+            'id_aprobador': self.id_aprobador,
+            'nombre_aprobador': self.aprobador.username if self.aprobador else None,
+            'id_horneado': self.id_horneado
         }

@@ -6,22 +6,29 @@
 
     <!-- Sección de Estadísticas -->
     <div class="row mb-4 text-center">
-        <div class="col-md-4">
-            <a href="{{ url_for('production.horneado') }}" class="btn btn-warning w-100 py-3 shadow-lg">
+        <!-- Cambiar esta parte del dashboard -->
+        <div class="col-md-3">
+            <a href="{{ url_for('production.proceso_horneadas') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-oven"></i> Proceso de horneadas
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
             </a>
         </div>        
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{{ url_for('production.historial') }}" class="btn btn-danger w-100 py-3 shadow-lg">
                 <i class="fa-regular fa-clipboard"></i> Historial de horneadas
             </a>
         </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('production.solicitar_horneado') }}" class="btn btn-danger w-100 py-3 shadow-lg">
+                <i class="fa-regular fa-clipboard"></i> solicitar de horneadas
+            </a>
+        </div>
     </div>
+    <!-- Sección de Estadísticas Dinámicas -->
     <!-- Sección de Estadísticas Dinámicas -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -29,18 +36,9 @@
                 <div class="card-body text-center">
                     <h5 class="card-title fw-bold">Producción Diaria</h5>
                     <p class="display-6 text-success">
-                        {{ "{:,}".format(produccion_diaria|default(0)) }} unidades
+                        {{ "{:,}".format(produccion_diaria) }} unidades
                     </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Insumos Disponibles</h5>
-                    <p class="display-6 text-warning">
-                        {{ porcentaje_insumos|default(0) }}%
-                    </p>
+                    <small class="text-muted">Actualizado: {{ now.strftime('%H:%M') }}</small>
                 </div>
             </div>
         </div>
@@ -49,8 +47,20 @@
                 <div class="card-body text-center">
                     <h5 class="card-title fw-bold">Lotes Pendientes</h5>
                     <p class="display-6 text-danger">
-                        {{ lotes_pendientes|default(0) }}
+                        {{ lotes_pendientes }}
                     </p>
+                    <a href="{{ url_for('production.ver_solicitudes_pendientes') }}" class="btn btn-sm btn-outline-dark">Ver pendientes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-lg rounded-4" style="background-color: #e8d8a7;">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Eficiencia</h5>
+                    <p class="display-6 text-primary">
+                        {{ eficiencia|default("95%") }}
+                    </p>
+                    <small class="text-muted">(Merma promedio: 5%)</small>
                 </div>
             </div>
         </div>
@@ -60,40 +70,57 @@
     <div class="card border-0 shadow-lg rounded-4 mb-5" style="background-color: #e8d8a7;">
         <div class="card-body">
             <h4 class="card-title text-center mb-3">📦 Producciones Recientes</h4>
-            <table class="table table-striped table-hover text-center align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Lote</th>
-                        <th>Receta</th>
-                        <th>Cantidad</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><a href="">#001</a></td>
-                        <td>Galleta de Chocolate</td>
-                        <td>1,000</td>
-                        <td><span class="badge bg-success">Completado</span></td>
-                        <td>2025-03-15</td>
-                    </tr>
-                    <tr>
-                        <td><a href="">#002</a></td>
-                        <td>Galleta de Vainilla</td>
-                        <td>800</td>
-                        <td><span class="badge bg-warning">En proceso</span></td>
-                        <td>2025-03-16</td>
-                    </tr>
-                    <tr>
-                        <td><a href="">#003</a></td>
-                        <td>Galleta de Nuez</td>
-                        <td>500</td>
-                        <td><span class="badge bg-danger">Pendiente</span></td>
-                        <td>2025-03-18</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Lote</th>
+                            <th>Receta</th>
+                            <th>Cantidad</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prod in producciones_recientes %}
+                        <tr>
+                            <td><a href="{{ url_for('production.detalle_horneado', id_horneado=prod.id) }}">#{{ "%03d" % prod.id }}</a></td>
+                            <td>{{ prod.receta }}</td>
+                            <td>{{ "{:,}".format(prod.cantidad) }}</td>
+                            <td>
+                                {% if prod.estado == 'Completado' %}
+                                    <span class="badge bg-success">Completado</span>
+                                {% elif prod.estado == 'Aprobada' %}
+                                    <span class="badge bg-warning">En proceso</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ prod.fecha }}</td>
+                            <td>
+                                <a href="{{ url_for('production.detalle_horneado', id_horneado=prod.id) }}" 
+                                   class="btn btn-sm btn-info" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No hay producciones recientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfica de Producción Semanal -->
+    <div class="card border-0 shadow-lg rounded-4 mb-5" style="background-color: #e8d8a7;">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-3">📊 Producción Semanal</h4>
+            <canvas id="productionChart" height="120"></canvas>
         </div>
     </div>
 </div>
@@ -101,15 +128,15 @@
 <!-- Scripts para la Gráfica -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Simulación de datos de producción semanal
+    // Datos reales de producción semanal (podrías reemplazar con datos dinámicos)
     const ctx = document.getElementById('productionChart').getContext('2d');
     const productionChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+            labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
             datasets: [{
                 label: 'Unidades Producidas',
-                data: [1200, 1500, 1100, 1300, 1600, 900, 1800],
+                data: [{{ produccion_semanal|join(', ') }}],
                 backgroundColor: '#74c69d',
                 borderColor: '#40916c',
                 borderWidth: 1
@@ -119,18 +146,32 @@
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Unidades'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Día de la semana'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + ' unidades';
+                        }
+                    }
                 }
             }
         }
-    });
-
-    // Simular envío del formulario para iniciar producción
-    document.getElementById('productionForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-        const receta = document.getElementById('receta').value;
-        const cantidad = document.getElementById('cantidad').value;
-        alert(`✅ Producción de ${cantidad} unidades de ${receta.replace('_', ' ')} iniciada correctamente.`);
     });
 </script>
 {% endblock %}
