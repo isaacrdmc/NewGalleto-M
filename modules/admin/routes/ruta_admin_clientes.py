@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, redirect, url_for
+from flask import current_app, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from ..services import (agregar_cliente, obtener_clientes, actualizar_cliente, 
                        eliminar_cliente, obtener_pedidos_cliente)
@@ -15,11 +15,14 @@ from database.conexion import db
 @login_required
 def clientes():
     if current_user.rol.nombreRol != 'Administrador':
+        current_app.logger.warning(f'Intento de acceso no autorizado a la página de clientes por {current_user.username}')
         return redirect(url_for('shared.login'))
     
     lista_clientes = obtener_clientes()
     form = ClienteForm()
+    current_app.logger.info(f'Acceso a la página de clientes por {current_user.username}')
     return render_template('admin/clientes.html', clientes=lista_clientes, form=form)
+
 
 @bp_admistracion.route('/clientes/agregar', methods=['POST'])
 @login_required
@@ -40,6 +43,9 @@ def agregar_cliente_route():
         if 'estado' in data:
             nuevo_cliente.estado = data['estado']
             db.session.commit()
+
+        
+        current_app.logger.info(f'Cliente agregado correctamente por {current_user.username}')
         
         return jsonify({
             "mensaje": "Cliente agregado correctamente",
@@ -48,9 +54,9 @@ def agregar_cliente_route():
                 "username": nuevo_cliente.username,
                 "estado": nuevo_cliente.estado
             }
-        }), 201
-        
+        }), 201        
     except Exception as e:
+        current_app.logger.error(f'Error al agregar cliente: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/editar/<int:id>', methods=['POST'])
