@@ -43,7 +43,7 @@ def index():
         # Redirigir según rol
         role_redirects = {
             'Administrador': 'admin.dashboard_admin',
-            'Produccion': 'production.produccion',
+            'Produccion': 'production.dashboard_produccion',
             'Ventas': 'ventas.ventas',
             'Cliente': 'cliente.portal_cliente'
         }
@@ -211,11 +211,20 @@ def reset_password_request():
         
         try:
             user = User.query.filter_by(username=username).first()
+            
+            # Siempre mostrar el mismo mensaje por seguridad
+            flash('El usuario existe, se enviarán instrucciones', 'info')
+            
             if user:
-                # Aquí iría la lógica para enviar el correo de recuperación
-                flash('Si el usuario existe, se ha enviado un correo con instrucciones', 'info')
-            else:
-                flash('Si el usuario existe, se ha enviado un correo con instrucciones', 'info')
+                # Generar token de recuperación
+                token = user.generate_reset_token()
+                
+                # En desarrollo: Mostrar el enlace en pantalla
+                reset_url = url_for('shared.reset_password', token=token, _external=True)
+                flash(f'Enlace de recuperación (DEBUG): {reset_url}', 'info')
+                
+                # En producción aquí iría el envío real del correo
+                # send_password_reset_email(user, reset_url)
             
             return redirect(url_for('shared.login'))
         
@@ -224,3 +233,40 @@ def reset_password_request():
             flash('Error al procesar la solicitud. Intente nuevamente.', 'danger')
     
     return render_template('shared/reset_pass.html', page_title='Recuperar Contraseña')
+
+
+@bp_shared.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Maneja el formulario de nueva contraseña"""
+    if current_user.is_authenticated:
+        return redirect(url_for('shared.index'))
+    
+    # Verificar el token
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('El enlace de recuperación es inválido o ha expirado', 'danger')
+        return redirect(url_for('shared.reset_password_request'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validar que las contraseñas coincidan
+        if password != confirm_password:
+            flash('Las contraseñas no coinciden', 'danger')
+            return redirect(request.url)
+        
+        try:
+            # Actualizar la contraseña
+            user.set_password(password)
+            db.session.commit()
+            
+            flash('Tu contraseña ha sido actualizada correctamente', 'success')
+            return redirect(url_for('shared.login'))
+        
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f'Error al resetear password: {str(e)}')
+            flash('Error al actualizar la contraseña. Intente nuevamente.', 'danger')
+    
+    return render_template('shared/new_password.html', token=token)

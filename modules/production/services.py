@@ -1,12 +1,11 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-from .models import Galleta, Insumo, Receta,Horneado,Usuario, db
+from .models import Galleta, Insumo, Receta, Horneado, Produccion, IngredienteReceta, db
+from modules.shared.models import User, Rol
 from modules.admin.models import Proveedores
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_, desc
 
-
-# Creamos una clase base de servicio
 class BaseService:
     def __init__(self, db_session):
         self.db_session = db_session
@@ -55,7 +54,6 @@ class BaseService:
             print(f"Error al eliminar: {e}")
             return False
 
-# Servicio para manejar los proveedores
 class ProveedorService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
@@ -76,20 +74,19 @@ class ProveedorService(BaseService):
     def get_all_proveedores(self):
         return self.get_all(Proveedores)
 
-# Servicio para manejar las galletas
 class GalletaService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
 
-    def add_galleta(self, nombreGalleta, precioUnitario, cantidadDisponible, gramajeGalleta, tipoGalleta, fechaAnaquel, fechaFinalAnaquel):
+    def add_galleta(self, nombre, precio_unitario, cantidad_disponible, gramaje, tipo_galleta, fecha_anaquel, fecha_final_anaquel):
         galleta = Galleta(
-            nombreGalleta=nombreGalleta,
-            precioUnitario=precioUnitario,
-            cantidadDisponible=cantidadDisponible,
-            gramajeGalleta=gramajeGalleta,
-            tipoGalleta=tipoGalleta,
-            fechaAnaquel=fechaAnaquel,
-            fechaFinalAnaquel=fechaFinalAnaquel
+            nombre=nombre,
+            precio_unitario=precio_unitario,
+            cantidad_disponible=cantidad_disponible,
+            gramaje=gramaje,
+            tipo_galleta=tipo_galleta,
+            fecha_anaquel=fecha_anaquel,
+            fecha_final_anaquel=fecha_final_anaquel
         )
         return self.add(galleta)
 
@@ -99,19 +96,21 @@ class GalletaService(BaseService):
     def get_all_galletas(self):
         return self.get_all(Galleta)
 
-# Servicio para manejar los insumos
 class InsumoService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
 
-    def add_insumo(self, nombre, unidadInsumo, cantidadDisponible, cantidadMinima):
+    def add_insumo(self, nombre, unidad, cantidad_disponible, cantidad_minima):
         insumo = Insumo(
             nombre=nombre,
-            unidad=unidadInsumo,  # Changed from unidadInsumo to unidad
-            cantidad_disponible=cantidadDisponible,  # Changed to use the snake_case attribute name
-            cantidad_minima=cantidadMinima  # Changed to use the snake_case attribute name
+            unidad=unidad,
+            cantidad_disponible=cantidad_disponible,
+            cantidad_minima=cantidad_minima
         )
         return self.add(insumo)
+
+    def get_insumo(self, id_insumo):
+        return self.get(Insumo, id_insumo)
 
     def get_insumo_por_nombre(self, nombre):
         try:
@@ -119,26 +118,21 @@ class InsumoService(BaseService):
         except SQLAlchemyError as e:
             print(f"Error al buscar insumo por nombre: {e}")
             return None
-    
-    
-    def get_insumo(self, id_insumo):
-        return self.get(Insumo, id_insumo)
 
     def get_all_insumos(self):
         return self.get_all(Insumo)
 
-# Servicio para manejar las recetas
 class RecetaService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
 
-    def add_receta(self, nombreReceta, instruccionReceta, cantGalletasProduction, galletTipo, idGalleta):
+    def add_receta(self, nombre, instrucciones, cantidad_producida, galletTipo, id_galleta):
         receta = Receta(
-            nombreReceta=nombreReceta,
-            instruccionReceta=instruccionReceta,
-            cantGalletasProduction=cantGalletasProduction,
+            nombre=nombre,
+            instrucciones=instrucciones,
+            cantidad_producida=cantidad_producida,
             galletTipo=galletTipo,
-            idGalleta=idGalleta
+            id_galleta=id_galleta
         )
         return self.add(receta)
 
@@ -146,40 +140,27 @@ class RecetaService(BaseService):
         return self.get(Receta, id_receta)
 
     def get_all_recetas(self):
-        return self.get_all(Receta)
-
-
-# Añadir al archivo services.py existente
+        return self.db_session.query(Receta).join(Galleta).order_by(Receta.id.desc()).all()
 
 class HorneadoService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
     
     def registrar_horneado(self, temperatura_horno, tiempo_horneado, cantidad_producida, observaciones, id_receta, id_usuario):
-        """
-        Registra un nuevo horneado utilizando el procedimiento almacenado sp_RegistrarHorneado
-        """
         try:
-            # Usamos SQLAlchemy para ejecutar el procedimiento almacenado
-            result = self.db_session.execute(
-                """
-                CALL sp_RegistrarHorneado(:temperatura, :tiempo, :cantidad, :observaciones, :id_receta, :id_usuario)
-                """,
-                {
-                    'temperatura': temperatura_horno,
-                    'tiempo': tiempo_horneado,
-                    'cantidad': cantidad_producida,
-                    'observaciones': observaciones,
-                    'id_receta': id_receta,
-                    'id_usuario': id_usuario
-                }
+            horneado = Horneado(
+                fecha_horneado=datetime.now(),
+                temperatura_horno=temperatura_horno,
+                tiempo_horneado=tiempo_horneado,
+                cantidad_producida=cantidad_producida,
+                observaciones=observaciones,
+                id_receta=id_receta,
+                id_usuario=id_usuario
             )
-            self.db_session.commit()
-            return True
-        except SQLAlchemyError as e:
-            self.db_session.rollback()
+            return self.add(horneado)
+        except Exception as e:
             print(f"Error al registrar horneado: {e}")
-            return False
+            return None
     
     def get_horneado(self, id_horneado):
         return self.get(Horneado, id_horneado)
@@ -188,9 +169,6 @@ class HorneadoService(BaseService):
         return self.get_all(Horneado)
     
     def get_horneados_filtrados(self, fecha_inicio=None, fecha_fin=None, id_receta=None):
-        """
-        Obtiene horneados con filtros opcionales de fecha y receta
-        """
         try:
             query = self.db_session.query(Horneado).order_by(Horneado.fecha_horneado.desc())
             
@@ -198,7 +176,6 @@ class HorneadoService(BaseService):
                 query = query.filter(Horneado.fecha_horneado >= fecha_inicio)
             
             if fecha_fin:
-                # Ajustamos fecha_fin para incluir todo el día
                 fecha_fin_completa = datetime.strptime(fecha_fin, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Horneado.fecha_horneado < fecha_fin_completa)
             
@@ -211,23 +188,17 @@ class HorneadoService(BaseService):
             return []
     
     def get_estadisticas_horneado(self, dias=30):
-        """
-        Obtiene estadísticas de horneado de los últimos X días
-        """
         try:
             fecha_limite = datetime.now() - timedelta(days=dias)
             
-            # Total de horneados en el período
             total_horneados = self.db_session.query(func.count(Horneado.id)).filter(
                 Horneado.fecha_horneado >= fecha_limite
             ).scalar()
             
-            # Total de galletas producidas en el período
             total_galletas = self.db_session.query(func.sum(Horneado.cantidad_producida)).filter(
                 Horneado.fecha_horneado >= fecha_limite
             ).scalar() or 0
             
-            # Galletas por tipo/receta
             galletas_por_receta = self.db_session.query(
                 Receta.nombre,
                 func.sum(Horneado.cantidad_producida).label('total')
@@ -235,7 +206,6 @@ class HorneadoService(BaseService):
                 Horneado.fecha_horneado >= fecha_limite
             ).group_by(Receta.nombre).all()
             
-            # Horneados por día (para gráficas)
             horneados_por_dia = self.db_session.query(
                 func.date(Horneado.fecha_horneado).label('fecha'),
                 func.sum(Horneado.cantidad_producida).label('total')
@@ -257,3 +227,39 @@ class HorneadoService(BaseService):
                 'galletas_por_receta': [],
                 'horneados_por_dia': []
             }
+
+class ProduccionService(BaseService):
+    def __init__(self, db_session):
+        super().__init__(db_session)
+    
+    def agregar_produccion(self, fecha_produccion, gramos_merma, mililitros_merma, piezas_merma, produccion_total, id_receta=None, id_galleta=None):
+        produccion = Produccion(
+            fechaProduccion=fecha_produccion,
+            gramosMerma=gramos_merma,
+            mililitrosMerma=mililitros_merma,
+            piezasMerma=piezas_merma,
+            produccionTotal=produccion_total,
+            idReceta=id_receta,
+            idGalleta=id_galleta
+        )
+        return self.add(produccion)
+    
+    def get_producciones(self):
+        return self.get_all(Produccion)
+
+class UserService(BaseService):
+    def __init__(self, db_session):
+        super().__init__(db_session)
+    
+    def get_user(self, id_user):
+        return self.get(User, id_user)
+    
+    def get_all_users(self):
+        return self.db_session.query(User).join(Rol).filter(
+            Rol.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
+        ).order_by(User.idUser.desc()).all()
+    
+    def get_roles(self):
+        return self.db_session.query(Rol).filter(
+            Rol.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
+        ).all()

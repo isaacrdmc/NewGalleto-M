@@ -2,33 +2,469 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar Recetas
+    <!-- Encabezado con título y notificaciones -->
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="text-white fw-normal fs-6">
+            <h1>Gestión de Recetas</h1>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
     </div>
+
+    <!-- Contenido principal -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
-        <h1>Gestión de Recetas</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Ingredientes</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Galleta de Chocolate</td>
-                    <td>Harina, Azúcar, Chocolate</td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="#" class="btn btn-success">Agregar Receta</a>
+        <!-- Barra de acciones y búsqueda -->
+        <div class="d-flex justify-content-between mb-4">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalReceta"
+                onclick="limpiarFormularioReceta()">
+                <i class="fas fa-plus"></i> Agregar Receta
+            </button>
+
+            <input type="text" id="buscarReceta" placeholder="Buscar receta..." class="form-control"
+                style="max-width: 300px;">
+        </div>
+
+        <!-- Contenedor de tarjetas de recetas -->
+        <div class="row" id="recetasContainer">
+            {% for receta in recetas %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <!-- Imagen dinámica de la receta basada en la galleta asociada -->
+                    <img src="{{ url_for('static', filename='img/' + receta.galleta.nombre|lower|replace(' ', '_') + '.png') }}"
+                        class="card-img-top" alt="{{ receta.nombre }}"
+                        onerror="this.src='../../static/img/receta.jpg'">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ receta.nombre }}</h5>
+                        <p class="card-text">Galleta: {{ receta.galleta.nombre }}</p>
+                        <p class="card-text"><small class="text-muted">Tanda: {{ receta.cantidad_producida }}
+                                galletas</small></p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <!-- Botones de acciones -->
+                        <a href="{{ url_for('admin.detalle_receta', id_receta=receta.id) }}"
+                            class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> Ver Detalles
+                        </a>
+                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalReceta"
+                            onclick="editarReceta('{{ receta.id }}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm"
+                            onclick="eliminarReceta('{{ receta.id }}', '{{ receta.nombre }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if loop.index % 4 == 0 %}
+        </div>
+        <div class="row">
+            {% endif %}
+
+            {% else %}
+            <!-- Mensaje cuando no hay recetas -->
+            <div class="col-12">
+                <div class="alert alert-info">No hay recetas registradas aún.</div>
+            </div>
+            {% endfor %}
+        </div>
     </main>
 </div>
+
+<!-- Modal para agregar/editar recetas -->
+<div class="modal fade" id="modalReceta" tabindex="-1" aria-labelledby="modalRecetaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: #603A1E">
+                <h5 class="modal-title fs-5" id="modalRecetaLabel">Agregar Receta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Formulario para agregar/editar recetas -->
+                <form id="formReceta" class="needs-validation" novalidate enctype="multipart/form-data">
+                    <input type="hidden" id="idReceta" name="idReceta">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <!-- Campo para el nombre de la receta -->
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label fw-bold">Nombre de la Receta</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                <div class="invalid-feedback">Por favor ingrese un nombre para la receta</div>
+                            </div>
+
+                            <!-- Selector de galleta -->
+                            <div class="mb-3">
+                                <label for="id_galleta" class="form-label fw-bold">Galleta</label>
+                                <select class="form-select" id="id_galleta" name="id_galleta" required>
+                                    <option value="">Seleccionar galleta</option>
+                                    {% for galleta in galletas %}
+                                    <option value="{{ galleta.id }}">{{ galleta.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Por favor seleccione una galleta</div>
+                            </div>
+
+                            <!-- Cantidad producida -->
+                            <div class="mb-3">
+                                <label for="cantidad_producida" class="form-label fw-bold">Cantidad Producida</label>
+                                <input type="number" class="form-control" id="cantidad_producida"
+                                    name="cantidad_producida" min="1" required>
+                                <div class="invalid-feedback">Por favor ingrese una cantidad válida</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <!-- Tipo de galleta -->
+                            <div class="mb-3">
+                                <label for="galletTipo" class="form-label fw-bold">Tipo de Galleta</label>
+                                <input type="number" class="form-control" id="galletTipo" name="galletTipo" required>
+                                <div class="invalid-feedback">Por favor ingrese el tipo de galleta</div>
+                            </div>
+
+                            <!-- Selector de imagen -->
+                            <div class="mb-3">
+                                <label for="imagen" class="form-label fw-bold">Imagen de la Receta</label>
+                                <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
+                                <small class="text-muted">Dejar en blanco para mantener la imagen actual o usar la
+                                    predeterminada</small>
+                                <div id="imagenPreview" class="mt-2"></div>
+                            </div>
+
+                            <!-- Instrucciones -->
+                            <div class="mb-3">
+                                <label for="instrucciones" class="form-label fw-bold">Instrucciones</label>
+                                <textarea class="form-control" id="instrucciones" name="instrucciones" rows="4"
+                                    required></textarea>
+                                <div class="invalid-feedback">Por favor ingrese las instrucciones</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarReceta()" id="btnGuardarReceta">
+                    Guardar Receta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Funciones para el CRUD de recetas
+
+    /**
+     * Previsualización de imagen seleccionada
+     */
+    document.getElementById('imagen').addEventListener('change', function (e) {
+        const preview = document.getElementById('imagenPreview');
+        preview.innerHTML = '';
+
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '150px';
+                img.className = 'img-thumbnail';
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    /**
+     * Guarda una receta nueva o editada
+     */
+    async function guardarReceta() {
+        try {
+            // Mostrar loader
+            Swal.fire({
+                title: 'Procesando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const idReceta = document.getElementById('idReceta').value;
+            const esEdicion = idReceta !== '';
+
+            // Validar campos requeridos
+            if (!document.getElementById('nombre').value.trim()) {
+                throw new Error('El nombre de la receta es requerido');
+            }
+
+            if (!document.getElementById('id_galleta').value) {
+                throw new Error('Debe seleccionar una galleta');
+            }
+
+            if (!document.getElementById('cantidad_producida').value ||
+                document.getElementById('cantidad_producida').value < 1) {
+                throw new Error('La cantidad producida debe ser al menos 1');
+            }
+
+            // Crear FormData para enviar archivos
+            const formData = new FormData(document.getElementById('formReceta'));
+
+            const url = esEdicion
+                ? `/admin/recetas/editar/${idReceta}`
+                : '/admin/recetas/nueva';
+
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            // Mostrar mensaje de éxito
+            Swal.close();
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: result.mensaje || (esEdicion ? 'Receta actualizada' : 'Receta creada'),
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            // Cerrar modal y actualizar tabla
+            cerrarModalReceta();
+            limpiarFormularioReceta();
+            actualizarTablaRecetas();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error desconocido'
+            });
+        }
+    }
+
+    /**
+     * Carga los datos de una receta para editarla
+     * @param {number} id - ID de la receta a editar
+     */
+    async function editarReceta(id) {
+        try {
+            const response = await fetch(`/admin/recetas/obtener/${id}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const receta = result.receta;
+
+            limpiarFormularioReceta();
+
+            // Llenar formulario con datos de la receta
+            document.getElementById("idReceta").value = receta.id;
+            document.getElementById("nombre").value = receta.nombre;
+            document.getElementById("id_galleta").value = receta.id_galleta;
+            document.getElementById("cantidad_producida").value = receta.cantidad_producida;
+            document.getElementById("galletTipo").value = receta.galletTipo;
+            document.getElementById("instrucciones").value = receta.instrucciones;
+
+            // Mostrar imagen actual si existe
+            const preview = document.getElementById('imagenPreview');
+            preview.innerHTML = '';
+            if (receta.imagen_url) {
+                const img = document.createElement('img');
+                img.src = receta.imagen_url;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '150px';
+                img.className = 'img-thumbnail';
+                preview.appendChild(img);
+            }
+
+            document.querySelector('#modalReceta .modal-title').textContent = 'Editar Receta';
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error al cargar receta'
+            });
+        }
+    }
+
+    /**
+     * Elimina una receta después de confirmación
+     * @param {number} id - ID de la receta a eliminar
+     * @param {string} nombre - Nombre de la receta a eliminar
+     */
+    async function eliminarReceta(id, nombre) {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: `¿Quieres eliminar la receta "${nombre}"? Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const response = await fetch(`/admin/recetas/eliminar/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            Swal.fire('Eliminada', result.mensaje || 'Receta eliminada', 'success');
+            actualizarTablaRecetas();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire('Error', error.message || 'Error al eliminar receta', 'error');
+        }
+    }
+
+    /**
+     * Filtra las recetas según el texto de búsqueda
+     */
+    function filtrarRecetas() {
+        const filtro = document.getElementById("buscarReceta").value.toLowerCase();
+        document.querySelectorAll("#recetasContainer .card").forEach(card => {
+            const textoCard = card.innerText.toLowerCase();
+            card.parentElement.style.display = textoCard.includes(filtro) ? "" : "none";
+        });
+    }
+
+    /**
+     * Actualiza la tabla de recetas mediante AJAX
+     */
+    async function actualizarTablaRecetas() {
+        try {
+            const response = await fetch('/admin/recetas/listar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const recetas = await response.json();
+            const container = document.querySelector('#recetasContainer');
+            container.innerHTML = '';
+
+            if (recetas.length === 0) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-info">No hay recetas registradas aún.</div></div>';
+                return;
+            }
+
+            let row = document.createElement('div');
+            row.className = 'row';
+            container.appendChild(row);
+
+            recetas.forEach((receta, index) => {
+                if (index > 0 && index % 4 === 0) {
+                    row = document.createElement('div');
+                    row.className = 'row';
+                    container.appendChild(row);
+                }
+
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-4';
+                col.innerHTML = `
+                    <div class="card h-100">
+                        <img src="${receta.imagen_url || '../../static/img/receta.jpg'}" 
+                             class= "card-img-top" 
+                             alt = "${receta.nombre}"
+                             onerror = "this.src='../../static/img/receta.jpg'" >
+                        <div class="card-body">
+                            <h5 class="card-title">${receta.nombre}</h5>
+                            <p class="card-text">Galleta: ${receta.galleta.nombre}</p>
+                            <p class="card-text"><small class="text-muted">Rinde: ${receta.cantidad_producida} galletas</small></p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="/admin/recetas/${receta.id}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Detalles
+                            </a>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
+                                data-bs-target="#modalReceta" onclick="editarReceta('${receta.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarReceta('${receta.id}', '${receta.nombre}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div >
+                `;
+                row.appendChild(col);
+            });
+        } catch (error) {
+            console.error('Error al actualizar recetas:', error);
+        }
+    }
+
+    /**
+     * Limpia el formulario de recetas
+     */
+    function limpiarFormularioReceta() {
+        document.getElementById("formReceta").reset();
+        document.getElementById("idReceta").value = '';
+        document.getElementById('imagenPreview').innerHTML = '';
+        document.querySelector('#modalReceta .modal-title').textContent = 'Agregar Receta';
+    }
+
+    /**
+     * Cierra el modal de recetas y limpia los backdrops
+     */
+    function cerrarModalReceta() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalReceta'));
+        if (modal) modal.hide();
+
+        // Limpiar backdrops si persisten
+        const backdrops = document.getElementsByClassName('modal-backdrop');
+        while (backdrops.length > 0) {
+            backdrops[0].parentNode.removeChild(backdrops[0]);
+        }
+
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+
+    // Event listeners
+    document.getElementById('buscarReceta').addEventListener('keyup', filtrarRecetas);
+</script>
 {% endblock %}

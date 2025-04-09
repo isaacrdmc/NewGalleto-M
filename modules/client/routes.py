@@ -5,7 +5,7 @@ from . import bp_clientes
 @bp_clientes.route('/portal_cliente')
 @login_required
 def portal_cliente():
-    if current_user.rol.nombreRol != 'Cliente':
+    if current_user.rol.nombreRol not in ['Cliente', 'Administrador']:
         flash('No tienes permisos para acceder a esta sección', 'danger')
         return redirect(url_for('shared.index'))
     return render_template('client/portal_cliente.html')

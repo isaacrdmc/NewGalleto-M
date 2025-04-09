@@ -5,7 +5,7 @@
     {% if messages %}
         <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show small-alert" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show small-alert" role="alert" data-auto-dismiss="5000">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -18,10 +18,10 @@
     <div class="login-box">
         <h3>Restablecer Contraseña</h3>
         <form method="POST" action="{{ url_for('shared.reset_password_request') }}" id="resetForm">
-            <label for="email">Correo Electrónico:</label>
-            <input type="email" name="email" id="email" placeholder="Ingresa tu correo" class="input-box" required>
+            <label for="username">Nombre de Usuario:</label>
+            <input type="text" name="username" id="username" placeholder="Ingresa tu nombre de usuario" class="input-box" required>
             
-            <button type="submit" class="btn">Enviar Enlace</button>
+            <button type="submit" class="btn">Enviar Instrucciones</button>
         </form>
         <div class="border border-1 mt-5"></div>
         <div class="text-center login-link">
@@ -32,22 +32,27 @@
 
 <script>
     document.getElementById('resetForm').addEventListener('submit', function(e) {
-        const email = document.getElementById('email').value.trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const username = document.getElementById('username').value.trim();
         
-        if (!email) {
+        if (!username) {
             e.preventDefault();
-            alert('Por favor ingresa tu correo electrónico.');
-            return false;
-        }
-        
-        if (!emailRegex.test(email)) {
-            e.preventDefault();
-            alert('Por favor ingresa un correo electrónico válido.');
+            alert('Por favor ingresa tu nombre de usuario.');
             return false;
         }
         
         return true;
+    });
+
+    // Cierre automático de alertas
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('[data-auto-dismiss]');
+        alerts.forEach(alert => {
+            const delay = parseInt(alert.getAttribute('data-auto-dismiss'));
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, delay);
+        });
     });
 </script>
 {% endblock %}

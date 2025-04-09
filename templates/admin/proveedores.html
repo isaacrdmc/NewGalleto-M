@@ -4,11 +4,29 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar Proveedores
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="text-white fw-normal fs-6">
+            <h1>Gestión Proveedores</h1>
+        </div>
+
+        <!-- Botón de notificaciones -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <!-- Aquí se listan las notificaciones -->
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
     </div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
-        <h1>Gestión Proveedores</h1>
         <div class="container mt-3">
             <!-- Botón y búsqueda -->
             <div class="d-flex justify-content-between mb-3">
@@ -26,40 +44,40 @@
             
             </div>
 
-            <div class="table-responsive">
-                <!-- Tabla de proveedores -->
-                <table class="table table-bordered bg-white text-center">
-                    <thead>
+            <div class="table-responsive rounded-3 shadow-sm mb-4">
+                <table class="table table-bordered table-hover table-striped bg-white mb-0">
+                    <thead class="text-center align-middle" style="background-color: #d6b7a1;">
                         <tr>
-                            <th>Acción</th>
+                            <th style="width: 120px;">Acciones</th>
                             <th>Empresa</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
                             <th>Dirección</th>
-                            <th>Productos</th>
+                            <th style="min-width: 250px;">Productos</th>
                         </tr>
                     </thead> 
-                    <tbody id="tablapes">
+                    <tbody id="tablapes" class="align-middle">
                         {% for p in proveedor %}
                         <tr id="row-{{ p.idProveedores }}">
-                            <td>
-                                <!-- ? Boton para modificar el elemento selecciónado -->
-                                <button 
-                                    class="btn btn-warning btn-sm" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#modalp"
-                                    onclick="editarp('{{ p.idProveedores }}')">✏️
-                                </button>
-                                <button 
-                                    class="btn btn-danger btn-sm" 
-                                    onclick="eliminarp('{{ p.idProveedores }}')">❌
-                                </button>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-warning btn-sm py-1 px-2" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalp"
+                                            onclick="editarp('{{ p.idProveedores }}')">
+                                            ✏️
+                                    </button>
+                                    <button class="btn btn-danger btn-sm py-1 px-2" 
+                                            onclick="eliminarp('{{ p.idProveedores }}')">
+                                            ❌
+                                    </button>
+                                </div>
                             </td>
-                            <td>{{ p.nombre }}</td>
-                            <td>{{ p.telefono }}</td>
-                            <td>{{ p.correo }}</td>
-                            <td>{{ p.direccion }}</td>
-                            <td>{{ p.productosProveedor }}</td>
+                            <td class="fw-semibold">{{ p.nombre }}</td>
+                            <td class="text-nowrap">{{ p.telefono }}</td>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.correo }}">{{ p.correo }}</td>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.direccion }}">{{ p.direccion }}</td>
+                            <td class="small">{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -157,28 +175,6 @@
                 </div>
             </div>
         </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
     </main>
 </div>
 

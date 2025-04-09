@@ -1,0 +1,86 @@
+{% extends "shared/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="text-white fw-normal fs-6">
+            <h1>Panel de Administración</h1>
+        </div>
+    </div>
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
+        <div class="row">
+            <!-- Card Producción -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100" style="cursor: pointer;" 
+                data-target="{{ url_for('production.dashboard_produccion') }}">
+                <img src="{{ url_for('static', filename='img/produccion.jpeg') }}"
+                        class="card-img-top h-100" alt="Producción">
+                    <div class="card-body text-center">
+                        <i class="fas fa-industry fa-4x mb-3"></i>
+                        <h3 class="card-title">Producción</h3>
+                        <p class="card-text">Gestión de recetas, horneados e inventario de insumos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Ventas -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100" style="cursor: pointer;" 
+                data-target="{{ url_for('ventas.ventas') }}">
+                <img src="{{ url_for('static', filename='img/ventas.jpg') }}"
+                        class="card-img-top h-100" alt="Ventas">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cash-register fa-4x mb-3"></i>
+                        <h3 class="card-title">Ventas</h3>
+                        <p class="card-text">Gestión de pedidos, clientes e inventario de productos terminados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Clientes -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100" style="cursor: pointer;" 
+                data-target="{{ url_for('cliente.portal_cliente') }}">
+                <img src="{{ url_for('static', filename='img/clientes.jpg') }}"
+                        class="card-img-top h-100" alt="Clientes">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-4x mb-3"></i>
+                        <h3 class="card-title">Clientes</h3>
+                        <p class="card-text">Acceso al portal de clientes y gestión de perfiles</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        border: none;
+        border-radius: 10px;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+</style>
+
+<script>
+// Opción 1: Usando event listeners (recomendada)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.card[data-target]').forEach(card => {
+        card.addEventListener('click', function() {
+            window.location.href = this.getAttribute('data-target');
+        });
+    });
+});
+
+// Opción 2: Función global (alternativa)
+// function redirectToTarget(element) {
+//     window.location.href = element.getAttribute('data-target');
+// }
+</script>
+
+{% endblock %}
