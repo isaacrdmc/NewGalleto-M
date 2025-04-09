@@ -14,7 +14,7 @@ from ..services import (
 )
 from ...admin import bp_admistracion
 
-@bp_admistracion.route('/dashboard_admin')
+@bp_admistracion.route('/admin/dashboard_admin')
 @login_required
 def dashboard_admin():
     if current_user.rol.nombreRol != 'Administrador':

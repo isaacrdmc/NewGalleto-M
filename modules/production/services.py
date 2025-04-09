@@ -4,6 +4,7 @@ from .models import Galleta, Insumo, Receta, Horneado, Produccion, IngredienteRe
 from modules.shared.models import User, Rol
 from modules.admin.models import Proveedores
 from datetime import datetime, timedelta
+from sqlalchemy import text
 from sqlalchemy import func, and_, desc
 
 class BaseService:
@@ -59,7 +60,7 @@ class ProveedorService(BaseService):
         super().__init__(db_session)
 
     def add_proveedor(self, nombre, telefono, correo, direccion, productosProveedor):
-        proveedor = Proveedores(
+        proveedor = proveedor(
             nombre=nombre,
             telefono=telefono,
             correo=correo,

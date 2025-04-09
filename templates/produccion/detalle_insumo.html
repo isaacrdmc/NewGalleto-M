@@ -1,95 +1,223 @@
 {% extends "shared/base.html" %}
-
 {% block content %}
 <div class="container mt-4">
     <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold">DETALLE DE INSUMO</h2>
-        <span class="badge bg-secondary fs-6">Fazenda: 6</span>
+        <a href="{{ url_for('production.inventario') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al inventario
+        </a>
     </div>
-    
     <!-- Tarjeta de información principal -->
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <!-- Imagen y datos básicos -->
-                <div class="col-md-3 text-center">
-                    <img src="{{ insumo.imagen }}" alt="{{ insumo.nombre }}" class="img-fluid" style="max-height: 120px;">
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <!-- Datos básicos -->
+            <div class="col-md-6">
+                <h3 class="mb-1">{{ insumo.nombre }}</h3>
+                <div class="d-flex gap-2 mb-2">
+                    <span class="badge bg-info text-dark">Total: {{ insumo.cantidad_disponible }} {{ insumo.unidad }}</span>
+                    <span class="badge {{ 'bg-success' if insumo.cantidad_disponible > insumo.cantidad_minima else 'bg-danger' }}">
+                        {{ 'Disponible' if insumo.cantidad_disponible > 0 else 'Agotado' }}
+                    </span>
                 </div>
-                <div class="col-md-6">
-                    <h3 class="mb-1">{{ insumo.nombre }}</h3>
-                    <div class="d-flex gap-2 mb-2">
-                        <span class="badge bg-info text-dark">Total: {{ insumo.cantidad }}GR</span>
-                        <span class="badge bg-warning text-dark">Piezas: {{ insumo.piezas }}</span>
-                        <span class="badge {{ 'bg-success' if insumo.stock > 0 else 'bg-danger' }}">
-                            {{ 'Disponible' if insumo.stock > 0 else 'Agotado' }}
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-primary me-2">
-                        <i class="bi bi-plus-circle"></i> Registrar
-                    </button>
-                </div>
+                <p class="mb-1">Cantidad mínima requerida: {{ insumo.cantidad_minima }} {{ insumo.unidad }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#registrarCompraModal">
+                    <i class="bi bi-plus-circle"></i> Registrar Compra
+                </button>
+                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#registrarMermaModal">
+                    <i class="bi bi-exclamation-triangle"></i> Registrar Merma
+                </button>
             </div>
         </div>
     </div>
-    
-    <!-- Tabla de lotes -->
-    <div class="card shadow">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Lotes registrados</h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Lote</th>
-                            <th>Cantidad</th>
-                            <th>Fecha caducidad</th>
-                            <th>Mermas</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+</div>
+
+<!-- Tabla de lotes -->
+<div class="card shadow">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Lotes registrados</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID Lote</th>
+                        <th>Cantidad</th>
+                        <th>Fecha Registro</th>
+                        <th>Fecha Caducidad</th>
+                        <th>Proveedor</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if lotes %}
                         {% for lote in lotes %}
-                        <tr class="{{ 'table-warning' if lote in proximos_caducar else '' }}">
-                            <td>{{ lote.lote }}</td>
-                            <td>{{ lote.cantidad }}GR</td>
+                        <tr class="{{ 'table-warning' if lote.is_expiring_soon else '' }}">
+                            <td>{{ lote.id }}</td>
+                            <td>{{ lote.cant_unidades_caja * lote.cant_cajas }} {{ lote.unidad_insumo }}</td>
+                            <td>{{ lote.fecha_registro }}</td>
                             <td>
                                 {{ lote.fecha_caducidad }}
-                                {% if lote in proximos_caducar %}
+                                {% if lote.is_expiring_soon %}
                                 <span class="badge bg-danger ms-2">Próximo a caducar</span>
                                 {% endif %}
                             </td>
-                            <td>{{ lote.mermas }}GR</td>
+                            <td>{{ lote.proveedor_nombre }}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-danger">Registrar merma</button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="prepararMerma({{ lote.id }}, '{{ lote.unidad_insumo }}')">
+                                    Registrar merma
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3">No hay lotes registrados para este insumo</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
     </div>
-    
-    <!-- Alerta para productos próximos a caducar -->
-    {% if proximos_caducar %}
-    <div class="alert alert-warning mt-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Productos próximos a caducar</h5>
-                <p class="mb-0">
-                    <strong>{{ insumo.nombre }}</strong> | 
-                    Cantidad: {{ proximos_caducar|sum(attribute='cantidad') }}GR | 
-                    Fecha: {{ proximos_caducar[0].fecha_caducidad }}
-                </p>
-            </div>
-            <button class="btn btn-sm btn-warning">Ver detalle</button>
-        </div>
-    </div>
-    {% endif %}
 </div>
+
+<!-- Alerta para productos próximos a caducar -->
+{% if lotes_proximos_caducar %}
+<div class="alert alert-warning mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Productos próximos a caducar</h5>
+            <p class="mb-0">
+                <strong>{{ insumo.nombre }}</strong> | 
+                Lotes por caducar: {{ lotes_proximos_caducar|length }} | 
+                Próxima fecha: {{ lotes_proximos_caducar[0].fecha_caducidad }}
+            </p>
+        </div>
+        <button class="btn btn-sm btn-warning">Ver detalle</button>
+    </div>
+</div>
+{% endif %}
+</div>
+<!-- Modal para registrar compra de insumo -->
+<div class="modal fade" id="registrarCompraModal" tabindex="-1" aria-labelledby="registrarCompraModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registrarCompraModalLabel">Registrar Compra de {{ insumo.nombre }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('production.registrar_compra_insumo') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="id_insumo" value="{{ insumo.id }}">
+                    <div class="mb-3">
+                        <label for="id_proveedor" class="form-label">Proveedor</label>
+                        <select class="form-select" id="id_proveedor" name="id_proveedor" required>
+                            <option value="id_proveedor">Seleccionar proveedor</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.idProveedores }}">{{ proveedor.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    
+                    <div class="mb-3">
+                        <label for="cant_cajas" class="form-label">Cantidad de Cajas</label>
+                        <input type="number" class="form-control" id="cant_cajas" name="cant_cajas" min="1" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cant_unidades_caja" class="form-label">Unidades por Caja</label>
+                        <input type="number" class="form-control" id="cant_unidades_caja" name="cant_unidades_caja" min="1" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="costo_caja" class="form-label">Costo por Caja</label>
+                        <input type="number" class="form-control" id="costo_caja" name="costo_caja" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fecha_caducidad" class="form-label">Fecha de Caducidad</label>
+                        <input type="date" class="form-control" id="fecha_caducidad" name="fecha_caducidad" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Compra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal para registrar merma -->
+<div class="modal fade" id="registrarMermaModal" tabindex="-1" aria-labelledby="registrarMermaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registrarMermaModalLabel">Registrar Merma de {{ insumo.nombre }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('production.registrar_merma') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="id_insumo" value="{{ insumo.id }}">
+                    <input type="hidden" name="id_lote" id="id_lote_merma">
+                    <div class="mb-3">
+                        <label for="tipo_merma" class="form-label">Tipo de Merma</label>
+                        <select class="form-select" id="tipo_merma" name="tipo_merma" required>
+                            <option value="Caducidad">Caducidad</option>
+                            <option value="Desperdicio">Desperdicio</option>
+                            <option value="Daño">Daño</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cantidad_merma" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidad_merma" name="cantidad_merma" min="1" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="unidad_merma" class="form-label">Unidad</label>
+                        <input type="text" class="form-control" id="unidad_merma" name="unidad_merma" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Registrar Merma</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Función para establecer los valores en el modal de merma
+    function prepararMerma(idLote, unidad) {
+        document.getElementById('id_lote_merma').value = idLote;
+        document.getElementById('unidad_merma').value = unidad;
+        
+        // Abrir el modal
+        var modal = new bootstrap.Modal(document.getElementById('registrarMermaModal'));
+        modal.show();
+    }
+    
+    // Establecer fecha mínima para caducidad (hoy)
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_caducidad').min = today;
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // e.preventDefault(); // Descomenta para probar sin enviar el formulario
+        const formData = new FormData(this);
+        console.log('id_proveedor:', formData.get('id_proveedor'));
+        // Recorrer todos los datos del formulario
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+    });
+</script>
 {% endblock %}

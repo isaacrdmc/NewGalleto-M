@@ -25,3 +25,10 @@ class DetallePedido(db.Model):
     subtotal = db.Column(db.Numeric(10,2), nullable=False)
     
     galleta = db.relationship('Galleta')
+
+
+class VistaDetallesGalletas(db.Model):
+    __tablename__ = 'vista_detalles_galletas'
+    galleta = db.Column(db.String(50), primary_key=True)  # Columna 'Galleta'
+    forma_venta = db.Column(db.String(50))               # Columna 'Forma de Venta'
+    cantidad = db.Column(db.String(50))                 # Columna 'Cantidad'
