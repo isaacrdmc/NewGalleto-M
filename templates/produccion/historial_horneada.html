@@ -87,7 +87,7 @@
                                         <td>{{ horneado.temperatura_horno }}°C</td>
                                         <td>{{ horneado.tiempo_horneado }}</td>
                                         <td>{{ horneado.cantidad_producida }}</td>
-                                        <td>{{ horneado.usuario.nombre }} {{ horneado.usuario.apellP }}</td>
+                                        <td>{{ horneado.usuario.username }}</td>
                                         <td>
                                             <a href="{{ url_for('production.detalle_horneado', id_horneado=horneado.id) }}" class="btn btn-sm btn-info">
                                                 <i class="fa-solid fa-eye"></i>

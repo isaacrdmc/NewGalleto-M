@@ -43,7 +43,7 @@
                         </span>
                         {% if current_user.rol.nombreRol == 'Produccion' %}
                         <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
-                            href="{{ url_for('production.inventario') }}"
+                            href="{{ url_for('production.dashboard_produccion') }}"
                             style="background-color: #ffd47ed5 !important;">
                             <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Insumos">
                         </a>

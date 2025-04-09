@@ -36,6 +36,18 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f'<User {self.username}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.idUser,
+            'username': self.username,
+            'fecha_registro': self.fechaRegistro.strftime('%Y-%m-%d %H:%M:%S') if self.fechaRegistro else None,
+            'ultimo_acceso': self.ultimoAcceso.strftime('%Y-%m-%d %H:%M:%S') if self.ultimoAcceso else None,
+            'intentos_fallidos': self.intentosFallidos,
+            'estado': self.estado,
+            'id_rol': self.idRol,
+            'rol_nombre': self.rol.nombre if self.rol else None
+        }
 
 class Rol(db.Model):
     __tablename__ = 'roles'

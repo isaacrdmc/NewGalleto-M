@@ -55,7 +55,7 @@
     <div class="row">
         {% for item in inventario %}
         <div class="col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('production.detalle_insumo', nombre_insumo=item.nombre) }}" 
+            <a href="{{ url_for('production.detalle_insumo', id_insumo=item.id) }}"
                 class="text-decoration-none d-block">
                 <div class="card text-center border border-3 {{ 'border-success' if item.cantidad_disponible > item.cantidad_minima else 'border-danger' }} shadow-sm hover-effect h-100">
                     <div class="card-body">
@@ -96,6 +96,7 @@ document.getElementById('addInsumoForm').addEventListener('submit', function(e) 
             alert('Error: ' + data.error);
         } else {
             alert('Insumo agregado con éxito');
+            modal.hide(); // <-- cierra el modal
             location.reload(); // Recargar la página para ver el nuevo insumo
         }
     })
