@@ -40,23 +40,36 @@
 </div>
 <!-- Fondo oscuro detrás del modal -->
 <div id="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000088; z-index:999;" onclick="cerrarModal()"></div>
-<!-- Modal personalizado -->
-<div id="modal-detalles" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%, 0); background:white; padding:20px; border:1px solid #ccc; z-index:1000; width:400px; border-radius:10px;">
-    <h3>Detalle de Venta</h3>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Forma</th>
-                <th>Cantidad</th>
-                <th>Precio</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody id="modal-tabla-detalles">
-        </tbody>
-    </table>
-    <button onclick="cerrarModal()" style="margin-top: 10px;">Cerrar</button>
+
+<!-- Modal personalizado con nuevo diseño -->
+<div id="modal-detalles" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%, 0); background:#f0d6b3; padding:0; border:none; z-index:1000; width:80%; max-width:700px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <!-- Encabezado del modal -->
+    <div style="background-color:#0f1722; color:white; padding:20px; text-align:center;">
+        <h2 style="margin:0; font-size:36px; font-weight:bold;">Detalle de venta</h2>
+    </div>
+    
+    <!-- Cuerpo del modal -->
+    <div style="padding:20px;">
+        <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+            <thead>
+                <tr style="background-color:#ffbe55;">
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Producto</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Forma</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Cantidad</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Precio</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="modal-tabla-detalles">
+                <!-- Los detalles se llenarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+        
+        <!-- Botón de cerrar -->
+        <div style="text-align:right; margin-top:20px;">
+            <button onclick="cerrarModal()" style="background-color:#d73e48; color:white; border:none; padding:12px 25px; font-size:16px; font-weight:bold; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -132,20 +145,20 @@
                 if (data.success) {
                     const tbody = document.getElementById('modal-tabla-detalles');
                     tbody.innerHTML = ''; // Limpiar contenido anterior
-    
+        
                     data.detalles.forEach(det => {
                         const row = `
-                            <tr>
-                                <td>${det.producto}</td>
-                                <td>${det.forma_venta}</td>
-                                <td>${det.cantidad}</td>
-                                <td>$${det.precio_unitario}</td>
-                                <td>$${det.subtotal}</td>
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding:15px; background-color:#f9f9f9;">${det.producto}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">${det.forma_venta}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">${det.cantidad_formateada || det.cantidad}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">$${det.precio_unitario}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">$${det.subtotal}</td>
                             </tr>
                         `;
                         tbody.innerHTML += row;
                     });
-    
+        
                     document.getElementById('modal-detalles').style.display = 'block';
                     document.getElementById('modal-overlay').style.display = 'block';
                 } else {

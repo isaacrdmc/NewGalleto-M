@@ -43,7 +43,7 @@ class DetalleVenta(db.Model):
     idDetalleVenta = Column(Integer, primary_key=True)
     cantGalletasVendidas = Column(Integer)
     precioUnitario = Column(DECIMAL(10,2))
-    formaVenta = Column(Enum('Por pieza', 'Por precio', 'por paquete/caja'))
+    formaVenta = Column(Enum('Por pieza', 'Por peso', 'por paquete/caja'))
     cantidadGalletas = Column(Integer)
     pesoGramos = Column(DECIMAL(10,2))
     idGalleta = Column(Integer, ForeignKey('galletas.idGalleta'))

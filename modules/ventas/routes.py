@@ -33,12 +33,28 @@ def obtener_detalles_venta(id_venta):
 
     detalles = []
     for d in venta.detalles:
+        # Formateo de cantidad según forma de venta
+        if d.formaVenta == "Por pieza":
+            cantidad_formateada = f"{d.cantGalletasVendidas} galletas"
+        elif d.formaVenta == "Por peso":
+            cantidad_formateada = f"{d.pesoGramos}gr"
+        elif d.formaVenta in ["Por paquete/caja", "por paquete/caja"]:
+            if d.pesoGramos == 1000:
+                cantidad_formateada = "Caja de 1kg"
+            elif d.pesoGramos == 700:
+                cantidad_formateada = "Caja de 700gr"
+            else:
+                cantidad_formateada = f"Paquete de {d.pesoGramos}gr"
+        else:
+            cantidad_formateada = str(d.cantGalletasVendidas)
+
         detalles.append({
             "producto": d.galleta.nombreGalleta if d.galleta else "Producto desconocido",
-            "cantidad": d.cantGalletasVendidas,
-            "precio_unitario": float(d.precioUnitario),
+            "cantidad": d.cantGalletasVendidas,  # Mantener el valor numérico para cálculos
+            "cantidad_formateada": cantidad_formateada,  # Nueva propiedad con formato
+            "precio_unitario": float(d.galleta.precioUnitario),
             "forma_venta": d.formaVenta,
-            "subtotal": float(d.precioUnitario * d.cantGalletasVendidas)
+            "subtotal": float(d.precioUnitario)
         })
 
     return jsonify({"success": True, "detalles": detalles})
