@@ -88,7 +88,7 @@ class Horneado(db.Model):
     
     # Relaciones con otras tablas
     id_receta = db.Column('idReceta', db.Integer, db.ForeignKey('recetas.idReceta'), nullable=False)
-    id_produccion = db.Column('idProduccion', db.Integer, db.ForeignKey('Produccion.idProduccion'), nullable=True)
+    id_produccion = db.Column('idProduccion', db.Integer, db.ForeignKey('Produccion.inProduccion'), nullable=True)
     id_usuario = db.Column('idUsuario', db.Integer, db.ForeignKey('usuarios.idUser'), nullable=False)
     
     # Relaciones
@@ -107,7 +107,7 @@ class Horneado(db.Model):
             'id_produccion': self.id_produccion,
             'id_usuario': self.id_usuario,
             'nombre_receta': self.receta.nombre if self.receta else None,
-            'nombre_usuario': f"{self.usuario.nombre} {self.usuario.apellP}" if self.usuario else None
+            'nombre_usuario': self.usuario.username if self.usuario else None
         }
 
 # Tabla de produccion

@@ -34,18 +34,17 @@ def obtener_proveedores():
     """
     return Proveedores.query.order_by(Proveedores.idProveedores.desc()).all()
 
-def actualizar_proveedor(proveedor_id, empresa=None, nombre=None, telefono=None, correo=None, direccion=None, productosProveedor=None):
+def actualizar_proveedor(proveedor_id, empresa=None, nombre=None, telefono=None, correo=None, direccion=None, productosProveedor=None, productos=None):
     """
     Actualiza los datos de un proveedor existente
     """
     try: 
         proveedor = Proveedores.query.get_or_404(proveedor_id)
-        # Usa 'empresa' si se proporciona, de lo contrario usa 'nombre'
         proveedor.nombre = empresa if empresa is not None else nombre
         proveedor.telefono = telefono
         proveedor.correo = correo
         proveedor.direccion = direccion
-        proveedor.productosProveedor = productosProveedor
+        proveedor.productosProveedor = productosProveedor if productosProveedor is not None else productos
         db.session.commit()
         return proveedor
     except Exception as e:

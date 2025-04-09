@@ -17,10 +17,11 @@
                     <!-- Botón Mis Pedidos -->
                     <div class="row mb-4">
                         <div class="col-12 text-center">
-                            <button class="btn btn-outline-secondary">
-                                <i class="fas fa-clipboard-list me-2"></i> 
-                                Mis pedidos
-                            </button>
+                            <a href="{{ url_for('cliente.pedidos_cliente') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-clipboard-list me-2"></i>
+                                Mis Pedidos
+                            </a>
+                            </a>
                         </div>
                     </div>
 
@@ -60,7 +61,8 @@
                                             <label class="fw-bold">Correo electrónico:</label>
                                         </div>
                                         <div class="col-8">
-                                            <input type="email" class="form-control" name="email" value="" placeholder="Ingresa tu correo">
+                                            <input type="email" class="form-control" name="email" value=""
+                                                placeholder="Ingresa tu correo">
                                         </div>
                                     </div>
                                 </div>
@@ -77,7 +79,8 @@
                                             <label class="fw-bold">Contraseña actual:</label>
                                         </div>
                                         <div class="col-8">
-                                            <input type="password" class="form-control" name="current_password" placeholder="Ingresa tu contraseña actual">
+                                            <input type="password" class="form-control" name="current_password"
+                                                placeholder="Ingresa tu contraseña actual">
                                         </div>
                                     </div>
                                     <div class="row mb-3">
@@ -85,7 +88,8 @@
                                             <label class="fw-bold">Nueva contraseña:</label>
                                         </div>
                                         <div class="col-8">
-                                            <input type="password" class="form-control" name="new_password" placeholder="Ingresa tu nueva contraseña">
+                                            <input type="password" class="form-control" name="new_password"
+                                                placeholder="Ingresa tu nueva contraseña">
                                         </div>
                                     </div>
                                     <div class="row mb-3">
@@ -93,7 +97,8 @@
                                             <label class="fw-bold">Confirmar contraseña:</label>
                                         </div>
                                         <div class="col-8">
-                                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirma tu nueva contraseña">
+                                            <input type="password" class="form-control" name="confirm_password"
+                                                placeholder="Confirma tu nueva contraseña">
                                         </div>
                                     </div>
                                 </div>
@@ -119,19 +124,23 @@
     .card {
         border-radius: 10px;
     }
+
     .form-control {
         border-radius: 5px;
         border: 1px solid #ced4da;
     }
+
     .btn-success {
         background-color: #4CAF50;
         border-color: #4CAF50;
         min-width: 200px;
     }
+
     .btn-outline-secondary {
         border-color: #6c757d;
         color: #6c757d;
     }
+
     h4.border-bottom {
         border-color: #dee2e6 !important;
     }
