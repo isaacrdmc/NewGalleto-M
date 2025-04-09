@@ -138,7 +138,7 @@ def obtener_cliente(id):
 @login_required
 def ver_pedidos_cliente(id):
     if current_user.rol.nombreRol != 'Administrador':
-        current_app.logger.warning(f'Acceso no autorizado a la información de los pedidos del cliente')
+        current_app.logger.warning(f'Intento de acceso no autorizado a la página de pedidos por {current_user.username}')
         return redirect(url_for('shared.login'))
     
     pedidos = obtener_pedidos_cliente(id)
@@ -165,4 +165,5 @@ def ver_pedidos_cliente(id):
             'items': items
         })
     
+    current_app.logger.info(f'Acceso a los pedidos del cliente {cliente.username} por {current_user.username}')
     return render_template('admin/pedidos_cliente.html', cliente=cliente, pedidos=pedidos_data)

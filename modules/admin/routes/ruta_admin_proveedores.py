@@ -16,6 +16,7 @@ from ...admin import bp_admistracion
 @login_required
 def agregarProv():
     proveedoresNuevos=agregar_proveedor()
+    current_app.logger.warning(f'Intento de acceso no autorizado a la página de clientes por {current_user.username}')
     return render_template('admin/index.html', proveedores=proveedoresNuevos)
  
 
@@ -52,8 +53,11 @@ def listar_proveedores():
         # * Obtener la lista de proveedores
         lista_proveedores = obtener_proveedores()
         if not lista_proveedores:
+            current_app.logger.warning(f'No hay proveedores registrados')
             return jsonify({"mensaje": "No hay proveedores registrados"}), 200
         
+
+        current_app.logger.info(f'Acceso a la lista de proveedores por {current_user.username}')
         # ? Convertimos la lista de proveedores a un fomrato de tipo JSON
         proveedores_json = [
             {
@@ -66,11 +70,14 @@ def listar_proveedores():
             }
             for p in lista_proveedores
         ]
+
+        current_app.logger.info(f'Lista de proveedores obtenida por {current_user.username}')
         return jsonify(proveedores_json), 200
     
     except Exception as e:
         # Loguear el error para depuración
         print(f"Error al listar proveedores: {e}")
+        current_app.logger.error(f'Error al listar proveedores_ {e}')
         return jsonify({"error": "Error interno del servidor"}), 500
 
 
@@ -113,6 +120,9 @@ def agregar_proveedor():
         db.session.add(nuevo_proveedor)
         db.session.commit()
 
+
+        current_app.logger.infor(f'Proveedor {nuevo_proveedor.nombre} agregado correctamente por {current_user.username}')
+
         # ? Retornamos el nuevo proveedor en formato JSON
         return jsonify({
             # ? Mensaje de exito (Mensaje importante del 'jsonify')
@@ -131,6 +141,7 @@ def agregar_proveedor():
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'Error al agregar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 
@@ -156,6 +167,8 @@ def editar_proveedor(id):
             direccion=data.get('direccion', ''),  # Usamos get() para campos opcionales
             productos=data.get('productos', '')
         )
+
+        current_app.logger.info(f'Proveedor {proveedor.nombre} editado correctamente por {current_user.username}')
         
         # ? Retornamos al porveedor actualizandolo en fomrato JSON
         return jsonify({
@@ -172,6 +185,7 @@ def editar_proveedor(id):
         })
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'Error al editar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 
@@ -182,6 +196,8 @@ def eliminar_proveedor_route(id):
     try:
         # ? Usamos la función de servicio para eliminar el proveedor
         proveedorEliminar = eliminar_proveedor(id)
+
+        current_app.logger.info(f'Proveedor {proveedorEliminar.nombre} eliminado correctamente po {current_user.username}')
 
         # * Retornamos el mensaje de exito
         return jsonify({
@@ -195,6 +211,7 @@ def eliminar_proveedor_route(id):
         })
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'Error al eliminar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
     
 
@@ -204,6 +221,7 @@ def eliminar_proveedor_route(id):
 @login_required
 def buscar_proveedor_route():
     if 'username' not in session or session['role'] != 'admin':
+        current_app.logger.error(f'Acceso no autorizado a la búsqueda de proveedores por el usuario')
         return jsonify({"error": "No autorizado"}), 403
     
     # * la respuesa la almacenamos en una variable
@@ -217,10 +235,14 @@ def buscar_proveedor_route():
         # ? Usamos la función de servicio para buscar el proveedor
         proveedores = buscar_proveedor_route(producto)
 
+
         # * Validamos la existencia del porveedor
         if not proveedores:
+            current_app.logger.warning(f'No se ha encontrado el porveedor {producto} por {current_user.username}')
             return jsonify({"mensaje": f"No se han encontrado proveedores con el {producto}"}), 404
 
+        current_app.logger.infor(f'Proveedor {producto} encontrado por {current_user.username}')
+        
         # ? Entregamos al ista de los porveedore en formato JSON
         proveedores_json = [
             {
@@ -238,6 +260,7 @@ def buscar_proveedor_route():
 
     except Exception as e:
         print(f"Error al buscar proveedores: {e}")
+        current_app.logger.error(f'Error al buscar proveedores: {str(e)}')
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
 
 
@@ -248,6 +271,9 @@ def buscar_proveedor_route():
 def obtener_proveedor(id):
     try:
         proveedor = Proveedores.query.get_or_404(id)
+
+        current_app.logger.info(f'Proveedor {proveedor.nombre} obtenido correctamente por {current_user.username}')
+
         return jsonify({
             "idProveedores": proveedor.idProveedores,
             "nombre": proveedor.nombre,
