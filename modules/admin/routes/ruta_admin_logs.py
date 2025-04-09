@@ -56,5 +56,5 @@ def logs_admin():
     logs = pagination.items
 
     # ? Si no hay logs, mostramos un mensaje
-    current_app.logger.info(f'Acceso a Eventos por {current_user.username}')
+    # current_app.logger.info(f'Acceso a Eventos por {current_user.username}')
     return render_template('admin/logs.html', logs=logs, pagination=pagination) # Renderizamos el HTML y le pasamos los logs y la pagínación

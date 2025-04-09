@@ -133,7 +133,6 @@ def obtener_cliente(id):
 
 
 
-# TODO Falta el logger de esta ruta
 @bp_admistracion.route('/clientes/pedidos/<int:id>')
 @login_required
 def ver_pedidos_cliente(id):

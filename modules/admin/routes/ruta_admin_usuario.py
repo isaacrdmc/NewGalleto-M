@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, redirect, url_for
+from flask import current_app, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from ..services import (
     agregar_usuario, obtener_usuarios, actualizar_usuario,
@@ -13,6 +13,7 @@ from ...shared.models import User, Rol
 @login_required
 def usuarios():
     if current_user.rol.nombreRol != 'Administrador':
+        current_app.logger.warning(f'Acceso denegado a {current_user.username} a la ruta para intractuar con los datos de los usuarios')
         return redirect(url_for('shared.login'))
     
     lista_usuarios = obtener_usuarios()
@@ -20,8 +21,9 @@ def usuarios():
     form = UsuarioForm()
     form.rol.choices = [(str(rol.idRol), rol.nombreRol) for rol in roles]
     
+    current_app.logger.info(f'Acceso a la ruta para intractuar con los datos de los usuaios por {current_user.username}')
     return render_template('admin/usuarios.html', usuarios=lista_usuarios, form=form)
-
+ 
 @bp_admistracion.route('/usuarios/agregar', methods=['POST'])
 @login_required
 def agregar_usuario_route():
@@ -35,6 +37,8 @@ def agregar_usuario_route():
             estado=data['estado']
         )
         
+        current_app.logger.info(f'Usuario {nuevo_usuario.username} agregado por {current_user.username}')
+
         return jsonify({
             "mensaje": "Usuario agregado correctamente",
             "usuario": {
@@ -50,6 +54,7 @@ def agregar_usuario_route():
             }
         }), 201
     except Exception as e:
+        current_app.logger.error(f'Error al agregar usuario: {str(e)}')
         return jsonify({"error": str(e)}), 500
     
 
@@ -69,6 +74,8 @@ def editar_usuario(id):
             estado=data['estado'],
             password=data.get('password')
         )
+
+        current_app.logger.info(f'Usuario {usuario.username} editado por {current_user.username}')
         
         return jsonify({
             "mensaje": "Usuario actualizado correctamente",
@@ -79,6 +86,7 @@ def editar_usuario(id):
             }
         }), 200
     except Exception as e:
+        current_app.logger.error(f'Error al editar usuario: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/usuarios/eliminar/<int:id>', methods=['POST'])
@@ -86,7 +94,10 @@ def editar_usuario(id):
 def eliminar_usuario_route(id):
     try:
         if id == current_user.idUser:
+            current_app.logger.warning(f'Intento de eliminar su propio usuario por {current_user.username}')
             return jsonify({"error": "No puedes eliminar tu propio usuario"}), 400
+        
+        current_app.logger.info(f'Usuario {id} eliminado por {current_user.username}')
             
         usuario = eliminar_usuario(id)
         return jsonify({
@@ -97,6 +108,7 @@ def eliminar_usuario_route(id):
             }
         }), 200
     except Exception as e:
+        current_app.logger.error(f'Error al eliminar usuario: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/usuarios/obtener/<int:id>', methods=['GET'])
@@ -105,7 +117,10 @@ def obtener_usuario(id):
     try:
         usuario = User.query.get_or_404(id)
         if usuario.rol.nombreRol == 'Cliente':
+            current_app.logger.warning(f'Intento de editar cliente por {current_user.username}')
             return jsonify({"error": "No se puede editar clientes aquí"}), 400
+        
+        current_app.logger.info(f'Usuario {usuario.username} obtenido po {current_user.username}')
             
         return jsonify({
             "id": usuario.idUser,
@@ -114,6 +129,7 @@ def obtener_usuario(id):
             "estado": usuario.estado
         }), 200
     except Exception as e:
+        current_app.logger.error(f'Error al obtener usuario: {str(e)}')
         return jsonify({"error": str(e)}), 500
     
 
@@ -136,7 +152,10 @@ def listar_usuarios():
                 "ultimoAcceso": u.ultimoAcceso.isoformat() if u.ultimoAcceso else None,
                 "estado": u.estado
             })
+
+            current_app.logger.info(f'Lista de usuario obtenida por {current_user.username}')
             
         return jsonify(usuarios_data), 200
     except Exception as e:
+        current_app.logger.error(f'Error al listar usuarios: {str(e)}')
         return jsonify({"error": str(e)}), 500
