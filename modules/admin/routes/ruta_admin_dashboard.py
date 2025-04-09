@@ -22,6 +22,7 @@ def dashboard_admin():
         current_app.logger.error(f'Acceso no autorizado a la página del dashboard por el usuario {current_user.username}')
         return redirect(url_for('shared.index'))
     current_app.logger.info(f'Acceso autorizado a la página del dashboard por el usuario {current_user.username}')
+    # return render_template('admin/dashboard.html') 
     
     # Obtener datos para el dashboard
     ventas_semanales = obtener_ventas_semanales()

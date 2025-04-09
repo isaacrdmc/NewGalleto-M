@@ -1,5 +1,5 @@
 # __init__.py principal de la app
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, render_template, url_for
 from config import Config
 from database.conexion import db
 from flask_login import LoginManager
@@ -31,6 +31,15 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+
+    # ^ Configuración de las rutas de error
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('500.html'), 500
 
 
 
