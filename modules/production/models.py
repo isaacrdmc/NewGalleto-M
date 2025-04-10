@@ -11,6 +11,9 @@ class Galleta(db.Model):
     nombre = db.Column('nombreGalleta', db.String(30), nullable=False)
     precio_unitario = db.Column('precioUnitario', db.Numeric(10,2), nullable=False)
     cantidad_disponible = db.Column('cantidadDisponible', db.Integer, nullable=False)
+    nombre = db.Column('nombreGalleta', db.String(50), nullable=False)
+    precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
+    cantidad_disponible = db.Column(db.Integer, nullable=False)
     gramaje = db.Column('gramajeGalleta', db.Numeric(10,2), nullable=False)
     tipo_galleta = db.Column('tipoGalleta', db.Integer, nullable=False)
     fecha_anaquel = db.Column('fechaAnaquel', db.Date, nullable=False)
@@ -52,7 +55,7 @@ class Receta(db.Model):
     
     # Define las columnas y sus tipos
     id = db.Column('idReceta', db.Integer, primary_key=True)
-    nombre = db.Column('nombreReceta', db.String(20), nullable=False)
+    nombre = db.Column('nombreReceta', db.String(50), nullable=False)
     instrucciones = db.Column('instruccionReceta', db.String(520), nullable=False)
     cantidad_producida = db.Column('cantGalletasProduction', db.Integer, nullable=False)
     galletTipo = db.Column('galletTipo', db.Integer, nullable=False)  # Modificado aquí
@@ -60,6 +63,10 @@ class Receta(db.Model):
     
     # Relación con la tabla 'galletas'
     galleta = db.relationship('Galleta', backref='recetas')
+    @property
+    def cantGalletasProduction(self):
+        """Propiedad para mantener compatibilidad con código existente"""
+        return self.cantidad_producida
 
     @property
     def imagen_url(self):
@@ -200,6 +207,61 @@ class SolicitudHorneado(db.Model):
     fechaAprobacion = db.Column(db.DateTime)
     fechaCompletado = db.Column(db.DateTime)
     idHorneado = db.Column(db.Integer, db.ForeignKey('historialHorneado.idHorneado'))
+        #     'id': self.id,
+        #     'fecha_compra': self.fecha_compra.strftime('%Y-%m-%d'),
+        #     'total_compra': float(self.total_compra) if self.total_compra else 0,
+        #     'proveedor': self.proveedor.nombre if self.proveedor else None,
+        #     'detalles': [detalle.to_dict() for detalle in self.detalles]
+        # }
+
+
+
+class DetalleCompraInsumo(db.Model):
+    __tablename__ = 'detalleCompraInsumo'
+    __table_args__ = {'extend_existing': True}  # ? Permite sobrescribir la tabla si ya existe
+
+    id = db.Column('idetalleCompraInsumo', db.Integer, primary_key=True)
+    cant_cajas = db.Column('cantCajas', db.Integer, nullable=False)
+    cant_unidades_caja = db.Column('cantUnidadesXcaja', db.Integer, nullable=False)
+    cant_merma_unidad = db.Column('cantMermaPorUnidad', db.Integer, nullable=False)
+    costo_caja = db.Column('CostoPorCaja', db.Numeric(10, 2), nullable=False)
+    costo_unidad_caja = db.Column('costoUnidadXcaja', db.Numeric(10, 2), nullable=False)
+    unidad_insumo = db.Column('unidadInsumo', db.Enum('Gr', 'mL', 'Pz'), nullable=False)
+    fecha_registro = db.Column('fechaRegistro', db.Date, nullable=False)
+    fecha_caducidad = db.Column('fechaCaducidad', db.Date, nullable=False)
+    
+    # Relaciones
+    id_compra = db.Column('idCompra', db.Integer, db.ForeignKey('transaccionCompra.idTransaccionCompra'), nullable=False)
+    id_insumo = db.Column('idInsumo', db.Integer, db.ForeignKey('insumos.idInsumo'), nullable=False)
+    insumo = db.relationship('Insumo', backref='compras')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'cant_cajas': self.cant_cajas,
+            'cant_unidades_caja': self.cant_unidades_caja,
+            'cant_merma_unidad': self.cant_merma_unidad,
+            'costo_caja': float(self.costo_caja),
+            'costo_unidad_caja': float(self.costo_unidad_caja),
+            'unidad_insumo': self.unidad_insumo,
+            'fecha_registro': self.fecha_registro.strftime('%Y-%m-%d'),
+            'fecha_caducidad': self.fecha_caducidad.strftime('%Y-%m-%d'),
+            'nombre_insumo': self.insumo.nombre if self.insumo else None
+        }
+
+class Notificacion(db.Model):
+    __tablename__ = 'notificaciones'
+    id = db.Column('idNotificaciónes', db.Integer, primary_key=True)
+    tipo_notificacion = db.Column('tipoNotificacion', db.Enum(
+        'Caducidad Insumo', 
+        'Caducidad Galleta', 
+        'Bajo Inventario', 
+        'Solicitud Produccion', 
+        'No hay suficientes insumos'), nullable=False)
+    mensaje = db.Column('mensajeNotificar', db.String(255))
+    fecha_creacion = db.Column('fechaCreacion', db.DateTime, nullable=False, default=datetime.now)
+    fecha_visto = db.Column('fechaVisto', db.DateTime)
+    estatus = db.Column(db.Enum('Nueva', 'Vista', 'Resuelto'), nullable=False, default='Nueva')
     
     # Relaciones
     receta = db.relationship('Receta', backref='solicitudes')

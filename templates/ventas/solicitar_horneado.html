@@ -1,0 +1,101 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Solicitar Horneado de Galletas</h2>
+                    
+                    <!-- Mensajes flash -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0">Nueva Solicitud de Horneado</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ url_for('production.procesar_solicitud_horneado') }}" method="post">
+                                        <div class="mb-3">
+                                            <label for="id_receta" class="form-label">Receta:</label>
+                                            <select class="form-select" id="id_receta" name="id_receta" required>
+                                                <option value="" selected disabled>Seleccionar...</option>
+                                                {% for receta in recetas %}
+                                                <option value="{{ receta.id }}">
+                                                    {{ receta.nombre }} ({{ receta.cantidad_producida }} galletas/lote)
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="cantidad_lotes" class="form-label">Cantidad de Lotes:</label>
+                                            <input type="number" class="form-control" id="cantidad_lotes" name="cantidad_lotes" required min="1" value="1">
+                                            <small class="text-muted" id="galletas-info">Selecciona una receta primero</small>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-paper-plane me-2"></i> Enviar Solicitud
+                                            </button>
+                                            <a href="{{ url_for('production.ver_mis_solicitudes') }}" class="btn btn-secondary">
+                                                <i class="fas fa-list me-2"></i> Ver Mis Solicitudes
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar la cantidad de galletas por lote cuando cambia la receta
+    const selectReceta = document.getElementById('id_receta');
+    const cantidadLotes = document.getElementById('cantidad_lotes');
+    
+    selectReceta.addEventListener('change', function() {
+        const recetaId = this.value;
+        if (recetaId) {
+            // Aquí podrías hacer una llamada AJAX para obtener los detalles de la receta
+            // y actualizar el texto de ayuda con la cantidad de galletas por lote
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+        const recetaSelect = document.getElementById('id_receta');
+        const galletasInfo = document.getElementById('galletas-info');
+        
+        // Datos de producción por receta
+        const produccionPorReceta = {
+            {% for receta in recetas %}
+            '{{ receta.id }}': {{ receta.cantidad_producida }},
+            {% endfor %}
+        };
+    
+        recetaSelect.addEventListener('change', function() {
+            const recetaId = this.value;
+            if (recetaId in produccionPorReceta) {
+                galletasInfo.textContent = `Cada lote produce ${produccionPorReceta[recetaId]} galletas`;
+            } else {
+                galletasInfo.textContent = 'Selecciona una receta primero';
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -57,6 +57,7 @@ class TransaccionCompra(db.Model):
 # ~ Tabla para los detalles de la compra
 class DetalleCompraInsumo(db.Model):
     __tablename__ = 'detalleCompraInsumo'
+    __table_args__ = {'extend_existing': True}  # ? Permite sobrescribir la tabla si ya existe
     
     idetalleCompraInsumo = db.Column(db.Integer, primary_key=True, autoincrement=True)
     cantCajas = db.Column(db.Integer, nullable=False)
