@@ -35,16 +35,13 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
-                Notificaciones
+                Notificaciones <span class="badge bg-danger" id="contadorNotificaciones">0</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
-                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
-                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
-                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones"
+                id="listaNotificaciones">
                 <li>
-                    <hr class="dropdown-divider">
+                    <div class="dropdown-item text-center">No hay notificaciones pendientes</div>
                 </li>
-                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
             </ul>
         </div>
     </div>
@@ -598,5 +595,50 @@
 
     // Event listeners
     document.getElementById('buscarReceta').addEventListener('keyup', filtrarRecetas);
+
+    // Función para cargar notificaciones
+    async function cargarNotificaciones() {
+        try {
+            const response = await fetch('/admin/notificaciones');
+            if (!response.ok) throw new Error('Error al cargar notificaciones');
+
+            const notificaciones = await response.json();
+            const lista = document.getElementById('listaNotificaciones');
+            const contador = document.getElementById('contadorNotificaciones');
+
+            lista.innerHTML = '';
+            contador.textContent = notificaciones.length;
+
+            if (notificaciones.length === 0) {
+                lista.innerHTML = '<li><div class="dropdown-item text-muted">No hay notificaciones nuevas</div></li>';
+                return;
+            }
+
+            notificaciones.forEach(notif => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                <a class="dropdown-item" href="#">
+                    <strong>${notif.tipo}</strong><br>
+                    <small>${notif.mensaje}</small>
+                    <div class="text-end"><small class="text-muted">${new Date(notif.fecha).toLocaleString()}</small></div>
+                </a>
+            `;
+                lista.appendChild(item);
+            });
+
+            lista.innerHTML += `
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">Ver todas las notificaciones</a></li>
+        `;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar notificaciones al inicio y cada 30 segundos
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarNotificaciones();
+        setInterval(cargarNotificaciones, 30000);
+    });
 </script>
 {% endblock %}

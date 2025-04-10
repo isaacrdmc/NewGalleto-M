@@ -12,14 +12,13 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
-                Notificaciones
+                Notificaciones <span class="badge bg-danger" id="contadorNotificaciones">0</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
-                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
-                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
-                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones"
+                id="listaNotificaciones">
+                <li>
+                    <div class="dropdown-item text-center">No hay notificaciones pendientes</div>
+                </li>
             </ul>
         </div>
     </div>
@@ -33,7 +32,8 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Ventas Semanales</h5>
-                        <h3 class="card-text text-success">${{ "%.2f"|format(ventas_semanales.get('total_ventas', 0)) }}</h3>
+                        <h3 class="card-text text-success">${{ "%.2f"|format(ventas_semanales.get('total_ventas', 0)) }}
+                        </h3>
                         <p class="text-muted">{{ ventas_semanales.get('cantidad_ventas', 0) }} transacciones</p>
                     </div>
                 </div>
@@ -43,10 +43,11 @@
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Top 3 Galletas</h5>
+                        <h5 class="card-title">Galletas semanales mas vendidas (pzas)</h5>
                         <ol class="ps-3">
                             {% for galleta in top_galletas %}
-                            <li>{{ galleta.get('nombre', 'N/A') }} <span class="text-success">(${{ "%.2f"|format(galleta.get('total_ventas', 0)) }})</span></li>
+                            <li>{{ galleta.get('nombre', 'N/A') }} <span class="text-success">(${{
+                                    "%.2f"|format(galleta.get('total_ventas', 0)) }})</span></li>
                             {% else %}
                             <li>No hay datos disponibles</li>
                             {% endfor %}
@@ -60,18 +61,19 @@
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Top Presentaciones</h5>
+                        <h5 class="card-title">Presentaciones semanales mas vendidas</h5>
                         <ol class="ps-3">
                             {% for presentacion in top_presentaciones %}
                             <li>
                                 {% if presentacion.get('formaVenta') == 'Por pieza' %}
-                                    Por Pieza
+                                Por Pieza
                                 {% elif presentacion.get('formaVenta') == 'Por precio' %}
-                                    Por Gramos
+                                Por Gramos
                                 {% else %}
-                                    {{ presentacion.get('formaVenta', 'Paquete/Caja') }}
+                                {{ presentacion.get('formaVenta', 'Paquete/Caja') }}
                                 {% endif %}
-                                <span class="text-success">(${{ "%.2f"|format(presentacion.get('total_ventas', 0)) }})</span>
+                                <span class="text-success">(${{ "%.2f"|format(presentacion.get('total_ventas', 0))
+                                    }})</span>
                             </li>
                             {% else %}
                             <li>No hay datos disponibles</li>
@@ -87,12 +89,16 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Estimación Semanal</h5>
-                        <p class="mb-1">Ventas: <span class="text-success">${{ "%.2f"|format(estimacion_costos.get('ventas', 0)) }}</span></p>
-                        <p class="mb-1">Compras: <span class="text-danger">${{ "%.2f"|format(estimacion_costos.get('compras', 0)) }}</span></p>
-                        <p class="mb-1">Mermas: <span class="text-warning">${{ "%.2f"|format(estimacion_costos.get('mermas', 0)) }}</span></p>
+                        <p class="mb-1">Ventas: <span class="text-success">${{
+                                "%.2f"|format(estimacion_costos.get('ventas', 0)) }}</span></p>
+                        <p class="mb-1">Compras: <span class="text-danger">${{
+                                "%.2f"|format(estimacion_costos.get('compras', 0)) }}</span></p>
+                        <p class="mb-1">Mermas: <span class="text-warning">${{
+                                "%.2f"|format(estimacion_costos.get('mermas', 0)) }}</span></p>
                         <hr>
-                        <h6 class="mb-0">Ganancia: 
-                            <span class="{% if estimacion_costos.get('ganancia', 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        <h6 class="mb-0">Ganancia:
+                            <span
+                                class="{% if estimacion_costos.get('ganancia', 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
                                 ${{ "%.2f"|format(estimacion_costos.get('ganancia', 0)) }}
                             </span>
                         </h6>
@@ -123,22 +129,25 @@
                 </div>
             </div>
 
-            <!-- Gráfico de distribución de ventas -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Distribución por Tipo de Galleta</h5>
-                        <canvas id="distribucionVentas"></canvas>
+            <!-- Después de las gráficas existentes -->
+            <div class="row">
+                <!-- Gráfico de Producción Semanal -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Producción Semanal</h5>
+                            <canvas id="produccionSemanal"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Gráfico de pastel -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Top 5 Galletas (Ventas Totales)</h5>
-                        <canvas id="graficoPastel"></canvas>
+                <!-- Gráfico de Eficiencia de Producción -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Eficiencia por Tipo de Galleta</h5>
+                            <canvas id="eficienciaProduccion"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -169,7 +178,7 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return '$' + value.toLocaleString();
                             }
                         }
@@ -200,7 +209,7 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return '$' + value.toLocaleString();
                             }
                         }
@@ -209,69 +218,114 @@
             }
         });
 
-        // Gráfico 3: Distribución por tipo de galleta (barras horizontales)
-        var ctxDistribucionVentas = document.getElementById('distribucionVentas').getContext('2d');
-        new Chart(ctxDistribucionVentas, {
+        // Gráfico 3: Producción semanal (barras agrupadas)
+        var ctxProduccion = document.getElementById('produccionSemanal').getContext('2d');
+        new Chart(ctxProduccion, {
             type: 'bar',
             data: {
-                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
-                datasets: [{
-                    label: 'Cantidad Vendida',
-                    data: JSON.parse('{{ distribucion_ventas.cantidades|tojson|safe }}'),
-                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                }]
+                labels: JSON.parse('{{ produccion_semanal.fechas|tojson|safe }}'),
+                datasets: [
+                    {
+                        label: 'Galletas Producidas',
+                        data: JSON.parse('{{ produccion_semanal.producido|tojson|safe }}'),
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Merma Total',
+                        data: JSON.parse('{{ produccion_semanal.merma|tojson|safe }}'),
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 scales: {
-                    x: {
+                    y: {
                         beginAtZero: true
                     }
                 }
             }
         });
 
-        // Gráfico 4: Top 5 galletas (pastel)
-        var ctxGraficoPastel = document.getElementById('graficoPastel').getContext('2d');
-        new Chart(ctxGraficoPastel, {
-            type: 'pie',
+        // Gráfico 4: Eficiencia de producción (radar)
+        var ctxEficiencia = document.getElementById('eficienciaProduccion').getContext('2d');
+        new Chart(ctxEficiencia, {
+            type: 'radar',
             data: {
-                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
+                labels: JSON.parse('{{ eficiencia_produccion|map(attribute="galleta")|list|tojson|safe }}'),
                 datasets: [{
-                    data: JSON.parse('{{ distribucion_ventas.totales|tojson|safe }}'),
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)'
-                    ],
-                    borderWidth: 1
+                    label: 'Eficiencia (%)',
+                    data: JSON.parse('{{ eficiencia_produccion|map(attribute="eficiencia")|list|tojson|safe }}'),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
                 }]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.label || '';
-                                var value = context.raw || 0;
-                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                var percentage = Math.round((value / total) * 100);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
                     }
                 }
             }
         });
+    });
+
+    // Función para cargar notificaciones
+    async function cargarNotificaciones() {
+        try {
+            const response = await fetch('/admin/notificaciones');
+            if (!response.ok) throw new Error('Error al cargar notificaciones');
+
+            const notificaciones = await response.json();
+            const lista = document.getElementById('listaNotificaciones');
+            const contador = document.getElementById('contadorNotificaciones');
+
+            lista.innerHTML = '';
+            contador.textContent = notificaciones.length;
+
+            if (notificaciones.length === 0) {
+                lista.innerHTML = '<li><div class="dropdown-item text-muted">No hay notificaciones nuevas</div></li>';
+                return;
+            }
+
+            notificaciones.forEach(notif => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                <a class="dropdown-item" href="#">
+                    <strong>${notif.tipo}</strong><br>
+                    <small>${notif.mensaje}</small>
+                    <div class="text-end"><small class="text-muted">${new Date(notif.fecha).toLocaleString()}</small></div>
+                </a>
+            `;
+                lista.appendChild(item);
+            });
+
+            lista.innerHTML += `
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">Ver todas las notificaciones</a></li>
+        `;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar notificaciones al inicio y cada 30 segundos
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarNotificaciones();
+        setInterval(cargarNotificaciones, 30000);
     });
 </script>
 

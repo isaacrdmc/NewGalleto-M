@@ -14,15 +14,13 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
-                Notificaciones
+                Notificaciones <span class="badge bg-danger" id="contadorNotificaciones">0</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
-                <!-- Aquí se listan las notificaciones -->
-                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
-                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
-                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones"
+                id="listaNotificaciones">
+                <li>
+                    <div class="dropdown-item text-center">No hay notificaciones pendientes</div>
+                </li>
             </ul>
         </div>
     </div>
@@ -31,17 +29,15 @@
             <!-- Botón y búsqueda -->
             <div class="d-flex justify-content-between mb-3">
                 <!--  ^ Boton para agregar un nuevo proveedor -->
-                <button 
-                    class="btn btn-success" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#modalp"
-                    onclick="limpiarFormulario()" document.getElementById('idProveedor').value = '';>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalp"
+                    onclick="limpiarFormulario()" document.getElementById('idProveedor').value='' ;>
                     ➕ Nuevo proveedor
                 </button>
 
                 <!-- ^ Búsqueda de elementos -->
-                <input type="text" id="buscar" placeholder="Buscar" class="form-control" style="max-width: 200px;" onkeyup="filtrarpes()">
-            
+                <input type="text" id="buscar" placeholder="Buscar" class="form-control" style="max-width: 200px;"
+                    onkeyup="filtrarpes()">
+
             </div>
 
             <div class="table-responsive rounded-3 shadow-sm mb-4">
@@ -55,35 +51,35 @@
                             <th>Dirección</th>
                             <th style="min-width: 250px;">Productos</th>
                         </tr>
-                    </thead> 
+                    </thead>
                     <tbody id="tablapes" class="align-middle">
                         {% for p in proveedor %}
                         <tr id="row-{{ p.idProveedores }}">
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <button class="btn btn-warning btn-sm py-1 px-2" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#modalp"
-                                            onclick="editarp('{{ p.idProveedores }}')">
-                                            ✏️
+                                    <button class="btn btn-warning btn-sm py-1 px-2" data-bs-toggle="modal"
+                                        data-bs-target="#modalp" onclick="editarp('{{ p.idProveedores }}')">
+                                        ✏️
                                     </button>
-                                    <button class="btn btn-danger btn-sm py-1 px-2" 
-                                            onclick="eliminarp('{{ p.idProveedores }}')">
-                                            ❌
+                                    <button class="btn btn-danger btn-sm py-1 px-2"
+                                        onclick="eliminarp('{{ p.idProveedores }}')">
+                                        ❌
                                     </button>
                                 </div>
                             </td>
                             <td class="fw-semibold">{{ p.nombre }}</td>
                             <td class="text-nowrap">{{ p.telefono }}</td>
-                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.correo }}">{{ p.correo }}</td>
-                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.direccion }}">{{ p.direccion }}</td>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.correo }}">{{ p.correo }}
+                            </td>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ p.direccion }}">{{ p.direccion
+                                }}</td>
                             <td class="small">{{ p.productosProveedor }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            
+
         </div>
 
 
@@ -91,17 +87,19 @@
         <div class="modal fade" id="modalp" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content border-0 shadow">
-                    
+
                     <!-- Encabezado con color de acento -->
                     <!-- <div class="modal-header bg-danger text-white"> -->
                     <div class="modal-header text-white" style="background-color: #603A1E">
                         <h5 class="modal-title fs-5" id="modalProveedorLabel">Agregar un proveedor</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Cerrar"></button>
                     </div>
 
                     <!-- & Cuerpo del modal con mejor distribución -->
                     <div class="modal-body p-4">
-                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp" class="needs-validation" novalidate>
+                        <form method="post" action="{{ url_for('admin.proveedores') }}" id="formp"
+                            class="needs-validation" novalidate>
                             <!-- Campo oculto para el ID del proveedor (corregido "hiden" a "hidden") -->
                             <input type="hidden" id="idProveedor" name="idProveedor">
                             {{ form.hidden_tag() }}
@@ -114,50 +112,55 @@
                                         {{ form.empresa.label(class="form-label fw-bold") }}
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-building"></i></span>
-                                            {{ form.empresa(class="form-control", id="empresa", required="required", placeholder="Nombre de la empresa") }}
+                                            {{ form.empresa(class="form-control", id="empresa", required="required",
+                                            placeholder="Nombre de la empresa") }}
                                             <div class="invalid-feedback">
                                                 Por favor ingrese el nombre de la empresa.
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         {{ form.telefono.label(class="form-label fw-bold") }}
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                            {{ form.telefono(class="form-control", id="telefono", required="required", placeholder="Teléfono de contacto") }}
+                                            {{ form.telefono(class="form-control", id="telefono", required="required",
+                                            placeholder="Teléfono de contacto") }}
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         {{ form.correo.label(class="form-label fw-bold") }}
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                            {{ form.correo(class="form-control", id="correo", required="required", placeholder="correo@proveedor.com", type="email") }}
+                                            {{ form.correo(class="form-control", id="correo", required="required",
+                                            placeholder="correo@proveedor.com", type="email") }}
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Segunda columna -->
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         {{ form.direccion.label(class="form-label fw-bold") }}
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                            {{ form.direccion(class="form-control", id="direccion", required="required", placeholder="Dirección completa") }}
+                                            {{ form.direccion(class="form-control", id="direccion", required="required",
+                                            placeholder="Dirección completa") }}
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         {{ form.productos.label(class="form-label fw-bold") }}
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
-                                            {{ form.productos(class="form-control", id="productos", required="required", placeholder="Productos que suministra") }}
+                                            {{ form.productos(class="form-control", id="productos", required="required",
+                                            placeholder="Productos que suministra") }}
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Espacio adicional para futuros campos -->
-                                    
+
                                 </div>
                             </div>
                         </form>
@@ -179,8 +182,8 @@
 </div>
 
 <!-- ^ JavaScript -->
-<script >
-    
+<script>
+
     // <!-- ? Insertar los datos dentro de la BD           (C)   -->
     async function guardarp() {
         try {
@@ -202,11 +205,11 @@
             const esEdicion = idProveedor !== '';
 
             // <!-- ?  -->
-            console.log('Modo:', esEdicion 
-                            ? 'Edición' 
-                            : 'Agregar', 'ID:', idProveedor
-                        );
-            
+            console.log('Modo:', esEdicion
+                ? 'Edición'
+                : 'Agregar', 'ID:', idProveedor
+            );
+
             // DEBUG: Verificamos si el ID es correcto
             console.log('ID Proveedor:', idProveedor, 'Es edición:', esEdicion);
 
@@ -260,9 +263,9 @@
 
 
             // <!-- ? Para la ruta para agregar/modificar proveedores usamos un ternario-->
-            const url = esEdicion 
-            ? `/admin/proveedores/editar/${idProveedor}`
-            : '/admin/proveedores/agregar';
+            const url = esEdicion
+                ? `/admin/proveedores/editar/${idProveedor}`
+                : '/admin/proveedores/agregar';
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -277,7 +280,7 @@
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
             }
-    
+
 
 
             // <!-- ?  -->
@@ -333,7 +336,7 @@
 
             // <!-- * Verificamos que tengamos los datos correctos -->
             console.log('Datos recibidos:', proveedor)
-            
+
 
             // Limpia el formulario primero
             limpiarFormulario();
@@ -346,14 +349,14 @@
             document.getElementById("direccion").value = proveedor.direccion;  // Dirección
             document.getElementById("productos").value = proveedor.productosProveedor || proveedor.productos;  // Productos
 
-            
+
             // <!-- * Cambiar el título dle modal -->
             document.querySelector('.modal-title').textContent = 'Editar proveedor';
 
 
             // <!-- * Mostramos el modal -->
             new bootstrap.Modal(document.getElementById('modalp')).show();
-        }catch (error){
+        } catch (error) {
             console.error('Detalles del error:', {
                 error: error.message,
                 stack: error.stack,
@@ -405,8 +408,8 @@
             // <!-- * El response lo almacenamos -->
             const result = await response.json();
 
-            
-            
+
+
             // <!-- * Mostramos la notificación de éxito -->
             // mostrarNotificacion(result.mensaje, 'success');
             Swal.fire(
@@ -415,8 +418,8 @@
                 'success'
             )
 
-            
-            
+
+
             // <!-- * Actualizamos la tabla para verificar que los datos fueon eliminados -->
             actualizarTablaProveedores();
 
@@ -429,7 +432,7 @@
                 'error'
             )
 
-        }        
+        }
     }
 
     // <!-- ? Función para Filtrar los datos dentro del sistema para hallar los que coinicdan   -->
@@ -445,15 +448,15 @@
     }
 
 
-    
+
 
 
 
     // <!-- ^ Funciónes generales -->
 
     // <!-- ? Mostramos las notificaciónes: -->
-    function mostrarNotificacion(mensaje, tipo='success'){
-        
+    function mostrarNotificacion(mensaje, tipo = 'success') {
+
         // ? Mostramos la notificación junto ocn su mensaje de alerta
         const Toast = Swal.mixin({
             toast: true,
@@ -472,20 +475,20 @@
             icon: tipo,
             title: mensaje
         });
-        
+
         // alert(`${tipo.toUpperCase()}: ${mensaje}`);
     }
 
-    
 
 
 
 
-    
+
+
     // <!-- ? Actualizamos la tabla sin necesidad de recargar la página -->
     async function actualizarTablaProveedores() {
         try {
-            
+
             const response = await fetch('/admin/proveedores/listar');
             if (!response.ok) {
                 const errorData = await response.json();
@@ -518,7 +521,7 @@
             console.error('Error al actualizar la tabla:', error);
         }
     };
-    
+
     // <!-- ? Limpiamos los campos del formulario del modal -->
     function limpiarFormulario() {
         document.getElementById("formp").reset();   // Limpiamos el formulario
@@ -530,22 +533,22 @@
     function cerrarModal() {
         const modalElement = document.getElementById('modalp');
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        
+
         // Cierra el modal si existe una instancia
         if (modalInstance) {
             modalInstance.hide();
-            
+
             // Elimina el backdrop manualmente si persiste
             const backdrops = document.getElementsByClassName('modal-backdrop');
             while (backdrops.length > 0) {
                 backdrops[0].parentNode.removeChild(backdrops[0]);
             }
         }
-        
+
         // Restablece el estilo del body para permitir el scroll
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
-        
+
         // Mueve el foco fuera del modal
         const abrirModalButton = document.querySelector('button[data-bs-target="#modalp"]');
         if (abrirModalButton) {
@@ -553,7 +556,51 @@
         }
     }
 
+    // Función para cargar notificaciones
+    async function cargarNotificaciones() {
+        try {
+            const response = await fetch('/admin/notificaciones');
+            if (!response.ok) throw new Error('Error al cargar notificaciones');
+
+            const notificaciones = await response.json();
+            const lista = document.getElementById('listaNotificaciones');
+            const contador = document.getElementById('contadorNotificaciones');
+
+            lista.innerHTML = '';
+            contador.textContent = notificaciones.length;
+
+            if (notificaciones.length === 0) {
+                lista.innerHTML = '<li><div class="dropdown-item text-muted">No hay notificaciones nuevas</div></li>';
+                return;
+            }
+
+            notificaciones.forEach(notif => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                <a class="dropdown-item" href="#">
+                    <strong>${notif.tipo}</strong><br>
+                    <small>${notif.mensaje}</small>
+                    <div class="text-end"><small class="text-muted">${new Date(notif.fecha).toLocaleString()}</small></div>
+                </a>
+            `;
+                lista.appendChild(item);
+            });
+
+            lista.innerHTML += `
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">Ver todas las notificaciones</a></li>
+        `;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar notificaciones al inicio y cada 30 segundos
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarNotificaciones();
+        setInterval(cargarNotificaciones, 30000);
+    });
+
 </script>
 
 {% endblock %}
-

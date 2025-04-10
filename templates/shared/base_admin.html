@@ -53,16 +53,18 @@
                                 Gestión de Proveedores
                             </a>
                         </li>
-                        <li class="nav-item my-1">
+                        <li class="nav-item my-1 mb-5">
                             <a class="nav-link {% if request.endpoint in ['admin.recetas', 'recetas'] %}active{% endif %} rounded-3" href="{{ url_for('admin.recetas') }}">
                                 Gestión de Recetas
                             </a>
                         </li>
+                        <!--       
                         <li class="nav-item my-1 mb-5">
                             <a class="nav-link {% if request.endpoint in ['admin.vistas', 'vistas'] %}active{% endif %} rounded-3" href="{{ url_for('admin.vistas') }}">
                                 Otras vistas
                             </a>
                         </li>
+                        -->
                         <li class="nav-item mt-3">
                             <a class="nav-link rounded-5 py-1" style="background-color: #b88277;" href="{{ url_for('shared.logout') }}">
                                 <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50" class="me-2">

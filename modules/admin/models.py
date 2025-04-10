@@ -115,3 +115,40 @@ class Merma(db.Model):
             'galleta': self.galleta.to_dict() if self.galleta else None
         }
 
+
+class Notificacion(db.Model):
+    __tablename__ = 'notificaciones'
+    
+    id = db.Column('idNotificaciónes', db.Integer, primary_key=True)
+    tipo = db.Column('tipoNotificacion', db.Enum(
+        'Caducidad Insumo', 
+        'Caducidad Galleta', 
+        'Bajo Inventario', 
+        'Solicitud Produccion', 
+        'No hay suficientes inusmos de'), nullable=False)
+    mensaje = db.Column('mensajeNotificar', db.String(255))
+    fecha_creacion = db.Column('fechaCreacion', db.DateTime, default=db.func.current_timestamp())
+    fecha_visto = db.Column('fechaVisto', db.DateTime, nullable=True)
+    estado = db.Column('estatus', db.Enum('Nueva', 'Vista', 'Resuelto'), default='Nueva')
+    
+    # Relaciones
+    id_usuario = db.Column('idUsuario', db.Integer, db.ForeignKey('usuarios.idUser'))
+    id_insumo = db.Column('idInsumo', db.Integer, db.ForeignKey('insumos.idInsumo'))
+    id_galleta = db.Column('idGalleta', db.Integer, db.ForeignKey('galletas.idGalleta'))
+    
+    usuario = db.relationship('User', backref='notificaciones')
+    insumo = db.relationship('Insumo', backref='notificaciones')
+    galleta = db.relationship('Galleta', backref='notificaciones')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tipo': self.tipo,
+            'mensaje': self.mensaje,
+            'fecha_creacion': self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_creacion else None,
+            'fecha_visto': self.fecha_visto.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_visto else None,
+            'estado': self.estado,
+            'id_usuario': self.id_usuario,
+            'id_insumo': self.id_insumo,
+            'id_galleta': self.id_galleta
+        }

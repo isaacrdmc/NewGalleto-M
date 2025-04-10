@@ -1,5 +1,5 @@
 # services.py
-from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma
+from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma, Notificacion
 from ..shared.models import User, Rol 
 from ..client.models import Pedido, DetallePedido
 from ..ventas.models import Venta, DetalleVenta
@@ -596,9 +596,7 @@ def obtener_ventas():
 # ==============================================
 
 def obtener_ventas_semanales():
-    """
-    Obtiene el total de ventas de la última semana
-    """
+    """Obtiene el total de ventas de la última semana"""
     inicio_semana = datetime.now() - timedelta(days=7)
     
     resultado = db.session.query(
@@ -608,10 +606,14 @@ def obtener_ventas_semanales():
         Venta.fechaVentaGalleta >= inicio_semana
     ).first()
     
+    # Log para depuración
+    print(f"Ventas semanales - Total: {resultado.total_ventas}, Cantidad: {resultado.cantidad_ventas}")
+    
     return {
         'total_ventas': float(resultado.total_ventas) if resultado.total_ventas else 0.0,
         'cantidad_ventas': resultado.cantidad_ventas or 0
     }
+
 
 def obtener_top_galletas(limit=3):
     """
@@ -754,3 +756,87 @@ def obtener_distribucion_ventas():
         'cantidades': [r.cantidad for r in resultados],
         'totales': [float(r.total) if r.total else 0.0 for r in resultados]
     }
+
+
+def obtener_produccion_semanal():
+    """Obtiene datos de producción de la última semana"""
+    inicio_semana = datetime.now() - timedelta(days=7)
+    
+    resultados = db.session.query(
+        func.date(Produccion.fechaProduccion).label('fecha'),
+        func.sum(Produccion.produccionTotal).label('total_producido'),
+        func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma).label('total_merma')
+    ).filter(
+        Produccion.fechaProduccion >= inicio_semana
+    ).group_by(
+        func.date(Produccion.fechaProduccion)
+    ).order_by(
+        func.date(Produccion.fechaProduccion)
+    ).all()
+    
+    return {
+        'fechas': [r.fecha.strftime('%Y-%m-%d') for r in resultados],
+        'producido': [r.total_producido for r in resultados],
+        'merma': [r.total_merma for r in resultados]
+    }
+
+
+def obtener_eficiencia_produccion():
+    """Calcula la eficiencia de producción por tipo de galleta"""
+    resultados = db.session.query(
+        Galleta.nombre,
+        func.sum(Produccion.produccionTotal).label('total_producido'),
+        func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma).label('total_merma'),
+        (func.sum(Produccion.produccionTotal) / 
+         (func.sum(Produccion.produccionTotal) + 
+          func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma)) * 100).label('eficiencia')
+    ).join(Produccion, Produccion.idGalleta == Galleta.id
+    ).filter(
+        Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
+    ).group_by(Galleta.nombre
+    ).order_by(func.sum(Produccion.produccionTotal).desc()
+    ).limit(5).all()
+    
+    return [{
+        'galleta': r.nombre,
+        'producido': r.total_producido,
+        'merma': r.total_merma,
+        'eficiencia': float(r.eficiencia) if r.eficiencia else 0.0
+    } for r in resultados]
+
+
+def obtener_notificaciones_recientes(limit=5, usuario_id=None):
+    """Obtiene las notificaciones más recientes no vistas"""
+    query = Notificacion.query.filter(
+        Notificacion.estado == 'Nueva'
+    )
+    
+    if usuario_id:
+        query = query.filter(Notificacion.id_usuario == usuario_id)
+    
+    return query.order_by(
+        Notificacion.fecha_creacion.desc()
+    ).limit(limit).all()
+
+def crear_notificacion(tipo, mensaje, id_usuario=None, id_insumo=None, id_galleta=None):
+    """Crea una nueva notificación en el sistema"""
+    notificacion = Notificacion(
+        tipo=tipo,
+        mensaje=mensaje,
+        id_usuario=id_usuario,
+        id_insumo=id_insumo,
+        id_galleta=id_galleta
+    )
+    db.session.add(notificacion)
+    db.session.commit()
+    return notificacion
+
+def marcar_notificacion_como_vista(notificacion_id):
+    """Marca una notificación como vista"""
+    notificacion = Notificacion.query.get(notificacion_id)
+    if notificacion:
+        notificacion.estado = 'Vista'
+        notificacion.fecha_visto = db.func.current_timestamp()
+        db.session.commit()
+    return notificacion
+    
