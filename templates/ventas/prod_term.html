@@ -423,7 +423,7 @@
             if (metodo === 'Por unidad') {
                 // Si ya hay una galleta seleccionada, cargar las cantidades
                 if (galletaActual) {
-                    const max = Math.min(galletaActual.cantidadDisponible, 20);
+                    const max = Math.min(galletaActual.cantidadDisponible, galletaActual.cantidadDisponible);
                     for (let i = 1; i <= max; i++) {
                         const opt = document.createElement('option');
                         opt.value = i;
