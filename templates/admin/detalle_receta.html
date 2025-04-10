@@ -70,7 +70,7 @@
                             <h5 class="mb-0">Ingredientes y Cantidades:</h5>
                         </div>
                         <div class="card-body" style="background-color: #f7e7ce;">
-                            {% if receta.ingredientes %}
+                            {% if ingredientes %}
                             <div class="table-responsive">
                                 <table
                                     class="table table-striped table-hover table-sm table-bordered border-5 table-receta">
@@ -82,12 +82,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for ingrediente in receta.ingredientes %}
+                                        {% for ingrediente in ingredientes %}
                                         <tr>
                                             <td>{{ ingrediente.insumo.nombre if ingrediente.insumo else 'N/A' }}</td>
                                             <td>{{ ingrediente.cantidad }}</td>
-                                            <td>{{ ingrediente.insumo.unidad_medida if ingrediente.insumo else 'N/A' }}
-                                            </td>
+                                            <td>{{ ingrediente.insumo.unidad if ingrediente.insumo else 'N/A' }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>

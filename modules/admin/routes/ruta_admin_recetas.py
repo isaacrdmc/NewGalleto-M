@@ -71,7 +71,7 @@ def detalle_receta(id_receta):
     
     receta = obtener_receta(id_receta)
     horneados = obtener_horneados_receta(id_receta)
-    ingredientes = obtener_ingredientes_receta(id_receta)
+    ingredientes = [ing.to_dict() for ing in obtener_ingredientes_receta(id_receta)]
     
     return render_template('admin/detalle_receta.html', 
                          receta=receta, 
