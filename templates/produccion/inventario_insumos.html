@@ -27,20 +27,22 @@
                             <input type="text" class="form-control" id="nombre" name="nombre" required>
                         </div>
                         <div class="mb-3">
-                            <label for="unidadInsumo" class="form-label">Unidad del Insumo</label>
-                            <select class="form-select" id="unidadInsumo" name="unidadInsumo" required>
+                            <label for="unidad" class="form-label">Unidad del Insumo</label>
+                            <select class="form-select" id="unidad" name="unidad" required>
                                 <option value="Gr">Gramos (Gr)</option>
                                 <option value="mL">Mililitros (mL)</option>
                                 <option value="Pz">Piezas (Pz)</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="cantidadDisponible" class="form-label">Cantidad Disponible</label>
-                            <input type="number" class="form-control" id="cantidadDisponible" name="cantidadDisponible" required>
+                            <label for="cantidad_disponible" class="form-label">Cantidad Disponible</label>
+                            <input type="number" class="form-control" id="cantidad_disponible"
+                                name="cantidad_disponible" required>
                         </div>
                         <div class="mb-3">
-                            <label for="cantidadMinima" class="form-label">Cantidad Mínima</label>
-                            <input type="number" class="form-control" id="cantidadMinima" name="cantidadMinima" required>
+                            <label for="cantidad_minima" class="form-label">Cantidad Mínima</label>
+                            <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima"
+                                required>
                         </div>
                         <div class="text-center">
                             <button type="submit" class="btn btn-primary">Agregar Insumo</button>
@@ -57,7 +59,16 @@
         <div class="col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('production.detalle_insumo', id_insumo=item.id) }}"
                 class="text-decoration-none d-block">
-                <div class="card text-center border border-3 {{ 'border-success' if item.cantidad_disponible > item.cantidad_minima else 'border-danger' }} shadow-sm hover-effect h-100">
+                <div
+                    class="card text-center border border-3 {{ 'border-success' if item.cantidad_disponible > item.cantidad_minima else 'border-danger' }} shadow-sm hover-effect h-100">
+                    <!-- Contenedor de imagen con tamaño fijo -->
+                    <div class="card-img-container"
+                        style="height: 180px; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                        <img src="{{ url_for('static', filename='img/' + item.nombre.lower().replace(' ', '_') + '.jpg') }}"
+                            onerror="this.onerror=null; this.src='/static/img/insumo.jpg'"
+                            class="card-img-top img-fluid p-2" alt="{{ item.nombre }}"
+                            style="max-height: 100%; max-width: 100%;">
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title">{{ item.nombre }}</h5>
                         <p class="mb-1">Cantidad: {{ item.cantidad_disponible }}</p>
@@ -73,37 +84,47 @@
 
 <!-- JavaScript para manejar el formulario -->
 <script>
-document.getElementById('addInsumoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const nuevoInsumo = {
-        nombre: document.getElementById('nombre').value,
-        unidadInsumo: document.getElementById('unidadInsumo').value,
-        cantidadDisponible: parseInt(document.getElementById('cantidadDisponible').value),
-        cantidadMinima: parseInt(document.getElementById('cantidadMinima').value)
-    };
-    
-    fetch('/production/insumo', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(nuevoInsumo)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert('Error: ' + data.error);
-        } else {
+    document.getElementById('addInsumoForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addInsumoModal'));
+
+        try {
+            const nuevoInsumo = {
+                nombre: document.getElementById('nombre').value,
+                unidad: document.getElementById('unidad').value,
+                cantidad_disponible: parseInt(document.getElementById('cantidad_disponible').value),
+                cantidad_minima: parseInt(document.getElementById('cantidad_minima').value)
+            };
+
+            const response = await fetch('/production/insumo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(nuevoInsumo)
+            });
+
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Respuesta inesperada del servidor: ${text.substring(0, 100)}...`);
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error desconocido al agregar insumo');
+            }
+
             alert('Insumo agregado con éxito');
-            modal.hide(); // <-- cierra el modal
-            location.reload(); // Recargar la página para ver el nuevo insumo
+            modal.hide();
+            location.reload();
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error al agregar insumo: ${error.message}`);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Ocurrió un error al agregar el insumo');
     });
-});
 </script>
 {% endblock %}

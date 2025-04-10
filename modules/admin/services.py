@@ -1,9 +1,9 @@
 # services.py
-from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma, Notificacion
+from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Notificacion
 from ..shared.models import User, Rol 
 from ..client.models import Pedido, DetallePedido
 from ..ventas.models import HistorialVenta, Venta, DetalleVenta
-from ..production.models import Receta, Galleta, Insumo, Horneado, Produccion, IngredienteReceta
+from ..production.models import Merma, Receta, Galleta, Insumo, Horneado, Produccion, IngredienteReceta
 from database.conexion import db
 from werkzeug.security import generate_password_hash
 from sqlalchemy import case, distinct, func

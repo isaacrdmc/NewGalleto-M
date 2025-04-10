@@ -2,8 +2,8 @@ from datetime import datetime
 import os
 from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from .services import FACTORES_CONVERSION, UNIDADES_COMPATIBLES, ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
-from .models import Receta, SolicitudHorneado, db, Horneado, Insumo, DetalleCompraInsumo, Merma, TransaccionCompra
-from modules.admin.models import Proveedores as Proveedor
+from .models import Receta, SolicitudHorneado, db, Horneado, Insumo, Merma
+from modules.admin.models import DetalleCompraInsumo, Proveedores as Proveedor, TransaccionCompra
 from sqlalchemy import desc, func, text
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
@@ -12,7 +12,7 @@ from database.conexion import db
 from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload  # Añade este import al inicio del archivo
 
-# Inicialización de servicios
+# Servicios
 proveedor_service = ProveedorService(db.session)
 galleta_service = GalletaService(db.session)
 insumo_service = InsumoService(db.session)
@@ -44,6 +44,14 @@ def add_proveedor():
         return jsonify(nuevo_proveedor.to_dict()), 201
     return jsonify({"error": "No se pudo agregar el proveedor"}), 400
 
+@bp_production.route('/proveedor/<int:id>', methods=['GET'])
+@login_required
+def get_proveedor(id):
+    proveedor = proveedor_service.get_proveedor(id)
+    if proveedor:
+        return jsonify(proveedor.to_dict())
+    return jsonify({"error": "Proveedor no encontrado"}), 404
+
 # Rutas para Galleta
 @bp_production.route('/galletas', methods=['GET'])
 @login_required
@@ -56,17 +64,25 @@ def get_all_galletas():
 def add_galleta():
     data = request.get_json()
     nueva_galleta = galleta_service.add_galleta(
-        data['nombre'],
-        data['precio_unitario'],
-        data['cantidad_disponible'],
-        data['gramaje'],
-        data['tipo_galleta'],
-        data['fecha_anaquel'],
-        data['fecha_final_anaquel']
+        data['nombreGalleta'],
+        data['precioUnitario'],
+        data['cantidadDisponible'],
+        data['gramajeGalleta'],
+        data['tipoGalleta'],
+        data['fechaAnaquel'],
+        data['fechaFinalAnaquel']
     )
     if nueva_galleta:
         return jsonify(nueva_galleta.to_dict()), 201
     return jsonify({"error": "No se pudo agregar la galleta"}), 400
+
+@bp_production.route('/galleta/<int:id>', methods=['GET'])
+@login_required
+def get_galleta(id):
+    galleta = galleta_service.get_galleta(id)
+    if galleta:
+        return jsonify(galleta.to_dict())
+    return jsonify({"error": "Galleta no encontrada"}), 404
 
 # Rutas para Insumo
 @bp_production.route('/insumos', methods=['GET'])
@@ -78,89 +94,69 @@ def get_all_insumos():
 @bp_production.route('/insumo', methods=['POST'])
 @login_required
 def add_insumo():
-    data = request.get_json()
-    nuevo_insumo = insumo_service.add_insumo(
-        data['nombre'],
-        data['unidad'],
-        data['cantidad_disponible'],
-        data['cantidad_minima']
-    )
-    if nuevo_insumo:
-        return jsonify(nuevo_insumo.to_dict()), 201
-    return jsonify({"error": "No se pudo agregar el insumo"}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Datos no proporcionados"}), 400
+
+        nuevo_insumo = insumo_service.add_insumo(
+            data.get('nombre'),
+            data.get('unidad'),
+            data.get('cantidad_disponible'),
+            data.get('cantidad_minima')
+        )
+        
+        if nuevo_insumo:
+            return jsonify(nuevo_insumo.to_dict()), 201
+        return jsonify({"error": "No se pudo agregar el insumo"}), 400
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@bp_production.route('/insumo/<int:id>', methods=['GET'])
+@login_required
+def get_insumo(id):
+    insumo = insumo_service.get_insumo(id)
+    if insumo:
+        return jsonify(insumo.to_dict())
+    return jsonify({"error": "Insumo no encontrado"}), 404
 
 # Rutas para Receta
 @bp_production.route('/recetas', methods=['GET'])
 @login_required
 def get_all_recetas():
     recetas = receta_service.get_all_recetas()
-    return jsonify([receta.to_dict(include_galleta=True) for receta in recetas])
+    return jsonify([receta.to_dict() for receta in recetas])
 
 @bp_production.route('/receta', methods=['POST'])
 @login_required
 def add_receta():
     data = request.get_json()
     nueva_receta = receta_service.add_receta(
-        data['nombre'],
-        data['instrucciones'],
-        data['cantidad_producida'],
+        data['nombreReceta'],
+        data['instruccionReceta'],
+        data['cantGalletasProduction'],
         data['galletTipo'],
-        data['id_galleta']
+        data['idGalleta']
     )
     if nueva_receta:
-        return jsonify(nueva_receta.to_dict(include_galleta=True)), 201
+        return jsonify(nueva_receta.to_dict()), 201
     return jsonify({"error": "No se pudo agregar la receta"}), 400
 
-# Rutas para Horneado
-@bp_production.route('/horneados', methods=['GET'])
+@bp_production.route('/receta/<int:id>', methods=['GET'])
 @login_required
-def get_all_horneados():
-    horneados = horneado_service.get_all_horneados()
-    return jsonify([horneado.to_dict() for horneado in horneados])
+def get_receta(id):
+    receta = receta_service.get_receta(id)
+    if receta:
+        return jsonify(receta.to_dict())
+    return jsonify({"error": "Receta no encontrada"}), 404
 
-@bp_production.route('/horneado', methods=['POST'])
-@login_required
-def horneado():
-    data = request.get_json()
-    nuevo_horneado = horneado_service.registrar_horneado(
-        temperatura_horno=data['temperatura_horno'],
-        tiempo_horneado=data['tiempo_horneado'],
-        cantidad_producida=data['cantidad_producida'],
-        observaciones=data.get('observaciones', ''),
-        id_receta=data['id_receta'],
-        id_usuario=current_user.idUser
-    )
-    if nuevo_horneado:
-        return jsonify(nuevo_horneado.to_dict()), 201
-    return jsonify({"error": "No se pudo registrar el horneado"}), 400
 
-# Rutas para Producción
-@bp_production.route('/producciones', methods=['GET'])
-@login_required
-def get_all_producciones():
-    producciones = produccion_service.get_producciones()
-    return jsonify([produccion.to_dict() for produccion in producciones])
+    
 
-# Rutas para Usuarios
-@bp_production.route('/usuarios', methods=['GET'])
-@login_required
-def get_all_users():
-    if current_user.rol.nombreRol != 'Administrador':
-        return jsonify({"error": "No autorizado"}), 403
-    users = user_service.get_all_users()
-    return jsonify([{
-        'id': user.idUser,
-        'username': user.username,
-        'rol': user.rol.nombreRol,
-        'estado': user.estado
-    } for user in users])
-
-# Rutas para Dashboard
 @bp_production.route('/dashboard_produccion')
 @login_required
 def dashboard_produccion():
-    if current_user.rol.nombreRol not in ['Produccion']:
-        return redirect(url_for('shared.login'))
     # Obtener producción diaria (galletas producidas hoy)
     produccion_diaria = db.session.query(
         func.sum(Horneado.cantidad_producida)
@@ -216,14 +212,24 @@ def dashboard_produccion():
 # Instanciamos el servicio de horneado
 horneado_service = HorneadoService(db.session)
 
-@bp_production.route('/historial_horneados')
-@login_required
+@bp_production.route('/historial', methods=['GET'])
 def historial():
+    # Obtener parámetros de filtrado
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
-    id_receta = request.args.get('id_receta')
+    id_receta = request.args.get('receta')
     
+    # Convertir id_receta a entero si existe
+    if id_receta:
+        try:
+            id_receta = int(id_receta)
+        except ValueError:
+            id_receta = None
+    
+    # Obtener los horneados filtrados
     horneados = horneado_service.get_horneados_filtrados(fecha_inicio, fecha_fin, id_receta)
+    
+    # Obtener todas las recetas para el filtro
     recetas = receta_service.get_all_recetas()
     
     # Renderizar el template con los datos
@@ -315,16 +321,16 @@ def detalle_insumo(id_insumo):
     # Obtener los lotes del insumo (detalles de compra)
     lotes = db.session.query(
         DetalleCompraInsumo,
-        TransaccionCompra.fecha_compra,
+        TransaccionCompra.fechaCompra,
         Proveedor.nombre.label('proveedor_nombre')
     ).join(
-        TransaccionCompra, DetalleCompraInsumo.id_compra == TransaccionCompra.id
+        TransaccionCompra, DetalleCompraInsumo.idCompra == TransaccionCompra.idTransaccionCompra
     ).join(
-        Proveedor, TransaccionCompra.id_proveedor == Proveedor.idProveedores  # Cambiar id por idProveedor
+        Proveedor, TransaccionCompra.idProveedor == Proveedor.idProveedores  # Cambiar id por idProveedor
     ).filter(
-        DetalleCompraInsumo.id_insumo == id_insumo
+        DetalleCompraInsumo.idInsumo == id_insumo
     ).order_by(
-        DetalleCompraInsumo.fecha_caducidad
+        DetalleCompraInsumo.fechaCaducidad
     ).all()
     
     # Preparar los datos de lotes para la vista

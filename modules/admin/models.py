@@ -86,35 +86,6 @@ class DetalleCompraInsumo(db.Model):
             'insumo': self.insumo.to_dict() if self.insumo else None
         }
 
-# ~ Tabla para las mermas
-class Merma(db.Model):
-    __tablename__ = 'merma'
-    
-    idMerma = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tipoMerma = db.Column(db.String(15), nullable=False)
-    unidadMerma = db.Column(Enum('Gr', 'mL', 'Pz', name='unidad_merma_enum'), nullable=False)
-    cantidadMerma = db.Column(db.Integer, nullable=False)
-    fechaMerma = db.Column(db.Date, nullable=False)
-    inProduccion = db.Column(db.Integer, db.ForeignKey('Produccion.inProduccion'))
-    idInsumo = db.Column(db.Integer, db.ForeignKey('insumos.idInsumo'))
-    idGalleta = db.Column(db.Integer, db.ForeignKey('galletas.idGalleta'))
-    
-    produccion = db.relationship('Produccion', backref='mermas')
-    insumo = db.relationship('Insumo', backref='mermas')
-    galleta = db.relationship('Galleta', backref='mermas')
-    
-    def to_dict(self):
-        return {
-            'id': self.idMerma,
-            'tipo': self.tipoMerma,
-            'unidad': self.unidadMerma,
-            'cantidad': self.cantidadMerma,
-            'fecha': self.fechaMerma.isoformat(),
-            'produccion_id': self.inProduccion,
-            'insumo': self.insumo.to_dict() if self.insumo else None,
-            'galleta': self.galleta.to_dict() if self.galleta else None
-        }
-
 
 class Notificacion(db.Model):
     __tablename__ = 'notificaciones'
