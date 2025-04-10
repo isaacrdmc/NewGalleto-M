@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from . import bp_clientes
-from .services import obtener_detalles_galletas
+#from .services import obtener_detalles_galletas
 from .models import Pedido, DetallePedido
 from modules.production.models import Galleta  # Importa desde production
 from database.conexion import db
@@ -28,35 +28,17 @@ def perfil():
 @bp_clientes.route('/pedidos')
 @login_required
 def pedidos_cliente():
-    print("Accediendo a la ruta '/pedidos'")
-    print(f"Usuario autenticado: {current_user.is_authenticated}")
-    print(f"Rol del usuario: {current_user.rol.nombreRol}")
-    
     if current_user.rol.nombreRol != 'Cliente':
         flash('Acceso no autorizado', 'danger')
         return redirect(url_for('shared.index'))
-    
+
     try:
-        # 1. Obtener pedidos del usuario usando SQL nativo
-        pedidos_query = text("""
-            SELECT idPedidos, estadoPedido, costoPedido, fechaPedido
-            FROM pedidos
-            WHERE idCliente = :user_id
-            ORDER BY fechaPedido DESC
-        """)
-        pedidos_data = db.session.execute(pedidos_query, {'user_id': current_user.idUser}).fetchall()
+        # Obtener pedidos del usuario usando el modelo ORM
+        pedidos = Pedido.query.filter_by(idCliente=current_user.idUser)\
+                             .order_by(Pedido.fechaPedido.desc())\
+                             .all()
         
-        # Procesar los pedidos para el template
-        pedidos = []
-        for pedido in pedidos_data:
-            pedidos.append({
-                'id': pedido[0],
-                'estado': pedido[1],
-                'total': float(pedido[2]),
-                'fecha': pedido[3].strftime('%Y-%m-%d')  # Formatear fecha como string
-            })
-        
-        # 2. Obtener detalles usando tu vista SQL personalizada
+        # Obtener detalles usando tu vista SQL personalizada
         detalles_query = text("""
             SELECT 
                 v.idUsuario AS 'ID Usuario',
@@ -80,21 +62,14 @@ def pedidos_cliente():
                             ELSE 'cajas 700g'
                         END)
                 END AS 'Cantidad'
-            FROM 
-                detallesVentas dv
-            JOIN 
-                galletas g ON dv.idGalleta = g.idGalleta
-            JOIN
-                ventas v ON dv.idDetalleVenta = v.idDetalleVenta
-            JOIN
-                usuarios u ON v.idUsuario = u.idUser
+            FROM detallesVentas dv
+            JOIN galletas g ON dv.idGalleta = g.idGalleta
+            JOIN ventas v ON dv.idDetalleVenta = v.idDetalleVenta
+            JOIN usuarios u ON v.idUsuario = u.idUser
             WHERE v.idUsuario = :user_id
         """)
         
         detalles_galletas = db.session.execute(detalles_query, {'user_id': current_user.idUser}).fetchall()
-        
-        print(f"Pedidos recuperados: {pedidos}")
-        print(f"Detalles de galletas: {detalles_galletas}")
         
         return render_template('client/pedidos_cliente.html',
                             pedidos=pedidos,
@@ -102,5 +77,4 @@ def pedidos_cliente():
     
     except Exception as e:
         flash(f'Error al cargar pedidos: {str(e)}', 'danger')
-        print(f"Error en la consulta: {str(e)}")
         return redirect(url_for('cliente.portal_cliente'))

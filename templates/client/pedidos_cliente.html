@@ -15,28 +15,23 @@
                             <th>Fecha</th>
                             <th>Estado</th>
                             <th>Total</th>
-                            <th>Detalles</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for pedido in pedidos %}
                         <tr>
                             <td>{{ pedido.idPedidos }}</td>
-                            <td>{{ pedido.fechaPedido.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ pedido.fechaPedido.strftime('%d/%m/%Y') }}</td>
                             <td>
-                                <span class="badge 
-                                    {% if pedido.estadoPedido == 'Entregado' %}bg-success
-                                    {% elif pedido.estadoPedido == 'Cancelado' %}bg-danger
-                                    {% else %}bg-warning text-dark{% endif %}">
+                                <span class="badge bg-{% if pedido.estadoPedido == 'Entregado' %}success{% elif pedido.estadoPedido == 'Pendiente' %}warning{% else %}info{% endif %}">
                                     {{ pedido.estadoPedido }}
                                 </span>
                             </td>
                             <td>${{ "{:,.2f}".format(pedido.costoPedido) }}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#detallePedido{{ pedido.idPedidos }}">
-                                    Ver Detalle
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detallePedido{{ pedido.idPedidos }}">
+                                    Ver Detalles
                                 </button>
                             </td>
                         </tr>
@@ -79,10 +74,10 @@
                                     <tbody>
                                         {% for detalle in pedido.detalles %}
                                         <tr>
-                                            <td>{{ detalle.galleta.nombreGalleta if detalle.galleta else 'Producto no disponible' }}</td>
+                                            <td>{{ detalle.galleta.nombre if detalle.galleta else 'Producto no disponible' }}</td>
                                             <td>{{ detalle.cantidad }}</td>
                                             <td>${{ "{:,.2f}".format(detalle.precioUnitario) }}</td>
-                                            <td>${{ "{:,.2f}".format(detalle.cantidad * detalle.precioUnitario) }}</td>
+                                            <td>${{ "{:,.2f}".format(detalle.subtotal) }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -96,7 +91,6 @@
                 </div>
             </div>
             {% endfor %}
-
             {% else %}
             <div class="alert alert-info">
                 No tienes pedidos registrados.
@@ -125,7 +119,7 @@
                         {% for detalle in detalles_galletas %}
                         <tr>
                             <td>{{ detalle.Galleta }}</td>
-                            <td>{{ detalle.Forma_Venta }}</td>
+                            <td>{{ detalle.formaVenta }}</td>
                             <td>{{ detalle.Cantidad }}</td>
                         </tr>
                         {% endfor %}
@@ -140,19 +134,4 @@
         </div>
     </div>
 </div>
-
-<style>
-    .table {
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .table th {
-        background-color: #343a40;
-        color: white;
-    }
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
-    }
-</style>
 {% endblock %}

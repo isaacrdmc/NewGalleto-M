@@ -1,8 +1,10 @@
 from modules.production.models import Galleta  # Cambia esta línea
 from .models import VistaDetallesGalletas
 from flask import current_app
+from flask_login import current_user
 from database.conexion import db
 from sqlalchemy.exc import SQLAlchemyError
+from .models import Pedido, DetallePedido
 
  
 def obtener_detalles_galletas():
