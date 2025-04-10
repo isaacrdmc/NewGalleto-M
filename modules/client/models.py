@@ -38,6 +38,7 @@ class DetallePedido(db.Model):
     # Usa la relación sin definir la clase Galleta aquí
     galleta = db.relationship('Galleta', backref='detalles_pedido')
 
+
 class VistaDetallesGalletas(db.Model):
     __tablename__ = 'vista_detalles_galletas'
     

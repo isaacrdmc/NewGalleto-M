@@ -2,33 +2,300 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="text-white mb-3 fw-normal fs-6" style="padding-left: 250px;">
-        Home / Administrador / Gestionar Clientes
+    <div class="d-flex text-white justify-content-between align-items-center mb-3" style="padding-left: 250px;">
+        <div class="fw-normal fs-6">
+            <h1>Gestión de Clientes</h1>
+        </div>
+
+        <!-- Botón de notificaciones -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
+                Notificaciones
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
+                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
+                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
+                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            </ul>
+        </div>
     </div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
-        <h1>Gestión de Clientes</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Ana Gómez</td>
-                    <td>ana@example.com</td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="#" class="btn btn-danger btn-sm">Eliminar</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="#" class="btn btn-success">Agregar Cliente</a>
+        <div class="container mt-3">
+            <div class="d-flex justify-content-between mb-3">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalCliente">
+                    ➕ Nuevo cliente
+                </button>
+                <input type="text" id="buscarCliente" placeholder="Buscar" class="form-control"
+                    style="max-width: 200px;">
+            </div>
+
+            <div class="table-responsive rounded rounded-3 shadow-sm">
+                <table class="table table-bordered table-striped table-hover bg-white text-center">
+                    <thead style="background-color: #d6b7a1;">
+                        <tr>
+                            <th>Acciones</th>
+                            <th>Usuario</th>
+                            <th>Total Pedidos</th>
+                            <th>Total Compras</th>
+                            <th>Historial</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaClientes">
+                        {% for cliente in clientes %}
+                        <tr id="row-{{ cliente.idUser }}">
+                            <td>
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#modalCliente" onclick="editarCliente('{{ cliente.idUser }}')">
+                                    ✏️
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                    onclick="eliminarCliente('{{ cliente.idUser }}', '{{ cliente.username }}')">
+                                    ❌
+                                </button>
+                            </td>
+                            <td>{{ cliente.username }}</td>
+                            <td>{{ cliente.total_pedidos|default(0) }}</td>
+                            <td>${{ cliente.total_compras|default(0)|float }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.ver_pedidos_cliente', id=cliente.idUser) }}"
+                                    class="btn btn-info btn-sm" title="Ver historial de pedidos">
+                                    📋 Historial
+                                </a>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge bg-{% if cliente.estado == 'Activo' %}success{% else %}danger{% endif %}">
+                                    {{ cliente.estado }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal para agregar/editar clientes -->
+        <div class="modal fade" id="modalCliente" tabindex="-1" aria-labelledby="modalClienteLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header text-white" style="background-color: #603A1E">
+                        <h5 class="modal-title fs-5" id="modalClienteLabel">Agregar un cliente</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form id="formCliente" class="needs-validation" novalidate>
+                            <input type="hidden" id="idCliente" name="idCliente">
+                            {{ form.hidden_tag() }}
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label fw-bold">Nombre de usuario</label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                        <div class="invalid-feedback">Por favor ingrese un nombre de usuario</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="estado" class="form-label fw-bold">Estado</label>
+                                        <select class="form-select" id="estado" name="estado" required>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Bloqueado">Inactivo</option>
+                                            <option value="Bloqueado">Bloqueado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label fw-bold">Contraseña</label>
+                                        <input type="password" class="form-control" id="password" name="password">
+                                        <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres
+                                        </div>
+                                        <small class="text-muted">Dejar en blanco para no cambiar (solo edición)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 </div>
+
+<!-- JavaScript específico para clientes -->
+<script>
+    // Funciones para el CRUD de clientes
+    async function guardarCliente() {
+        try {
+            Swal.fire({
+                title: 'Procesando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const idCliente = document.getElementById('idCliente').value;
+            const esEdicion = idCliente !== '';
+
+            const data = {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value.trim()
+                // No incluir estado para nuevos clientes
+            };
+
+            // Solo incluir estado si es una edición
+            if (esEdicion) {
+                data.estado = document.getElementById('estado').value;
+            }
+
+            // Validaciones
+            if (!data.username) {
+                await Swal.fire({ icon: 'error', title: 'Error', text: 'Todos los campos son requeridos' });
+                return;
+            }
+
+            if (!esEdicion && !data.password) {
+                await Swal.fire({ icon: 'error', title: 'Error', text: 'La contraseña es requerida para nuevos clientes' });
+                return;
+            }
+
+            const url = esEdicion
+                ? `/admin/clientes/editar/${idCliente}`
+                : '/admin/clientes/agregar';
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            Swal.close();
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: result.mensaje,
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            cerrarModalCliente();
+            limpiarFormularioCliente();
+            actualizarTablaClientes();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Error desconocido' });
+        }
+    }
+
+    function cerrarModalCliente() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalCliente'));
+        if (modal) modal.hide();
+    }
+
+    function limpiarFormularioCliente() {
+        document.getElementById('formCliente').reset();
+        document.getElementById('idCliente').value = '';
+        document.querySelector('#modalCliente .modal-title').textContent = 'Agregar un cliente';
+    }
+
+    async function actualizarTablaClientes() {
+        try {
+            const response = await fetch('/admin/clientes');
+            if (!response.ok) {
+                throw new Error('Error al cargar clientes');
+            }
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const nuevaTabla = doc.querySelector('#tablaClientes');
+
+            if (nuevaTabla) {
+                document.getElementById('tablaClientes').innerHTML = nuevaTabla.innerHTML;
+            }
+        } catch (error) {
+            console.error('Error al actualizar tabla:', error);
+        }
+    }
+
+    async function editarCliente(id) {
+        try {
+            const response = await fetch(`/admin/clientes/obtener/${id}`);
+            if (!response.ok) {
+                throw new Error('Error al obtener cliente');
+            }
+
+            const cliente = await response.json();
+
+            document.getElementById('idCliente').value = cliente.id;
+            document.getElementById('username').value = cliente.username;
+            document.getElementById('estado').value = cliente.estado;
+
+            document.querySelector('#modalCliente .modal-title').textContent = 'Editar cliente';
+
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+        }
+    }
+
+    async function eliminarCliente(id, username) {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: `¿Quieres eliminar al cliente "${username}"? Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const response = await fetch(`/admin/clientes/eliminar/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]')?.value || ''
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al eliminar cliente');
+            }
+
+            const result = await response.json();
+            Swal.fire('Eliminado', result.mensaje, 'success');
+            actualizarTablaClientes();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire('Error', error.message, 'error');
+        }
+    }
+</script>
 {% endblock %}

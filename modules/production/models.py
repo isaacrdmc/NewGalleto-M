@@ -1,21 +1,33 @@
+# production/models.py
 from database.conexion import db
 from datetime import datetime
 from sqlalchemy.sql import func
-from modules.shared.models import Rol as Role
-from modules.shared.models import User as Usuario
-from modules.admin.models import Proveedores as Proveedor
 
+# Tabla de galletas
 class Galleta(db.Model):
     __tablename__ = 'galletas'
     id = db.Column('idGalleta', db.Integer, primary_key=True)
     nombre = db.Column('nombreGalleta', db.String(30), nullable=False)
-    precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
-    cantidad_disponible = db.Column(db.Integer, nullable=False)
+    precio_unitario = db.Column('precioUnitario', db.Numeric(10,2), nullable=False)
+    cantidad_disponible = db.Column('cantidadDisponible', db.Integer, nullable=False)
     gramaje = db.Column('gramajeGalleta', db.Numeric(10,2), nullable=False)
-    tipo_galleta = db.Column(db.Integer, nullable=False)
+    tipo_galleta = db.Column('tipoGalleta', db.Integer, nullable=False)
     fecha_anaquel = db.Column('fechaAnaquel', db.Date, nullable=False)
     fecha_final_anaquel = db.Column('fechaFinalAnaquel', db.Date, nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'precio': float(self.precio_unitario),
+            'gramaje': float(self.gramaje),
+            'cantidad': self.cantidad_disponible,
+            'tipo': self.tipo_galleta,
+            'fecha_caducidad': self.fecha_final_anaquel.strftime('%Y-%m-%d'),
+        }
+
+
+# Tabla de insumos
 class Insumo(db.Model):
     __tablename__ = 'insumos'
     id = db.Column('idInsumo', db.Integer, primary_key=True)
@@ -33,6 +45,7 @@ class Insumo(db.Model):
             'cantidad_minima': self.cantidad_minima
         }
 
+# Tabla de recetas
 class Receta(db.Model):
     __tablename__ = 'recetas'
     
@@ -47,10 +60,23 @@ class Receta(db.Model):
     # Relación con la tabla 'galletas'
     galleta = db.relationship('Galleta', backref='recetas')
 
+    def to_dict(self, include_galleta=True):
+        data = {
+            'id': self.id,
+            'nombre': self.nombre,
+            'instrucciones': self.instrucciones,
+            'cantidad_producida': self.cantidad_producida,
+            'galletTipo': self.galletTipo,
+            'id_galleta': self.id_galleta,
+            'imagen_url': f"/static/img/galletas/{self.galleta.nombre.lower().replace(' ', '_')}.png" if self.galleta else '/static/img/receta.jpg'
+        }
+    
+        if include_galleta and self.galleta:
+            data['galleta'] = self.galleta.to_dict()
+    
+        return data
 
-
-# Añadir al archivo models.py existente
-
+# Tabla del historial del horneado
 class Horneado(db.Model):
     __tablename__ = 'historialHorneado'
     id = db.Column('idHorneado', db.Integer, primary_key=True)
@@ -84,139 +110,51 @@ class Horneado(db.Model):
             'nombre_usuario': self.usuario.username if self.usuario else None
         }
 
+# Tabla de produccion
 class Produccion(db.Model):
     __tablename__ = 'Produccion'
-    id = db.Column('inProduccion', db.Integer, primary_key=True)
-    fecha_produccion = db.Column('fechaProduccion', db.Date, nullable=False)
-    gramos_merma = db.Column('gramosMerma', db.Integer, nullable=False)
-    mililitros_merma = db.Column('mililitrosMerma', db.Integer, nullable=False)
-    piezas_merma = db.Column('piezasMerma', db.Integer, nullable=False)
-    produccion_total = db.Column('produccionTotal', db.Integer, nullable=False)
     
-    # Relaciones con otras tablas
-    id_receta = db.Column('idReceta', db.Integer, db.ForeignKey('recetas.idReceta'), nullable=True)
-    id_galleta = db.Column('idGalleta', db.Integer, db.ForeignKey('galletas.idGalleta'), nullable=True)
+    inProduccion = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fechaProduccion = db.Column(db.Date, nullable=False)
+    gramosMerma = db.Column(db.Integer, nullable=False)
+    mililitrosMerma = db.Column(db.Integer, nullable=False)
+    piezasMerma = db.Column(db.Integer, nullable=False)
+    produccionTotal = db.Column(db.Integer, nullable=False)
+    idReceta = db.Column(db.Integer, db.ForeignKey('recetas.idReceta'))
+    idGalleta = db.Column(db.Integer, db.ForeignKey('galletas.idGalleta'))
     
-    # Relaciones
-    horneados = db.relationship('Horneado', backref='produccion')
+    receta = db.relationship('Receta', backref='producciones')
+    galleta = db.relationship('Galleta', backref='producciones')
     
     def to_dict(self):
         return {
-            'id': self.id,
-            'fecha_produccion': self.fecha_produccion.strftime('%Y-%m-%d'),
-            'gramos_merma': self.gramos_merma,
-            'mililitros_merma': self.mililitros_merma,
-            'piezas_merma': self.piezas_merma,
-            'produccion_total': self.produccion_total,
-            'id_receta': self.id_receta,
-            'id_galleta': self.id_galleta
+            'id': self.inProduccion,
+            'fecha_produccion': self.fechaProduccion.strftime('%Y-%m-%d'),
+            'gramos_merma': self.gramosMerma,
+            'mililitros_merma': self.mililitrosMerma,
+            'piezas_merma': self.piezasMerma,
+            'produccion_total': self.produccionTotal,
+            'id_receta': self.idReceta,
+            'id_galleta': self.idGalleta
+        }
+
+# Tabla de ingredientes de la receta
+class IngredienteReceta(db.Model):
+    __tablename__ = 'ingredientesReceta'
+    
+    idIngredientesResetas = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cantidad = db.Column(db.Integer, nullable=False)
+    idInsumo = db.Column(db.Integer, db.ForeignKey('insumos.idInsumo'), nullable=False)
+    idReceta = db.Column(db.Integer, db.ForeignKey('recetas.idReceta'), nullable=False)
+    
+    insumo = db.relationship('Insumo')
+    
+    def to_dict(self):
+        return {
+            'id': self.idIngredientesResetas,
+            'id_receta': self.idReceta,
+            'id_insumo': self.idInsumo,
+            'cantidad': self.cantidad,
+            'insumo': self.insumo.to_dict() if self.insumo else None
         }
         
-        
-###################################################
-
-class TransaccionCompra(db.Model):
-    __tablename__ = 'transaccionCompra'
-    
-    id = db.Column('idTransaccionCompra', db.Integer, primary_key=True)
-    fecha_compra = db.Column('fechaCompra', db.Date, nullable=False)
-    total_compra = db.Column('totalCompra', db.Numeric(10, 2))
-
-    # Clave foránea correctamente definida con 'idProveedor' (correspondiente a la columna en la tabla proveedores)
-    id_proveedor = db.Column('idProveedor', db.Integer, db.ForeignKey('proveedores.idProveedores'), nullable=False)
-    proveedor = db.relationship('Proveedores', backref='transacciones')
-    
-    detalles = db.relationship('DetalleCompraInsumo', backref='transaccion', lazy=True)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'fecha_compra': self.fecha_compra.strftime('%Y-%m-%d'),
-            'total_compra': float(self.total_compra) if self.total_compra else 0,
-            'proveedor': self.proveedor.nombre if self.proveedor else None,
-            'detalles': [detalle.to_dict() for detalle in self.detalles]
-        }
-
-
-
-class DetalleCompraInsumo(db.Model):
-    __tablename__ = 'detalleCompraInsumo'
-    id = db.Column('idetalleCompraInsumo', db.Integer, primary_key=True)
-    cant_cajas = db.Column('cantCajas', db.Integer, nullable=False)
-    cant_unidades_caja = db.Column('cantUnidadesXcaja', db.Integer, nullable=False)
-    cant_merma_unidad = db.Column('cantMermaPorUnidad', db.Integer, nullable=False)
-    costo_caja = db.Column('CostoPorCaja', db.Numeric(10, 2), nullable=False)
-    costo_unidad_caja = db.Column('costoUnidadXcaja', db.Numeric(10, 2), nullable=False)
-    unidad_insumo = db.Column('unidadInsumo', db.Enum('Gr', 'mL', 'Pz'), nullable=False)
-    fecha_registro = db.Column('fechaRegistro', db.Date, nullable=False)
-    fecha_caducidad = db.Column('fechaCaducidad', db.Date, nullable=False)
-    
-    # Relaciones
-    id_compra = db.Column('idCompra', db.Integer, db.ForeignKey('transaccionCompra.idTransaccionCompra'), nullable=False)
-    id_insumo = db.Column('idInsumo', db.Integer, db.ForeignKey('insumos.idInsumo'), nullable=False)
-    insumo = db.relationship('Insumo', backref='compras')
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'cant_cajas': self.cant_cajas,
-            'cant_unidades_caja': self.cant_unidades_caja,
-            'cant_merma_unidad': self.cant_merma_unidad,
-            'costo_caja': float(self.costo_caja),
-            'costo_unidad_caja': float(self.costo_unidad_caja),
-            'unidad_insumo': self.unidad_insumo,
-            'fecha_registro': self.fecha_registro.strftime('%Y-%m-%d'),
-            'fecha_caducidad': self.fecha_caducidad.strftime('%Y-%m-%d'),
-            'nombre_insumo': self.insumo.nombre if self.insumo else None
-        }
-
-class Notificacion(db.Model):
-    __tablename__ = 'notificaciones'
-    id = db.Column('idNotificaciónes', db.Integer, primary_key=True)
-    tipo_notificacion = db.Column('tipoNotificacion', db.Enum(
-        'Caducidad Insumo', 
-        'Caducidad Galleta', 
-        'Bajo Inventario', 
-        'Solicitud Produccion', 
-        'No hay suficientes inusmos de'), nullable=False)
-    mensaje = db.Column('mensajeNotificar', db.String(255))
-    fecha_creacion = db.Column('fechaCreacion', db.DateTime, nullable=False, default=datetime.now)
-    fecha_visto = db.Column('fechaVisto', db.DateTime)
-    estatus = db.Column(db.Enum('Nueva', 'Vista', 'Resuelto'), nullable=False, default='Nueva')
-    
-    # Relaciones
-    id_usuario = db.Column('idUsuario', db.Integer, db.ForeignKey('usuarios.idUser'))
-    id_insumo = db.Column('idInsumo', db.Integer, db.ForeignKey('insumos.idInsumo'))
-    id_galleta = db.Column('idGalleta', db.Integer, db.ForeignKey('galletas.idGalleta'))
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'tipo_notificacion': self.tipo_notificacion,
-            'mensaje': self.mensaje,
-            'fecha_creacion': self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'),
-            'fecha_visto': self.fecha_visto.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_visto else None,
-            'estatus': self.estatus
-        }
-
-class Merma(db.Model):
-    __tablename__ = 'merma'
-    id = db.Column('idMerma', db.Integer, primary_key=True)
-    tipo_merma = db.Column('tipoMerma', db.String(15), nullable=False)
-    unidad_merma = db.Column('unidadMerma', db.Enum('Gr', 'mL', 'Pz'), nullable=False)
-    cantidad_merma = db.Column('cantidadMerma', db.Integer, nullable=False)
-    fecha_merma = db.Column('fechaMerma', db.Date, nullable=False)
-    
-    # Relaciones
-    id_produccion = db.Column('inProduccion', db.Integer, db.ForeignKey('Produccion.inProduccion'))
-    id_insumo = db.Column('idInsumo', db.Integer, db.ForeignKey('insumos.idInsumo'))
-    id_galleta = db.Column('idGalleta', db.Integer, db.ForeignKey('galletas.idGalleta'))
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'tipo_merma': self.tipo_merma,
-            'unidad_merma': self.unidad_merma,
-            'cantidad_merma': self.cantidad_merma,
-            'fecha_merma': self.fecha_merma.strftime('%Y-%m-%d')
-        }

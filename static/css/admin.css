@@ -105,3 +105,21 @@ main {
 .dashboard-card .card-text {
     color: #333;
 }
+
+.table-receta {
+    border-radius: 12px;
+    border: #f7e7ce solid;
+    overflow: hidden; /* importante para que los bordes internos no sobresalgan */
+}
+
+.table-receta thead th {
+    border-radius: 15px;
+}
+
+.table-receta tbody tr:last-child td:first-child {
+    border-radius: 12px;
+}
+
+.table-receta tbody tr:last-child td:last-child {
+    border-radius: 12px;
+}

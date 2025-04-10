@@ -1,6 +1,18 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show small-alert" role="alert" data-auto-dismiss="5000">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 <div class="register-container">
     <div class="register-box">
         <h3 class="pb-3">Crear cuenta</h3>
@@ -60,6 +72,18 @@
         } else {
             this.setCustomValidity('');
         }
+    });
+
+    // Cierre automático de alertas después de 5 segundos
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('[data-auto-dismiss]');
+        alerts.forEach(alert => {
+            const delay = parseInt(alert.getAttribute('data-auto-dismiss'));
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, delay);
+        });
     });
 </script>
 {% endblock %}

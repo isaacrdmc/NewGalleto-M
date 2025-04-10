@@ -1,7 +1,6 @@
 import re
 from flask import current_app, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_login import current_user
-
+ 
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
 # from services.log_service import LogService
@@ -10,32 +9,26 @@ from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
 from flask_login import login_required, current_user
 from ...admin import bp_admistracion
+# from ...logs.log_config import loggerPersonalizado
+# from ...logs.log_config import loggerPersonalizado
 
-
-# ? En esta sección ira la parte de las rutas para el CRUD de los proveedores:
-    # * Agregar nuevos proveedores a la BD
-    # * Mostrar los proveedores de la BD
-    # * Modificar los proveedores en la BD
-    # * Actualizar nuevos proveedores a la BD
-
-# http://127.0.0.1:5000/production/proveedores
-
-
+# * nueva ruta, ruta para el CRUD de los proveedores
+@bp_admistracion.route('/agregarProveedor')
+@login_required
+def agregarProv():
+    proveedoresNuevos=agregar_proveedor()
+    current_app.logger.warning(f'Intento de acceso no autorizado a la página de clientes por {current_user.username}')
+    return render_template('admin/index.html', proveedores=proveedoresNuevos)
+ 
 
 # * Renderiza la página y trae los datos del arreglo
 # @bp_admistracion.route('/proveedores', methods=['GET'])
 @bp_admistracion.route('/proveedores')
 @login_required
 def proveedores():
-    if 'username' not in session or session['role'] != 'admin':
-        current_app.logger.warning(
-            "Intento de acceso no autorizado a la administración de proveedores",
-            extra={
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'ip': request.remote_addr,
-                'tipo_log': 'SECURITY'
-            }
-        )
+    if current_user.rol.nombreRol != 'Administrador':
+        # 
+        current_app.logger.error(f'Acceso no autorizado a la página de proveedores poer el usuario')
         return redirect(url_for('shared.login'))
 
     # Registrar acceso exitoso
@@ -59,15 +52,8 @@ def proveedores():
 @bp_admistracion.route('/proveedores/listar', methods=['GET'])
 @login_required
 def listar_proveedores():
-    if 'username' not in session or session['role'] != 'admin':
-        current_app.logger.warning(
-            "Intento de acceso no autorizado a la API de proveedores",
-            extra={
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'ip': request.remote_addr,
-                'tipo_log': 'SECURITY'
-            }
-        )
+    if current_user.rol.nombreRol != 'Administrador':
+        current_app.logger.error(f'Acceso no autorizado a listar proveedores por el usuario')
         return jsonify({"error": "No autorizado"}), 403
 
     try:
@@ -83,16 +69,12 @@ def listar_proveedores():
         # Obtener la lista de proveedores
         lista_proveedores = obtener_proveedores()
         if not lista_proveedores:
-            current_app.logger.info(
-                "No hay proveedores registrados",
-                extra={
-                    'user': current_user.username,
-                    'tipo_log': 'INFO'
-                }
-            )
+            current_app.logger.warning(f'No hay proveedores registrados')
             return jsonify({"mensaje": "No hay proveedores registrados"}), 200
         
-        # Convertir a JSON
+
+        current_app.logger.info(f'Acceso a la lista de proveedores por {current_user.username}')
+        # ? Convertimos la lista de proveedores a un fomrato de tipo JSON
         proveedores_json = [
             {
                 "id": p.idProveedores,
@@ -104,27 +86,14 @@ def listar_proveedores():
             }
             for p in lista_proveedores
         ]
-        
-        current_app.logger.debug(
-            "Lista de proveedores generada",
-            extra={
-                'user': current_user.username,
-                'cantidad_proveedores': len(proveedores_json),
-                'tipo_log': 'DEBUG'
-            }
-        )
-        
+
+        current_app.logger.info(f'Lista de proveedores obtenida por {current_user.username}')
         return jsonify(proveedores_json), 200
     
     except Exception as e:
-        current_app.logger.error(
-            "Error al listar proveedores",
-            extra={
-                'error': str(e),
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'tipo_log': 'ERROR'
-            }
-        )
+        # Loguear el error para depuración
+        print(f"Error al listar proveedores: {e}")
+        current_app.logger.error(f'Error al listar proveedores_ {e}')
         return jsonify({"error": "Error interno del servidor"}), 500
 
 
@@ -199,16 +168,8 @@ def agregar_proveedor():
         db.session.add(nuevo_proveedor)
         db.session.commit()
 
-        # * Registramos un log de operación exitosa
-        current_app.logger.info(
-            f"Usuario {session['username']} agregó nuevo proveedor: {data['empresa']}",
-            extra={
-                'proveedor_id': nuevo_proveedor.idProveedores,
-                'user': current_user.username,
-                'tipo_log': 'OPERATION'
-            }
-        )
 
+        current_app.logger.infor(f'Proveedor {nuevo_proveedor.nombre} agregado correctamente por {current_user.username}')
 
         # ? Retornamos el nuevo proveedor en formato JSON
         return jsonify({
@@ -228,15 +189,7 @@ def agregar_proveedor():
 
     except Exception as e:
         db.session.rollback()
-        # Registrar error
-        current_app.logger.critical(
-            "Error al agregar proveedor",
-            extra={
-                'error': str(e),
-                'user': current_user.username if hasattr(current_user, 'username') else None,
-                'tipo_log': 'ERROR'
-            }
-        )
+        current_app.logger.error(f'Error al agregar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 
@@ -303,17 +256,7 @@ def editar_proveedor(id):
             productos=data.get('productos', '')
         )
 
-        # * Registramos el log de la operación exitosa
-        current_app.logger.info(
-            f"Proveedor actualizado: {nombre_anterior} -> {data['empresa']}",
-            extra={
-                'proveedor_id': id,
-                'nombre_anterior': nombre_anterior,
-                'nombre_nuevo': data['empresa'],
-                'user': current_user.username,
-                'tipo_log': 'OPERATION'
-            }
-        )
+        current_app.logger.info(f'Proveedor {proveedor.nombre} editado correctamente por {current_user.username}')
         
         # ? Retornamos al porveedor actualizandolo en fomrato JSON
         return jsonify({
@@ -332,16 +275,7 @@ def editar_proveedor(id):
         })
     except Exception as e:
         db.session.rollback()
-        # Registramos el error capturado
-        current_app.logger.error(
-            "Error al actualizar proveedor",
-            extra={
-                'proveedor_id': id,
-                'error': str(e),
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'tipo_log': 'ERROR'
-            }
-        )
+        current_app.logger.error(f'Error al editar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
 
 
@@ -350,45 +284,11 @@ def editar_proveedor(id):
 @bp_admistracion.route('/proveedores/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar_proveedor_route(id):
-    # ~ Verificamos sus credenciales
-    if 'username' not in session or session['role'] != 'admin':
-        current_app.logger.warning(
-            "Intento de acceso no autorizado para eliminar proveedor",
-            extra={
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'ip': request.remote_addr,
-                'tipo_log': 'SECURITY',
-                'proveedor_id': id
-            }
-        )# Obtenemos el usuario para registrar jjunto ocn el log
-        return jsonify({"error": "No autorizado"}), 403
-    
     try:
-        # ? Obtenemos el id del usuairo para enviarlo junto con el log:
-        proveedor = Proveedores.query.get(id)
+        # ? Usamos la función de servicio para eliminar el proveedor
+        proveedorEliminar = eliminar_proveedor(id)
 
-        if not proveedor:
-            current_app.logger.error(
-                "Intento de eliminar proveedor inexistente",
-                extra={
-                    'proveedor_id': id,
-                    'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                    'tipo_log': 'ERROR'
-                }
-            )
-            return jsonify({"error": "Proveedor no encontrado"}), 404
-        
-        
-        # * Guardmos los datos antes de elimminar para el log y respuesta
-        proveedo_infor =  {
-            'id': proveedor.idProveedores,
-            'nombre': proveedor.nombre,
-            'telefono': proveedor.telefono,
-            'correo': proveedor.correo
-        }
-
-        # ? Llamamos a la función del servicio para poder eleiminar al proveedor
-        eliminar_proveedor(id)
+        current_app.logger.info(f'Proveedor {proveedorEliminar.nombre} eliminado correctamente po {current_user.username}')
 
         # * Registramos el log de la operación exitosa
         current_app.logger.info(
@@ -403,21 +303,17 @@ def eliminar_proveedor_route(id):
 
         # ? RETORNAMOS EL MENSAJE DE EXITO
         return jsonify({
-            "mensaje": "Proveedor eliminado",
-            "proveedor": proveedo_infor
+            "mensaje": "Proveedor eliminado",       # ? Mensaje de exito (Mensaje importante del 'jsonify')
+            "proveedor": {  # & Datos del proveedor eleiminado
+                "id": proveedorEliminar.idProveedores,
+                "nombre": proveedorEliminar.nombre,
+                "telefono": proveedorEliminar.telefono,
+                "correo": proveedorEliminar.correo
+            }
         })
-    
     except Exception as e:
         db.session.rollback()
-        current_app.logger.critical(
-            "Error al eliminar proveedor",
-            extra={
-                'proveedor_id': id,
-                'error': str(e),
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'tipo_log': 'ERROR'
-            }
-        )
+        current_app.logger.error(f'Error al eliminar proveedor: {str(e)}')
         return jsonify({"error": str(e)}), 500
     
 
@@ -425,14 +321,7 @@ def eliminar_proveedor_route(id):
 # ^ Buscar un proveedor dentro de la BD        (Otro)@bp_admistracion.route('/proveedores/buscar', methods=['GET'])
 def buscar_proveedor_route():
     if 'username' not in session or session['role'] != 'admin':
-        current_app.logger.warning(
-            "Intento de acceso no autorizado a búsqueda de proveedores",
-            extra={
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'ip': request.remote_addr,
-                'tipo_log': 'SECURITY'
-            }
-        )
+        current_app.logger.error(f'Acceso no autorizado a la búsqueda de proveedores por el usuario')
         return jsonify({"error": "No autorizado"}), 403
     
     producto = request.args.get('producto', '').strip()
@@ -450,17 +339,15 @@ def buscar_proveedor_route():
     try: 
         proveedores = buscar_proveedor_route(producto)
 
+
+        # * Validamos la existencia del porveedor
         if not proveedores:
-            current_app.logger.info(
-                "Búsqueda de proveedores sin resultados",
-                extra={
-                    'producto_buscado': producto,
-                    'user': current_user.username,
-                    'tipo_log': 'INFO'
-                }
-            )
+            current_app.logger.warning(f'No se ha encontrado el porveedor {producto} por {current_user.username}')
             return jsonify({"mensaje": f"No se han encontrado proveedores con el {producto}"}), 404
 
+        current_app.logger.infor(f'Proveedor {producto} encontrado por {current_user.username}')
+        
+        # ? Entregamos al ista de los porveedore en formato JSON
         proveedores_json = [
             {
                 "id": p.idProveedores,
@@ -486,17 +373,9 @@ def buscar_proveedor_route():
         return jsonify(proveedores_json), 200
 
     except Exception as e:
-        current_app.logger.error(
-            "Error al buscar proveedores",
-            extra={
-                'producto_buscado': producto,
-                'error': str(e),
-                'user': current_user.username if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
-                'tipo_log': 'ERROR'
-            }
-        )
-        return jsonify({"error": "Error interno del servidor"}), 500
-
+        print(f"Error al buscar proveedores: {e}")
+        current_app.logger.error(f'Error al buscar proveedores: {str(e)}')
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
 
 
 
@@ -506,6 +385,9 @@ def buscar_proveedor_route():
 def obtener_proveedor(id):
     try:
         proveedor = Proveedores.query.get_or_404(id)
+
+        current_app.logger.info(f'Proveedor {proveedor.nombre} obtenido correctamente por {current_user.username}')
+
         return jsonify({
             "idProveedores": proveedor.idProveedores,
             "nombre": proveedor.nombre,

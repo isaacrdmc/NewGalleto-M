@@ -11,6 +11,7 @@ from database.conexion import db
 @login_required
 def portal_cliente():
     if current_user.rol.nombreRol not in ['Cliente']:
+    if current_user.rol.nombreRol not in ['Cliente']:
         flash('No tienes permisos para acceder a esta sección', 'danger')
         return redirect(url_for('shared.index'))
     return render_template('client/portal_cliente.html')
