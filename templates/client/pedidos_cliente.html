@@ -21,21 +21,21 @@
                     <tbody>
                         {% for pedido in pedidos %}
                         <tr>
-                            <td>{{ pedido.id }}</td>
-                            <td>{{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ pedido.idPedidos }}</td>
+                            <td>{{ pedido.fechaPedido.strftime('%d/%m/%Y %H:%M') }}</td>
                             <td>
                                 <span class="badge 
-                                    {% if pedido.estado == 'completado' %}bg-success
-                                    {% elif pedido.estado == 'cancelado' %}bg-danger
+                                    {% if pedido.estadoPedido == 'Entregado' %}bg-success
+                                    {% elif pedido.estadoPedido == 'Cancelado' %}bg-danger
                                     {% else %}bg-warning text-dark{% endif %}">
-                                    {{ pedido.estado|capitalize }}
+                                    {{ pedido.estadoPedido }}
                                 </span>
                             </td>
-                            <td>${{ "{:,.2f}".format(pedido.total) }}</td>
+                            <td>${{ "{:,.2f}".format(pedido.costoPedido) }}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" 
                                         data-bs-toggle="modal" 
-                                        data-bs-target="#detallePedido{{ pedido.id }}">
+                                        data-bs-target="#detallePedido{{ pedido.idPedidos }}">
                                     Ver Detalle
                                 </button>
                             </td>
@@ -47,21 +47,21 @@
 
             <!-- Modales para detalles de pedido -->
             {% for pedido in pedidos %}
-            <div class="modal fade" id="detallePedido{{ pedido.id }}" tabindex="-1">
+            <div class="modal fade" id="detallePedido{{ pedido.idPedidos }}" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Detalle del Pedido #{{ pedido.id }}</h5>
+                            <h5 class="modal-title">Detalle del Pedido #{{ pedido.idPedidos }}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <p><strong>Fecha:</strong> {{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</p>
-                                    <p><strong>Estado:</strong> {{ pedido.estado|capitalize }}</p>
+                                    <p><strong>Fecha:</strong> {{ pedido.fechaPedido.strftime('%d/%m/%Y %H:%M') }}</p>
+                                    <p><strong>Estado:</strong> {{ pedido.estadoPedido }}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><strong>Total:</strong> ${{ "{:,.2f}".format(pedido.total) }}</p>
+                                    <p><strong>Total:</strong> ${{ "{:,.2f}".format(pedido.costoPedido) }}</p>
                                 </div>
                             </div>
 
@@ -77,12 +77,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for item in pedido.items %}
+                                        {% for detalle in pedido.detalles %}
                                         <tr>
-                                            <td>{{ item.producto.nombre }}</td>
-                                            <td>{{ item.cantidad }}</td>
-                                            <td>${{ "{:,.2f}".format(item.precio_unitario) }}</td>
-                                            <td>${{ "{:,.2f}".format(item.cantidad * item.precio_unitario) }}</td>
+                                            <td>{{ detalle.galleta.nombreGalleta if detalle.galleta else 'Producto no disponible' }}</td>
+                                            <td>{{ detalle.cantidad }}</td>
+                                            <td>${{ "{:,.2f}".format(detalle.precioUnitario) }}</td>
+                                            <td>${{ "{:,.2f}".format(detalle.cantidad * detalle.precioUnitario) }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -124,9 +124,9 @@
                     <tbody>
                         {% for detalle in detalles_galletas %}
                         <tr>
-                            <td>{{ detalle.galleta }}</td>
-                            <td>{{ detalle.forma_venta }}</td>
-                            <td>{{ detalle.cantidad }}</td>
+                            <td>{{ detalle.Galleta }}</td>
+                            <td>{{ detalle.Forma_Venta }}</td>
+                            <td>{{ detalle.Cantidad }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
