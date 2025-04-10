@@ -1,18 +1,9 @@
 from datetime import datetime
 from modules.shared.models import User
 from database.conexion import db
+from ..production.models import Galleta
 
-class Galleta(db.Model):
-    __tablename__ = 'galletas'
-    id = db.Column('idGalleta', db.Integer, primary_key=True)
-    nombre = db.Column('nombreGalleta', db.String(30), nullable=False)
-    precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
-    cantidad_disponible = db.Column(db.Integer, nullable=False)
-    gramaje = db.Column('gramajeGalleta', db.Numeric(10,2), nullable=False)
-    tipo_galleta = db.Column(db.Integer, nullable=False)
-    fecha_anaquel = db.Column('fechaAnaquel', db.Date, nullable=False)
-    fecha_final_anaquel = db.Column('fechaFinalAnaquel', db.Date, nullable=False)
-    
+
 class Pedido(db.Model):
     __tablename__ = 'pedidos'
     
@@ -42,7 +33,7 @@ class DetallePedido(db.Model):
 class VistaDetallesGalletas(db.Model):
     __tablename__ = 'vista_detalles_galletas'
     
-    id = db.Column(db.Integer, primary_key=True)
+    galleta = db.Column(db.Integer, primary_key=True)
     Galleta = db.Column(db.String(50))
     Forma_Venta = db.Column(db.String(50))
     Cantidad = db.Column(db.String(50))
