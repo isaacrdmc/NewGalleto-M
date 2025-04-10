@@ -389,7 +389,7 @@
                             
                             // Si la venta es por unidad, actualizar opciones de cantidad
                             if (metodo === 'Por unidad') {
-                                const max = Math.min(data.cantidadDisponible, 20); // Limitamos a 20 o la cantidad disponible
+                                const max = Math.min(data.cantidadDisponible, data.cantidadDisponible); // Limitamos a 20 o la cantidad disponible
                                 cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
                                 for (let i = 1; i <= max; i++) {
                                     const opt = document.createElement('option');
