@@ -1,0 +1,114 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Proceso de Horneadas</h2>
+                    
+                    <!-- Mensajes flash -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Sección de Solicitudes Pendientes -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">Solicitudes Aprobadas Pendientes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if solicitudes_pendientes %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Receta</th>
+                                            <th>Lotes</th>
+                                            <th>Total Galletas</th>
+                                            <th>Solicitante</th>
+                                            <th>Fecha Aprobación</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for solicitud in solicitudes_pendientes %}
+                                        <tr>
+                                            <td>#{{ "%03d" % solicitud.id }}</td>
+                                            <td>{{ solicitud.receta.nombre }}</td>
+                                            <td>{{ solicitud.cantidad_lotes }}</td>
+                                            <td>{{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</td>
+                                            <td>{{ solicitud.solicitante.username }}</td>
+                                            <td>{{ solicitud.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>
+                                                <a href="{{ url_for('production.completar_solicitud', id_solicitud=solicitud.id) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="fas fa-play me-1"></i> Iniciar Horneado
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                No hay solicitudes aprobadas pendientes de horneado.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de Horneados Recientes -->
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">Tus Horneados Recientes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if horneados_recientes %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Receta</th>
+                                            <th>Temperatura</th>
+                                            <th>Tiempo</th>
+                                            <th>Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for horneado in horneados_recientes %}
+                                        <tr>
+                                            <td>{{ horneado.fecha_horneado.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>{{ horneado.receta.nombre }}</td>
+                                            <td>{{ horneado.temperatura_horno }}°C</td>
+                                            <td>{{ horneado.tiempo_horneado }} min</td>
+                                            <td>{{ horneado.cantidad_producida }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                No has realizado horneados recientemente.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

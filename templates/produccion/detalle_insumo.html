@@ -8,6 +8,17 @@
             <i class="bi bi-arrow-left"></i> Volver al inventario
         </a>
     </div>
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
     <!-- Tarjeta de información principal -->
 <div class="card shadow mb-4">
     <div class="card-body">
@@ -25,10 +36,10 @@
             </div>
             <div class="col-md-6 text-end">
                 <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#registrarCompraModal">
-                    <i class="bi bi-plus-circle"></i> Registrar Compra
+                    <i class=""></i>Registrar Compra
                 </button>
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#registrarMermaModal">
-                    <i class="bi bi-exclamation-triangle"></i> Registrar Merma
+                <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#registrarMermaModal">
+                    <i class=""></i>Registrar Merma
                 </button>
             </div>
         </div>
@@ -112,18 +123,32 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url_for('production.registrar_compra_insumo') }}" method="POST">
+                <!-- Dentro del modal de registrar compra (#registrarCompraModal) -->
                 <div class="modal-body">
                     <input type="hidden" name="id_insumo" value="{{ insumo.id }}">
                     <div class="mb-3">
                         <label for="id_proveedor" class="form-label">Proveedor</label>
                         <select class="form-select" id="id_proveedor" name="id_proveedor" required>
-                            <option value="id_proveedor">Seleccionar proveedor</option>
+                            <option value="">Seleccionar proveedor</option>
                             {% for proveedor in proveedores %}
                                 <option value="{{ proveedor.idProveedores }}">{{ proveedor.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    
+    
+                    <!-- Nuevo campo para unidad de compra -->
+                    <div class="mb-3">
+                        <label for="unidad_compra" class="form-label">Unidad de Compra</label>
+                        <select class="form-select" id="unidad_compra" name="unidad_compra" required>
+                            <option value="">Seleccionar unidad</option>
+                            <option value="Gr">Gramos (gr)</option>
+                            <option value="Kg">Kilogramos (kg)</option>
+                            <option value="mL">Mililitros (ml)</option>
+                            <option value="L">Litros (L)</option>
+                            <option value="Pz">Piezas (pz)</option>
+                            <option value="Dz">Docenas (dz)</option>
+                        </select>
+                    </div>
                     
                     <div class="mb-3">
                         <label for="cant_cajas" class="form-label">Cantidad de Cajas</label>

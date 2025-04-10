@@ -52,7 +52,7 @@ class Receta(db.Model):
     
     # Define las columnas y sus tipos
     id = db.Column('idReceta', db.Integer, primary_key=True)
-    nombre = db.Column('nombreReceta', db.String(20), nullable=False)
+    nombre = db.Column('nombreReceta', db.String(50), nullable=False)
     instrucciones = db.Column('instruccionReceta', db.String(520), nullable=False)
     cantidad_producida = db.Column('cantGalletasProduction', db.Integer, nullable=False)
     galletTipo = db.Column('galletTipo', db.Integer, nullable=False)  # Modificado aquí
@@ -60,6 +60,10 @@ class Receta(db.Model):
     
     # Relación con la tabla 'galletas'
     galleta = db.relationship('Galleta', backref='recetas')
+    @property
+    def cantGalletasProduction(self):
+        """Propiedad para mantener compatibilidad con código existente"""
+        return self.cantidad_producida
 
     @property
     def imagen_url(self):
