@@ -12,45 +12,58 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
-                Notificaciones
+                Notificaciones <span class="badge bg-danger" id="contadorNotificaciones">0</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
-                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
-                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
-                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones"
+                id="listaNotificaciones">
+                <li>
+                    <div class="dropdown-item text-center">No hay notificaciones pendientes</div>
+                </li>
             </ul>
         </div>
     </div>
 
     <!-- Contenido del Dashboard -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-4 rounded-4">
+        <!-- Mensaje de error global -->
+        <div id="mensajeErrorGlobal" class="alert alert-danger d-none mb-4">
+            <strong>Error:</strong> <span id="textoErrorGlobal"></span>
+        </div>
+
         <!-- Fila de estadísticas -->
         <div class="row">
             <!-- Ventas Semanales -->
             <div class="col-md-3 mb-4">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h5 class="card-title">Ventas Semanales</h5>
-                        <h3 class="card-text text-success">${{ "%.2f"|format(ventas_semanales.get('total_ventas', 0)) }}</h3>
-                        <p class="text-muted">{{ ventas_semanales.get('cantidad_ventas', 0) }} transacciones</p>
+                        <h3 class="card-text text-success" id="totalVentasSemanales">
+                            ${{ "%.2f"|format(ventas_semanales.get('total_ventas', 0)) }}
+                        </h3>
+                        <p class="text-muted" id="cantidadTransacciones">
+                            {{ ventas_semanales.get('cantidad_ventas', 0) }} transacciones
+                        </p>
                     </div>
                 </div>
             </div>
 
             <!-- Productos Más Vendidos -->
             <div class="col-md-3 mb-4">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Top 3 Galletas</h5>
-                        <ol class="ps-3">
-                            {% for galleta in top_galletas %}
-                            <li>{{ galleta.get('nombre', 'N/A') }} <span class="text-success">(${{ "%.2f"|format(galleta.get('total_ventas', 0)) }})</span></li>
+                        <h5 class="card-title">Galletas semanales mas vendidas (pzas)</h5>
+                        <div id="contenedorTopGalletas">
+                            {% if top_galletas and top_galletas|length > 0 %}
+                            <ol class="ps-3">
+                                {% for galleta in top_galletas %}
+                                <li>{{ galleta.get('nombre', 'N/A') }} <span class="text-success">(${{
+                                        "%.2f"|format(galleta.get('total_ventas', 0)) }})</span></li>
+                                {% endfor %}
+                            </ol>
                             {% else %}
-                            <li>No hay datos disponibles</li>
-                            {% endfor %}
-                        </ol>
+                            <div class="alert alert-info">No hay datos disponibles</div>
+                            {% endif %}
+                        </div>
                         <p class="text-muted">Por ganancias totales</p>
                     </div>
                 </div>
@@ -58,44 +71,56 @@
 
             <!-- Presentaciones Más Vendidas -->
             <div class="col-md-3 mb-4">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Top Presentaciones</h5>
-                        <ol class="ps-3">
-                            {% for presentacion in top_presentaciones %}
-                            <li>
-                                {% if presentacion.get('formaVenta') == 'Por pieza' %}
+                        <h5 class="card-title">Presentaciones semanales mas vendidas</h5>
+                        <div id="contenedorTopPresentaciones">
+                            {% if top_presentaciones and top_presentaciones|length > 0 %}
+                            <ol class="ps-3">
+                                {% for presentacion in top_presentaciones %}
+                                <li>
+                                    {% if presentacion.formaVenta == 'Por pieza' %}
                                     Por Pieza
-                                {% elif presentacion.get('formaVenta') == 'Por precio' %}
+                                    {% elif presentacion.formaVenta == 'Por peso' %}
                                     Por Gramos
-                                {% else %}
-                                    {{ presentacion.get('formaVenta', 'Paquete/Caja') }}
-                                {% endif %}
-                                <span class="text-success">(${{ "%.2f"|format(presentacion.get('total_ventas', 0)) }})</span>
-                            </li>
+                                    {% elif presentacion.formaVenta == 'por paquete/caja' %}
+                                    Paquete/Caja
+                                    {% else %}
+                                    {{ presentacion.formaVenta or 'Otra' }}
+                                    {% endif %}
+                                    <span class="text-success">(${{ "%.2f"|format(presentacion.total_ventas) }})</span>
+                                </li>
+                                {% endfor %}
+                            </ol>
+                            <p class="text-muted">Por ganancias totales</p>
                             {% else %}
-                            <li>No hay datos disponibles</li>
-                            {% endfor %}
-                        </ol>
-                        <p class="text-muted">Por ganancias totales</p>
+                            <div class="alert alert-info">No hay datos de disponibles</div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Estimación de Costos -->
             <div class="col-md-3 mb-4">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h5 class="card-title">Estimación Semanal</h5>
-                        <p class="mb-1">Ventas: <span class="text-success">${{ "%.2f"|format(estimacion_costos.get('ventas', 0)) }}</span></p>
-                        <p class="mb-1">Compras: <span class="text-danger">${{ "%.2f"|format(estimacion_costos.get('compras', 0)) }}</span></p>
-                        <p class="mb-1">Mermas: <span class="text-warning">${{ "%.2f"|format(estimacion_costos.get('mermas', 0)) }}</span></p>
-                        <hr>
-                        <h6 class="mb-0">Ganancia: 
-                            <span class="{% if estimacion_costos.get('ganancia', 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                ${{ "%.2f"|format(estimacion_costos.get('ganancia', 0)) }}
-                            </span>
-                        </h6>
+                        <div id="contenedorEstimacion">
+                            <p class="mb-1">Ventas: <span class="text-success">${{
+                                    "%.2f"|format(estimacion_costos.get('ventas', 0)) }}</span></p>
+                            <p class="mb-1">Compras: <span class="text-danger">${{
+                                    "%.2f"|format(estimacion_costos.get('compras', 0)) }}</span></p>
+                            <p class="mb-1">Mermas: <span class="text-warning">${{
+                                    "%.2f"|format(estimacion_costos.get('mermas', 0)) }}</span></p>
+                            <hr>
+                            <h6 class="mb-0">Ganancia:
+                                <span
+                                    class="{% if estimacion_costos.get('ganancia', 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ "%.2f"|format(estimacion_costos.get('ganancia', 0)) }}
+                                </span>
+                            </h6>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,7 +133,10 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Ventas Últimas 4 Semanas</h5>
-                        <canvas id="ventasSemanales"></canvas>
+                        <div id="contenedorVentasSemanales">
+                            <canvas id="ventasSemanales"></canvas>
+                            <div class="alert alert-danger mt-2 d-none" id="errorVentasSemanales"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,27 +146,36 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Ventas por Día (Última Semana)</h5>
-                        <canvas id="ventasDiarias"></canvas>
+                        <div id="contenedorVentasDiarias">
+                            <canvas id="ventasDiarias"></canvas>
+                            <div class="alert alert-danger mt-2 d-none" id="errorVentasDiarias"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráfico de distribución de ventas -->
+            <!-- Gráfico de Producción Semanal -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Distribución por Tipo de Galleta</h5>
-                        <canvas id="distribucionVentas"></canvas>
+                        <h5 class="card-title">Producción Semanal</h5>
+                        <div id="contenedorProduccionSemanal">
+                            <canvas id="produccionSemanal"></canvas>
+                            <div class="alert alert-danger mt-2 d-none" id="errorProduccionSemanal"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráfico de pastel -->
+            <!-- Gráfico de Eficiencia de Producción -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Top 5 Galletas (Ventas Totales)</h5>
-                        <canvas id="graficoPastel"></canvas>
+                        <h5 class="card-title">Eficiencia por Tipo de Galleta</h5>
+                        <div id="contenedorEficienciaProduccion">
+                            <canvas id="eficienciaProduccion"></canvas>
+                            <div class="alert alert-danger mt-2 d-none" id="errorEficienciaProduccion"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,130 +185,479 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Función para mostrar errores globales
+    function mostrarErrorGlobal(mensaje) {
+        const contenedor = document.getElementById('mensajeErrorGlobal');
+        const texto = document.getElementById('textoErrorGlobal');
+        texto.textContent = mensaje;
+        contenedor.classList.remove('d-none');
+        console.error('[Error Global]:', mensaje);
+    }
+
+    // Función para mostrar errores en componentes específicos
+    function mostrarErrorComponente(idContenedor, mensaje) {
+        const contenedor = document.getElementById(idContenedor);
+        if (contenedor) {
+            contenedor.textContent = mensaje;
+            contenedor.classList.remove('d-none');
+            console.error(`[Error ${idContenedor}]:`, mensaje);
+        } else {
+            console.error('No se encontró el contenedor de errores:', idContenedor);
+        }
+    }
+
+    // Función para verificar la disponibilidad y validez de datos JSON
+    function verificarDatosJSON(jsonString, defaultValue = [], nombreDatos) {
+        try {
+            // Si es null o undefined, usar valor predeterminado
+            if (!jsonString) {
+                console.warn(`Datos de ${nombreDatos} no disponibles, usando valores predeterminados.`);
+                return defaultValue;
+            }
+            
+            const datos = JSON.parse(jsonString);
+            return datos || defaultValue;
+        } catch (error) {
+            console.error(`Error al procesar datos JSON de ${nombreDatos}:`, error);
+            mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`, 
+                `Error al procesar datos: ${error.message}`);
+            return defaultValue;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        // Gráfico 1: Ventas semanales (barras)
-        var ctxVentasSemanales = document.getElementById('ventasSemanales').getContext('2d');
-        new Chart(ctxVentasSemanales, {
-            type: 'bar',
-            data: {
-                labels: JSON.parse('{{ historial_ventas.semanas|tojson|safe }}'),
-                datasets: [{
-                    label: 'Ventas en $',
-                    data: JSON.parse('{{ historial_ventas.datos|tojson|safe }}'),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
+        try {
+            console.log("Inicializando dashboard del administrador...");
+            
+            // Gráfico 1: Ventas semanales (barras)
+            try {
+                console.log("Generando gráfico de ventas semanales...");
+                var semanas = verificarDatosJSON('{{ historial_ventas.semanas|tojson|safe }}', [], 'Semanas');
+                var datosVentas = verificarDatosJSON('{{ historial_ventas.datos|tojson|safe }}', [], 'Datos de ventas');
+                
+                if (semanas.length === 0 || datosVentas.length === 0) {
+                    document.getElementById('contenedorVentasSemanales').innerHTML = 
+                        '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas semanales</div>';
+                } else {
+                    var ctxVentasSemanales = document.getElementById('ventasSemanales').getContext('2d');
+                    if (!ctxVentasSemanales) {
+                        throw new Error('No se pudo obtener el contexto del canvas ventasSemanales');
+                    }
+                    
+                    new Chart(ctxVentasSemanales, {
+                        type: 'bar',
+                        data: {
+                            labels: semanas,
+                            datasets: [{
+                                label: 'Ventas en $',
+                                data: datosVentas,
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function (value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
+                    console.log("Gráfico de ventas semanales generado correctamente");
                 }
+            } catch (error) {
+                console.error("Error al generar gráfico de ventas semanales:", error);
+                mostrarErrorComponente('errorVentasSemanales', `Error: ${error.message}`);
             }
-        });
 
-        // Gráfico 2: Ventas diarias (línea)
-        var ctxVentasDiarias = document.getElementById('ventasDiarias').getContext('2d');
-        new Chart(ctxVentasDiarias, {
-            type: 'line',
-            data: {
-                labels: JSON.parse('{{ ventas_por_dia.fechas|tojson|safe }}'),
-                datasets: [{
-                    label: 'Ventas en $',
-                    data: JSON.parse('{{ ventas_por_dia.datos|tojson|safe }}'),
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2,
-                    tension: 0.1,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
+            // Gráfico 2: Ventas diarias (línea)
+            try {
+                console.log("Generando gráfico de ventas diarias...");
+                var fechas = verificarDatosJSON('{{ ventas_por_dia.fechas|tojson|safe }}', [], 'Fechas diarias');
+                var datosDiarios = verificarDatosJSON('{{ ventas_por_dia.datos|tojson|safe }}', [], 'Datos diarios');
+                
+                if (fechas.length === 0 || datosDiarios.length === 0) {
+                    document.getElementById('contenedorVentasDiarias').innerHTML = 
+                        '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas diarias</div>';
+                } else {
+                    var ctxVentasDiarias = document.getElementById('ventasDiarias').getContext('2d');
+                    if (!ctxVentasDiarias) {
+                        throw new Error('No se pudo obtener el contexto del canvas ventasDiarias');
+                    }
+                    
+                    new Chart(ctxVentasDiarias, {
+                        type: 'line',
+                        data: {
+                            labels: fechas,
+                            datasets: [{
+                                label: 'Ventas en $',
+                                data: datosDiarios,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function (value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
+                    console.log("Gráfico de ventas diarias generado correctamente");
                 }
+            } catch (error) {
+                console.error("Error al generar gráfico de ventas diarias:", error);
+                mostrarErrorComponente('errorVentasDiarias', `Error: ${error.message}`);
             }
-        });
 
-        // Gráfico 3: Distribución por tipo de galleta (barras horizontales)
-        var ctxDistribucionVentas = document.getElementById('distribucionVentas').getContext('2d');
-        new Chart(ctxDistribucionVentas, {
-            type: 'bar',
-            data: {
-                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
-                datasets: [{
-                    label: 'Cantidad Vendida',
-                    data: JSON.parse('{{ distribucion_ventas.cantidades|tojson|safe }}'),
-                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                scales: {
-                    x: {
-                        beginAtZero: true
+            // Gráfico 3: Producción semanal (barras agrupadas)
+            try {
+                console.log("Generando gráfico de producción semanal...");
+                var fechasProduccion = verificarDatosJSON('{{ produccion_semanal.fechas|tojson|safe }}', [], 'Fechas producción');
+                var datosProducido = verificarDatosJSON('{{ produccion_semanal.producido|tojson|safe }}', [], 'Datos producción');
+                var datosMerma = verificarDatosJSON('{{ produccion_semanal.merma|tojson|safe }}', [], 'Datos merma');
+                
+                if (fechasProduccion.length === 0) {
+                    document.getElementById('contenedorProduccionSemanal').innerHTML = 
+                        '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de producción</div>';
+                } else {
+                    var ctxProduccion = document.getElementById('produccionSemanal').getContext('2d');
+                    if (!ctxProduccion) {
+                        throw new Error('No se pudo obtener el contexto del canvas produccionSemanal');
                     }
-                }
-            }
-        });
-
-        // Gráfico 4: Top 5 galletas (pastel)
-        var ctxGraficoPastel = document.getElementById('graficoPastel').getContext('2d');
-        new Chart(ctxGraficoPastel, {
-            type: 'pie',
-            data: {
-                labels: JSON.parse('{{ distribucion_ventas.nombres|tojson|safe }}'),
-                datasets: [{
-                    data: JSON.parse('{{ distribucion_ventas.totales|tojson|safe }}'),
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.label || '';
-                                var value = context.raw || 0;
-                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                var percentage = Math.round((value / total) * 100);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                    
+                    new Chart(ctxProduccion, {
+                        type: 'bar',
+                        data: {
+                            labels: fechasProduccion,
+                            datasets: [
+                                {
+                                    label: 'Galletas Producidas',
+                                    data: datosProducido,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Merma Total',
+                                    data: datosMerma,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
                             }
                         }
-                    }
+                    });
+                    console.log("Gráfico de producción semanal generado correctamente");
                 }
+            } catch (error) {
+                console.error("Error al generar gráfico de producción semanal:", error);
+                mostrarErrorComponente('errorProduccionSemanal', `Error: ${error.message}`);
             }
-        });
+
+            // Gráfico 4: Eficiencia de producción (radar)
+            try {
+                console.log("Generando gráfico de eficiencia de producción...");
+                var ctxEficiencia = document.getElementById('eficienciaProduccion');
+                if (!ctxEficiencia) {
+                    throw new Error('No se pudo encontrar el canvas eficienciaProduccion');
+                }
+                
+                var eficienciaData = verificarDatosJSON('{{ eficiencia_produccion|tojson|safe }}', [], 'Eficiencia producción');
+                
+                if (!eficienciaData || eficienciaData.length === 0) {
+                    document.getElementById('contenedorEficienciaProduccion').innerHTML = 
+                        '<div class="alert alert-warning">No hay datos disponibles para el gráfico de eficiencia</div>';
+                } else {
+                    ctxEficiencia = ctxEficiencia.getContext('2d');
+                    if (!ctxEficiencia) {
+                        throw new Error('No se pudo obtener el contexto del canvas eficienciaProduccion');
+                    }
+                    
+                    var labels = eficienciaData.map(item => item.galleta);
+                    var data = eficienciaData.map(item => item.eficiencia);
+
+                    new Chart(ctxEficiencia, {
+                        type: 'radar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Eficiencia (%)',
+                                data: data,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                r: {
+                                    angleLines: { display: true },
+                                    suggestedMin: 0,
+                                    suggestedMax: 100,
+                                    ticks: { stepSize: 20 }
+                                }
+                            },
+                            plugins: {
+                                legend: { position: 'top' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log("Gráfico de eficiencia de producción generado correctamente");
+                }
+            } catch (error) {
+                console.error("Error al generar gráfico de eficiencia de producción:", error);
+                mostrarErrorComponente('errorEficienciaProduccion', `Error: ${error.message}`);
+            }
+            
+        } catch (error) {
+            console.error("Error general al inicializar el dashboard:", error);
+            mostrarErrorGlobal(`Error general al cargar el dashboard: ${error.message}`);
+        }
+    });
+
+    // Sistema de notificaciones mejorado con manejo de errores
+    let intentosReconexion = 0;
+    const maxIntentosReconexion = 5;
+    const tiempoReconexion = 5000; // 5 segundos
+
+    // Función para cargar notificaciones con mejor manejo de errores
+    async function cargarNotificaciones() {
+        const lista = document.getElementById('listaNotificaciones');
+        const contador = document.getElementById('contadorNotificaciones');
+        
+        try {
+            console.log("Solicitando notificaciones al servidor...");
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
+            
+            const response = await fetch('/admin/notificaciones', {
+                signal: controller.signal,
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`Error en la respuesta del servidor: ${response.status} ${response.statusText}`);
+            }
+
+            const notificaciones = await response.json();
+            console.log(`Se recibieron ${notificaciones.length} notificaciones`);
+            
+            // Verificar que notificaciones sea un array
+            if (!Array.isArray(notificaciones)) {
+                throw new Error('El formato de respuesta de notificaciones es inválido');
+            }
+
+            // Limpiar lista existente
+            lista.innerHTML = '';
+
+            // Actualizar contador
+            const notificacionesNoVistas = notificaciones.filter(n => n.estado === 'Nueva').length;
+            contador.textContent = notificacionesNoVistas;
+
+            if (notificaciones.length === 0) {
+                lista.innerHTML = '<li><div class="dropdown-item text-muted">No hay notificaciones nuevas</div></li>';
+                return;
+            }
+
+            // Agregar cada notificación
+            notificaciones.forEach(notif => {
+                // Validar notificación
+                if (!notif || typeof notif !== 'object') {
+                    console.warn('Notificación inválida encontrada:', notif);
+                    return; // Saltar esta notificación
+                }
+                
+                const item = document.createElement('li');
+                
+                // Validar fecha
+                let fechaFormateada;
+                try {
+                    const fecha = notif.fecha ? new Date(notif.fecha) : new Date();
+                    fechaFormateada = fecha.toLocaleString();
+                } catch (err) {
+                    console.warn('Error al formatear fecha de notificación:', err);
+                    fechaFormateada = 'Fecha desconocida';
+                }
+
+                item.innerHTML = `
+                <a class="dropdown-item ${notif.estado === 'Nueva' ? 'fw-bold' : ''}" href="#" 
+                   onclick="marcarNotificacionVista(${notif.id || 0})">
+                    <strong>${notif.tipo || 'Notificación'}</strong><br>
+                    <small>${notif.mensaje || 'Sin mensaje'}</small>
+                    <div class="text-end">
+                        <small class="text-muted">${fechaFormateada}</small>
+                    </div>
+                </a>
+            `;
+                lista.appendChild(item);
+            });
+
+            // Agregar footer
+            lista.innerHTML += `
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="/admin/todas-notificaciones">Ver todas las notificaciones</a></li>
+        `;
+
+            // Reiniciar contador de intentos si todo salió bien
+            intentosReconexion = 0;
+            
+        } catch (error) {
+            intentosReconexion++;
+            
+            if (error.name === 'AbortError') {
+                console.error('Tiempo de espera agotado al cargar notificaciones');
+            } else {
+                console.error('Error al cargar notificaciones:', error);
+            }
+            
+            // Mostrar mensaje de error en la lista de notificaciones
+            if (lista) {
+                lista.innerHTML = `
+                <li>
+                    <div class="dropdown-item text-danger">
+                        <i class="bi bi-exclamation-triangle-fill"></i> 
+                        Error al cargar notificaciones
+                    </div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-center" href="#" onclick="cargarNotificaciones(); return false;">
+                        Intentar nuevamente
+                    </a>
+                </li>`;
+            }
+            
+            // Si superamos el máximo de intentos, mostrar alerta más visible
+            if (intentosReconexion >= maxIntentosReconexion) {
+                const mensajeError = `No se pudieron cargar las notificaciones después de ${maxIntentosReconexion} intentos. Compruebe su conexión a internet o contacte con soporte.`;
+                mostrarErrorGlobal(mensajeError);
+            } else {
+                // Programar reintento con backoff exponencial
+                const tiempoEspera = tiempoReconexion * Math.pow(2, intentosReconexion - 1);
+                console.log(`Reintentando cargar notificaciones en ${tiempoEspera/1000} segundos...`);
+                setTimeout(cargarNotificaciones, tiempoEspera);
+            }
+        }
+    }
+
+    // Función para marcar notificación como vista con mejor manejo de errores
+    async function marcarNotificacionVista(id) {
+        if (!id) {
+            console.error('ID de notificación inválido');
+            return;
+        }
+        
+        try {
+            console.log(`Marcando notificación ${id} como vista...`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout de 8 segundos
+            
+            const response = await fetch(`/admin/notificaciones/marcar_vista/${id}`, {
+                method: 'POST',
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                const texto = await response.text();
+                throw new Error(`Error al marcar notificación como vista. Código: ${response.status}, Respuesta: ${texto}`);
+            }
+
+            console.log(`Notificación ${id} marcada como vista correctamente`);
+            cargarNotificaciones(); // Recargar notificaciones
+            
+        } catch (error) {
+            console.error('Error al marcar notificación como vista:', error);
+            
+            if (error.name === 'AbortError') {
+                alert('La operación ha tardado demasiado tiempo. Por favor, inténtelo de nuevo.');
+            } else {
+                alert('Error al marcar la notificación como vista. Por favor, inténtelo de nuevo más tarde.');
+            }
+        }
+    }
+
+    // Inicializar sistema de notificaciones con manejo de errores
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            console.log("Inicializando sistema de notificaciones...");
+            cargarNotificaciones();
+            
+            // Establecer intervalo con verificación de conexión previa
+            const intervaloNotificaciones = setInterval(() => {
+                if (navigator.onLine) {
+                    cargarNotificaciones();
+                } else {
+                    console.warn('Sin conexión a internet, posponiendo carga de notificaciones...');
+                }
+            }, 30000);
+            
+            // Guardar referencia al intervalo para posible limpieza posterior
+            window.intervaloNotificaciones = intervaloNotificaciones;
+            
+            // Manejar eventos de conexión/desconexión
+            window.addEventListener('online', () => {
+                console.log('Conexión restaurada, cargando notificaciones...');
+                cargarNotificaciones();
+            });
+            
+            window.addEventListener('offline', () => {
+                console.warn('Conexión perdida, no se cargarán notificaciones hasta restaurar conexión');
+                mostrarErrorGlobal('Conexión a internet perdida. Algunas funciones pueden no estar disponibles.');
+            });
+            
+            console.log("Sistema de notificaciones inicializado correctamente");
+        } catch (error) {
+            console.error("Error al inicializar sistema de notificaciones:", error);
+            mostrarErrorGlobal(`Error al inicializar notificaciones: ${error.message}`);
+        }
     });
 </script>
 

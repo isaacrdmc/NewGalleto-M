@@ -8,7 +8,8 @@ from ..services import (
 )
 from ..forms.recetas import RecetaForm
 from ...admin import bp_admistracion
-from ...production.models import Galleta
+from ...production.models import Galleta, Receta
+from datetime import datetime
 
 @bp_admistracion.route('/recetas')
 @login_required
@@ -18,41 +19,49 @@ def recetas():
     
     recetas = obtener_recetas()
     galletas = obtener_galletas()
-    return render_template('admin/recetas.html', recetas=recetas, galletas=galletas)
+    timestamp = int(datetime.now().timestamp())  # Añade esto
+    return render_template('admin/recetas.html', 
+                         recetas=recetas, 
+                         galletas=galletas,
+                         timestamp=timestamp)
 
-@bp_admistracion.route('/recetas/nueva', methods=['GET', 'POST'])
+@bp_admistracion.route('/recetas/nueva', methods=['POST'])
 @login_required
 def nueva_receta():
     if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
     
-    form = RecetaForm()
-    form.id_galleta.choices = [(g.idGalleta, g.nombreGalleta) for g in obtener_galletas()]
+    try:
+        data = {
+            'nombre': request.form.get('nombre'),
+            'instrucciones': request.form.get('instrucciones'),
+            'cantidad_producida': int(request.form.get('cantidad_producida')),
+            'galletTipo': int(request.form.get('galletTipo')),
+            'id_galleta': int(request.form.get('id_galleta'))
+        }
+        
+        # Validaciones básicas
+        if data['cantidad_producida'] <= 0:
+            return jsonify({'success': False, 'error': 'La cantidad producida debe ser mayor a 0'}), 400
+        
+        if data['galletTipo'] < 0:
+            return jsonify({'success': False, 'error': 'El tipo de galleta no puede ser negativo'}), 400
+        
+        imagen = request.files.get('imagen')
+        receta = agregar_receta(data, imagen)
+        
+        return jsonify({
+            'success': True,
+            'mensaje': 'Receta creada exitosamente!',
+            'receta': receta.to_dict(include_galleta=True),
+            'imagen_url': receta.imagen_url  # Asegúrate de devolver esto
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error al crear receta: {str(e)}'
+        }), 400
     
-    if request.method == 'POST' and form.validate():
-        try:
-            data = {
-                'nombre': form.nombre.data,
-                'instrucciones': form.instrucciones.data,
-                'cantidad_producida': form.cantidad_producida.data,
-                'galletTipo': form.galletTipo.data,
-                'id_galleta': form.id_galleta.data
-            }
-            
-            imagen = request.files.get('imagen')
-            receta = agregar_receta(data, imagen)
-            return jsonify({
-                'success': True,
-                'mensaje': 'Receta creada exitosamente!',
-                'receta': receta.to_dict(include_galleta=True)
-            })
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': f'Error al crear receta: {str(e)}'
-            }), 400
-    
-    return render_template('admin/form_receta.html', form=form)
 
 @bp_admistracion.route('/recetas/<int:id_receta>')
 @login_required
@@ -62,42 +71,72 @@ def detalle_receta(id_receta):
     
     receta = obtener_receta(id_receta)
     horneados = obtener_horneados_receta(id_receta)
-    ingredientes = obtener_ingredientes_receta(id_receta)
+    ingredientes = [ing.to_dict() for ing in obtener_ingredientes_receta(id_receta)]
     
     return render_template('admin/detalle_receta.html', 
                          receta=receta, 
                          horneados=horneados,
                          ingredientes=ingredientes)
 
+
+@bp_admistracion.route('/recetas/obtener/<int:id_receta>')
+@login_required
+def obtener_receta_para_edicion(id_receta):
+    try:
+        receta = obtener_receta(id_receta)  # Esto ya es un diccionario
+        return jsonify({
+            'success': True,
+            'receta': receta  # No necesitamos to_dict() aquí
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 404
+    
+
 @bp_admistracion.route('/recetas/editar/<int:id_receta>', methods=['POST'])
 @login_required
 def editar_receta(id_receta):
+    if current_user.rol.nombreRol != 'Administrador':
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
     try:
         data = {
             'nombre': request.form.get('nombre'),
             'instrucciones': request.form.get('instrucciones'),
             'cantidad_producida': int(request.form.get('cantidad_producida')),
-            'galletTipo': request.form.get('galletTipo'),
+            'galletTipo': int(request.form.get('galletTipo')),
             'id_galleta': int(request.form.get('id_galleta'))
         }
         
+        # Validaciones básicas
+        if data['cantidad_producida'] <= 0:
+            return jsonify({'success': False, 'error': 'La cantidad producida debe ser mayor a 0'}), 400
+        
+        if data['galletTipo'] < 0:
+            return jsonify({'success': False, 'error': 'El tipo de galleta no puede ser negativo'}), 400
+        
         imagen = request.files.get('imagen')
         receta = actualizar_receta(id_receta, data, imagen)
+        
         return jsonify({
             'success': True,
             'mensaje': 'Receta actualizada exitosamente!',
-            'receta': receta.to_dict(include_galleta=True)
+            'receta': receta.to_dict(include_galleta=True),
+            'imagen_url': receta.imagen_url  # Asegúrate de devolver esto
         })
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'Error al actualizar receta: {str(e)}'
         }), 400
+    
 
 @bp_admistracion.route('/recetas/<int:id_receta>/eliminar', methods=['POST'])
 @login_required
 def eliminar_receta_route(id_receta):
     try:
+        if current_user.rol.nombreRol != 'Administrador':
+            return jsonify({'success': False, 'error': 'No autorizado'}), 403
+            
         eliminar_receta(id_receta)
         return jsonify({
             'success': True,
@@ -108,6 +147,7 @@ def eliminar_receta_route(id_receta):
             'success': False,
             'error': str(e)
         }), 400
+    
 
 @bp_admistracion.route('/recetas/ingredientes/agregar', methods=['POST'])
 @login_required
@@ -138,3 +178,16 @@ def eliminar_ingrediente(id):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    
+
+@bp_admistracion.route('/recetas/listar')
+@login_required
+def listar_recetas():
+    try:
+        if current_user.rol.nombreRol != 'Administrador':
+            return jsonify({'error': 'No autorizado'}), 403
+            
+        recetas = obtener_recetas()
+        return jsonify([r.to_dict(include_galleta=True) for r in Receta.query.join(Galleta).order_by(Receta.id.desc()).all()])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

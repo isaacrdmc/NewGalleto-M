@@ -1,12 +1,12 @@
 # services.py
-from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma
+from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma, Notificacion
 from ..shared.models import User, Rol 
 from ..client.models import Pedido, DetallePedido
-from ..ventas.models import Venta, DetalleVenta
+from ..ventas.models import HistorialVenta, Venta, DetalleVenta
 from ..production.models import Receta, Galleta, Insumo, Horneado, Produccion, IngredienteReceta
 from database.conexion import db
 from werkzeug.security import generate_password_hash
-from sqlalchemy import distinct, func
+from sqlalchemy import case, distinct, func
 from datetime import datetime, timedelta
 
 # ==============================================
@@ -128,32 +128,35 @@ def obtener_receta(id_receta):
     Obtiene una receta específica por su ID
     """
     receta = Receta.query.get_or_404(id_receta)
-    return receta.to_dict(include_galleta=True)
+    return receta.to_dict(include_galleta=True)  # Esto ya devuelve un diccionario
 
 def agregar_receta(data, imagen=None):
-    """
-    Agrega una nueva receta a la base de datos
-    """
+    """Agrega una nueva receta a la base de datos"""
+    # Validar cantidad producida
+    if data['cantidad_producida'] < 1:
+        raise ValueError("La cantidad producida debe ser al menos 1")
+    
+    # Validar tipo de galleta
+    if data['galletTipo'] < 0:
+        raise ValueError("El tipo de galleta no puede ser negativo")
+    
     nueva_receta = Receta(
-        nombreReceta=data['nombre'],
-        instruccionReceta=data['instrucciones'],
-        cantGalletasProduction=data['cantidad_producida'],
+        nombre=data['nombre'],
+        instrucciones=data['instrucciones'],
+        cantidad_producida=data['cantidad_producida'],
         galletTipo=data['galletTipo'],
-        idGalleta=data['id_galleta']
+        id_galleta=data['id_galleta']
     )
     
     db.session.add(nueva_receta)
     db.session.commit()
     
     if imagen:
-        from flask import current_app
-        import os
-        upload_folder = os.path.join(current_app.root_path, 'static', 'img', 'galletas')
-        os.makedirs(upload_folder, exist_ok=True)
-        filename = f"{nueva_receta.idReceta}_{data['nombre'].lower().replace(' ', '_')}.{imagen.filename.split('.')[-1]}"
-        imagen.save(os.path.join(upload_folder, filename))
+        # Solo guardamos la imagen en el sistema de archivos
+        guardar_imagen_receta(nueva_receta, imagen, data['nombre'])
     
     return nueva_receta
+
 
 def actualizar_receta(id_receta, data, imagen=None):
     """
@@ -161,20 +164,62 @@ def actualizar_receta(id_receta, data, imagen=None):
     """
     receta = Receta.query.get_or_404(id_receta)
     
-    receta.nombreReceta = data['nombre']
-    receta.instruccionReceta = data['instrucciones']
-    receta.cantGalletasProduction = data['cantidad_producida']
+    receta.nombre = data['nombre']
+    receta.instrucciones = data['instrucciones']
+    receta.cantidad_producida = data['cantidad_producida']
     receta.galletTipo = data['galletTipo']
-    receta.idGalleta = data['id_galleta']
+    receta.id_galleta = data['id_galleta']
+    
+    if imagen:
+        guardar_imagen_receta(receta, imagen, data['nombre'])
     
     db.session.commit()
     return receta
+
+
+def guardar_imagen_receta(receta, imagen, nombre_receta):
+    from flask import current_app
+    import os
+    from werkzeug.utils import secure_filename
+    
+    upload_folder = os.path.join(current_app.root_path, 'static', 'img', 'recetas')
+    
+    # Debug: Imprime la ruta para verificar
+    print(f"Intentando guardar imagen en: {upload_folder}")
+    
+    # Asegurar que el directorio existe
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    # Generar nombre de archivo seguro
+    ext = imagen.filename.split('.')[-1].lower()
+    filename = secure_filename(f"receta_{receta.id}.{ext}")
+    filepath = os.path.join(upload_folder, filename)
+    
+    # Debug: Imprime información del archivo
+    print(f"Guardando imagen como: {filename}")
+    print(f"Ruta completa: {filepath}")
+    
+    # Guardar la imagen
+    imagen.save(filepath)
+    
+    # Verificar que el archivo se creó
+    if os.path.exists(filepath):
+        print("Archivo guardado exitosamente")
+    else:
+        print("Error: El archivo no se guardó correctamente")
+    
+    return f"/static/img/recetas/{filename}"
+
 
 def eliminar_receta(id_receta):
     """
     Elimina una receta de la base de datos
     """
     receta = Receta.query.get_or_404(id_receta)
+    
+    # Eliminar ingredientes asociados primero
+    IngredienteReceta.query.filter_by(idReceta=id_receta).delete()
+    
     db.session.delete(receta)
     db.session.commit()
     return receta
@@ -276,7 +321,7 @@ def obtener_horneados_receta(id_receta):
     """
     Obtiene todos los horneados asociados a una receta
     """
-    return Horneado.query.filter_by(idReceta=id_receta).order_by(Horneado.fechaHorneado.desc()).all()
+    return Horneado.query.filter_by(id_receta=id_receta).order_by(Horneado.fecha_horneado.desc()).all()
 
 # ==============================================
 # SECCIÓN DE MERMAS
@@ -458,7 +503,7 @@ def crear_pedido(id_cliente, detalles):
         
         for detalle in detalles:
             nuevo_detalle = DetallePedido(
-                idPedido=pedido.idPedido,
+                idPedido=pedido.idPedidos,
                 idGalleta=detalle['id_galleta'],
                 cantidad=detalle['cantidad'],
                 precioUnitario=detalle['precio_unitario'],
@@ -487,41 +532,34 @@ def obtener_pedidos_cliente(id_cliente):
 # SECCIÓN DE VENTAS (CORREGIDA)
 # ==============================================
 
-def registrar_venta(id_usuario, id_cliente, metodo_pago, requiere_factura, detalles, observaciones=None):
+def registrar_venta(fecha_venta, total_venta, id_usuario, detalles):
     """
-    Registra una nueva venta en el sistema (versión corregida)
+    Registra una nueva venta en el sistema
     """
     try:
-        # Primero crear el detalle de venta
-        detalle_venta = DetalleVenta(
-            cantGalletasVendidas=sum(d['cantidad'] for d in detalles),
-            precioUnitario=sum(d['cantidad'] * d['precio_unitario'] for d in detalles),
-            formaVenta=detalles[0]['forma_venta'],  # Tomamos la forma de venta del primer detalle
-            cantidadGalletas=detalles[0].get('cantidad_galletas'),
-            pesoGramos=detalles[0].get('peso_gramos'),
-            idGalleta=detalles[0]['id_galleta']
-        )
-        db.session.add(detalle_venta)
-        db.session.flush()  # Para obtener el ID del detalle
-        
-        # Calcular el total
-        total = sum(d['cantidad'] * d['precio_unitario'] for d in detalles)
-        
-        # Crear la venta
+        # Crear la venta principal
         venta = Venta(
-            fechaVentaGalleta=datetime.now().date(),
-            totalVenta=total,
-            idUsuario=id_usuario,
-            idCliente=id_cliente,
-            idDetalleVenta=detalle_venta.idDetalleVenta,
-            metodoPago=metodo_pago,
-            requiereFactura=requiere_factura,
-            observaciones=observaciones
+            fechaVentaGalleta=fecha_venta,
+            totalVenta=total_venta,
+            idUsuario=id_usuario
         )
         db.session.add(venta)
+        db.session.flush()  # Para obtener el ID de la venta
         
-        # Actualizar stock de galletas
+        # Crear los detalles de venta
         for detalle in detalles:
+            nuevo_detalle = DetalleVenta(
+                cantGalletasVendidas=detalle['cantidad'],
+                precioUnitario=detalle['precio_unitario'],
+                formaVenta=detalle['forma_venta'],
+                cantidadGalletas=detalle.get('cantidad_galletas'),
+                pesoGramos=detalle.get('peso_gramos'),
+                idGalleta=detalle['id_galleta'],
+                idVenta=venta.idVenta
+            )
+            db.session.add(nuevo_detalle)
+            
+            # Actualizar stock de galletas
             galleta = Galleta.query.get(detalle['id_galleta'])
             if galleta:
                 galleta.cantidadDisponible -= detalle['cantidad']
@@ -531,6 +569,7 @@ def registrar_venta(id_usuario, id_cliente, metodo_pago, requiere_factura, detal
     except Exception as e:
         db.session.rollback()
         raise e
+    
 
 def obtener_ventas():
     """
@@ -546,14 +585,26 @@ def obtener_ventas():
         'detalle': v.detalle.to_dict() if v.detalle else None
     } for v in ventas]
 
+
+def registrar_historial_venta(accion, id_usuario, id_venta):
+    """
+    Registra un cambio en una venta en el historial
+    """
+    historial = HistorialVenta(
+        accionRelaizada=accion,
+        idUsuario=id_usuario,
+        idVenta=id_venta
+    )
+    db.session.add(historial)
+    db.session.commit()
+    return historial
+
 # ==============================================
 # CORRECCIÓN DE REPORTES
 # ==============================================
 
 def obtener_ventas_semanales():
-    """
-    Obtiene el total de ventas de la última semana
-    """
+    """Obtiene el total de ventas de la última semana"""
     inicio_semana = datetime.now() - timedelta(days=7)
     
     resultado = db.session.query(
@@ -563,21 +614,23 @@ def obtener_ventas_semanales():
         Venta.fechaVentaGalleta >= inicio_semana
     ).first()
     
+    # Log para depuración
+    print(f"Ventas semanales - Total: {resultado.total_ventas}, Cantidad: {resultado.cantidad_ventas}")
+    
     return {
         'total_ventas': float(resultado.total_ventas) if resultado.total_ventas else 0.0,
         'cantidad_ventas': resultado.cantidad_ventas or 0
     }
 
+
 def obtener_top_galletas(limit=3):
-    """
-    Obtiene las galletas más vendidas
-    """
+    # Corrección en la consulta:
     resultados = db.session.query(
         Galleta.nombre,
         func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida'),
         func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas')
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
-    ).join(Galleta, DetalleVenta.idGalleta == Galleta.id  # Corregido para usar idGalleta
+    ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
+    ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
     ).group_by(Galleta.id
     ).order_by(func.sum(DetalleVenta.cantGalletasVendidas).desc()
     ).limit(limit).all()
@@ -589,20 +642,35 @@ def obtener_top_galletas(limit=3):
     } for r in resultados]
 
 def obtener_top_presentaciones(limit=3):
-    """
-    Obtiene las presentaciones más vendidas (por pieza, gramos o paquete/caja)
-    basado en las ganancias generadas
-    """
-    return db.session.query(
-        DetalleVenta.formaVenta,
-        func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas'),
-        func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida')
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
-    ).filter(
-        Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
-    ).group_by(DetalleVenta.formaVenta
-    ).order_by(func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).desc()
-    ).limit(limit).all()
+    """Obtiene las presentaciones más vendidas (por pieza, gramos o paquete/caja)"""
+    try:
+        # Primero verifica si hay datos en las tablas
+        ventas_recientes = db.session.query(Venta).filter(
+            Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
+        ).count()
+        
+        if ventas_recientes == 0:
+            return []
+
+        resultados = db.session.query(
+            DetalleVenta.formaVenta,
+            func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas'),
+            func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida')
+        ).join(Venta, DetalleVenta.idVenta == Venta.idVenta
+        ).filter(
+            Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
+        ).group_by(DetalleVenta.formaVenta
+        ).order_by(func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).desc()
+        ).limit(limit).all()
+        
+        return [{
+            'formaVenta': r.formaVenta,
+            'total_ventas': float(r.total_ventas) if r.total_ventas else 0.0,
+            'cantidad_vendida': r.cantidad_vendida or 0
+        } for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_top_presentaciones: {str(e)}")
+        return []
 
 def obtener_estimacion_costos():
     """
@@ -697,7 +765,7 @@ def obtener_distribucion_ventas():
         func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad'),
         func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total')
     ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
+    ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
     ).filter(
         Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=30))
     ).group_by(Galleta.nombre
@@ -709,3 +777,123 @@ def obtener_distribucion_ventas():
         'cantidades': [r.cantidad for r in resultados],
         'totales': [float(r.total) if r.total else 0.0 for r in resultados]
     }
+
+
+def obtener_produccion_semanal():
+    """Obtiene datos de producción de la última semana"""
+    inicio_semana = datetime.now() - timedelta(days=7)
+    
+    resultados = db.session.query(
+        func.date(Produccion.fechaProduccion).label('fecha'),
+        func.sum(Produccion.produccionTotal).label('total_producido'),
+        func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma).label('total_merma')
+    ).filter(
+        Produccion.fechaProduccion >= inicio_semana
+    ).group_by(
+        func.date(Produccion.fechaProduccion)
+    ).order_by(
+        func.date(Produccion.fechaProduccion)
+    ).all()
+    
+    return {
+        'fechas': [r.fecha.strftime('%Y-%m-%d') for r in resultados],
+        'producido': [r.total_producido for r in resultados],
+        'merma': [r.total_merma for r in resultados]
+    }
+
+
+def obtener_eficiencia_produccion():
+    """Calcula la eficiencia de producción por tipo de galleta"""
+    try:
+        # Primero verifica si hay datos de producción
+        produccion_reciente = db.session.query(Produccion).filter(
+            Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
+        ).count()
+        
+        if produccion_reciente == 0:
+            return []
+
+        resultados = db.session.query(
+            Galleta.nombre,
+            func.sum(Produccion.produccionTotal).label('total_producido'),
+            func.sum(
+                case(
+                    (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                    (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                    (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                    else_=0
+                )
+            ).label('total_merma'),
+            (func.sum(Produccion.produccionTotal) / 
+             (func.sum(Produccion.produccionTotal) + 
+              func.sum(
+                  case(
+                      (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                      (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                      (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                      else_=0
+                  )
+              )) * 100).label('eficiencia')
+        ).join(Produccion, Produccion.idGalleta == Galleta.id
+        ).filter(
+            Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
+        ).group_by(Galleta.nombre
+        ).having(
+            (func.sum(Produccion.produccionTotal) + 
+             func.sum(
+                 case(
+                     (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                     (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                     (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                     else_=0
+                 )
+             )) > 0
+        ).order_by(func.sum(Produccion.produccionTotal).desc()
+        ).limit(5).all()
+        
+        return [{
+            'galleta': r.nombre,
+            'producido': r.total_producido or 0,
+            'merma': r.total_merma or 0,
+            'eficiencia': float(r.eficiencia) if r.eficiencia is not None else 0.0
+        } for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_eficiencia_produccion: {str(e)}")
+        return []
+
+
+def obtener_notificaciones_recientes(limit=5, usuario_id=None):
+    """Obtiene las notificaciones más recientes no vistas"""
+    query = Notificacion.query.filter(
+        Notificacion.estado == 'Nueva'
+    )
+    
+    if usuario_id:
+        query = query.filter(Notificacion.id_usuario == usuario_id)
+    
+    return query.order_by(
+        Notificacion.fecha_creacion.desc()
+    ).limit(limit).all()
+
+def crear_notificacion(tipo, mensaje, id_usuario=None, id_insumo=None, id_galleta=None):
+    """Crea una nueva notificación en el sistema"""
+    notificacion = Notificacion(
+        tipo=tipo,
+        mensaje=mensaje,
+        id_usuario=id_usuario,
+        id_insumo=id_insumo,
+        id_galleta=id_galleta
+    )
+    db.session.add(notificacion)
+    db.session.commit()
+    return notificacion
+
+def marcar_notificacion_como_vista(notificacion_id):
+    """Marca una notificación como vista"""
+    notificacion = Notificacion.query.get(notificacion_id)
+    if notificacion:
+        notificacion.estado = 'Vista'
+        notificacion.fecha_visto = db.func.current_timestamp()
+        db.session.commit()
+    return notificacion
+    

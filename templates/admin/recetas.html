@@ -1,6 +1,29 @@
 {% extends "shared/base_admin.html" %}
 
 {% block content %}
+<style>
+    .card-img-top {
+        height: 200px;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .card {
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    #imagenPreview img {
+        height: 150px;
+        width: 100%;
+        object-fit: cover;
+    }
+</style>
+
 <div class="container-fluid">
     <!-- Encabezado con título y notificaciones -->
     <div class="d-flex justify-content-between align-items-center mb-3" style="padding-left: 250px;">
@@ -12,16 +35,13 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNotificaciones"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ url_for('static', filename='img/notificacion.png') }}" alt="notificaciones" width="20">
-                Notificaciones
+                Notificaciones <span class="badge bg-danger" id="contadorNotificaciones">0</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones">
-                <li><a class="dropdown-item" href="#">Nueva orden de compra</a></li>
-                <li><a class="dropdown-item" href="#">Producto agotado</a></li>
-                <li><a class="dropdown-item" href="#">Reporte de ventas disponible</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownNotificaciones"
+                id="listaNotificaciones">
                 <li>
-                    <hr class="dropdown-divider">
+                    <div class="dropdown-item text-center">No hay notificaciones pendientes</div>
                 </li>
-                <li><a class="dropdown-item" href="#">Ver todas las notificaciones</a></li>
             </ul>
         </div>
     </div>
@@ -44,10 +64,9 @@
             {% for receta in recetas %}
             <div class="col-md-3 mb-4">
                 <div class="card h-100">
-                    <!-- Imagen dinámica de la receta basada en la galleta asociada -->
-                    <img src="{{ url_for('static', filename='img/' + receta.galleta.nombre|lower|replace(' ', '_') + '.png') }}"
+                    <img src="{{ receta.imagen_url or url_for('static', filename='img/receta.jpg') }}?t={{ timestamp }}"
                         class="card-img-top" alt="{{ receta.nombre }}"
-                        onerror="this.src='../../static/img/receta.jpg'">
+                        onerror="this.onerror=null; this.src='/static/img/receta.jpg?t={{ timestamp }}'">
                     <div class="card-body">
                         <h5 class="card-title">{{ receta.nombre }}</h5>
                         <p class="card-text">Galleta: {{ receta.galleta.nombre }}</p>
@@ -55,7 +74,6 @@
                                 galletas</small></p>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <!-- Botones de acciones -->
                         <a href="{{ url_for('admin.detalle_receta', id_receta=receta.id) }}"
                             class="btn btn-primary btn-sm">
                             <i class="fas fa-eye"></i> Ver Detalles
@@ -71,20 +89,14 @@
                     </div>
                 </div>
             </div>
-
-            {% if loop.index % 4 == 0 %}
-        </div>
-        <div class="row">
-            {% endif %}
-
             {% else %}
-            <!-- Mensaje cuando no hay recetas -->
             <div class="col-12">
                 <div class="alert alert-info">No hay recetas registradas aún.</div>
             </div>
             {% endfor %}
         </div>
-    </main>
+</div>
+</main>
 </div>
 
 <!-- Modal para agregar/editar recetas -->
@@ -97,20 +109,17 @@
                     aria-label="Cerrar"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- Formulario para agregar/editar recetas -->
                 <form id="formReceta" class="needs-validation" novalidate enctype="multipart/form-data">
                     <input type="hidden" id="idReceta" name="idReceta">
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <!-- Campo para el nombre de la receta -->
                             <div class="mb-3">
                                 <label for="nombre" class="form-label fw-bold">Nombre de la Receta</label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" required>
                                 <div class="invalid-feedback">Por favor ingrese un nombre para la receta</div>
                             </div>
 
-                            <!-- Selector de galleta -->
                             <div class="mb-3">
                                 <label for="id_galleta" class="form-label fw-bold">Galleta</label>
                                 <select class="form-select" id="id_galleta" name="id_galleta" required>
@@ -122,7 +131,6 @@
                                 <div class="invalid-feedback">Por favor seleccione una galleta</div>
                             </div>
 
-                            <!-- Cantidad producida -->
                             <div class="mb-3">
                                 <label for="cantidad_producida" class="form-label fw-bold">Cantidad Producida</label>
                                 <input type="number" class="form-control" id="cantidad_producida"
@@ -132,14 +140,13 @@
                         </div>
 
                         <div class="col-md-6">
-                            <!-- Tipo de galleta -->
                             <div class="mb-3">
                                 <label for="galletTipo" class="form-label fw-bold">Tipo de Galleta</label>
-                                <input type="number" class="form-control" id="galletTipo" name="galletTipo" required>
+                                <input type="number" class="form-control" id="galletTipo" name="galletTipo" min="0"
+                                    required>
                                 <div class="invalid-feedback">Por favor ingrese el tipo de galleta</div>
                             </div>
 
-                            <!-- Selector de imagen -->
                             <div class="mb-3">
                                 <label for="imagen" class="form-label fw-bold">Imagen de la Receta</label>
                                 <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
@@ -148,7 +155,6 @@
                                 <div id="imagenPreview" class="mt-2"></div>
                             </div>
 
-                            <!-- Instrucciones -->
                             <div class="mb-3">
                                 <label for="instrucciones" class="form-label fw-bold">Instrucciones</label>
                                 <textarea class="form-control" id="instrucciones" name="instrucciones" rows="4"
@@ -171,7 +177,6 @@
     </div>
 </div>
 
-<!-- JavaScript -->
 <script>
     // Funciones para el CRUD de recetas
 
@@ -211,18 +216,32 @@
             const idReceta = document.getElementById('idReceta').value;
             const esEdicion = idReceta !== '';
 
-            // Validar campos requeridos
-            if (!document.getElementById('nombre').value.trim()) {
-                throw new Error('El nombre de la receta es requerido');
+            // Obtener valores de los campos
+            const nombre = document.getElementById('nombre')?.value?.trim();
+            const idGalleta = document.getElementById('id_galleta')?.value;
+            const cantidadProducida = parseInt(document.getElementById('cantidad_producida')?.value || 0);
+            const galletTipo = parseInt(document.getElementById('galletTipo')?.value || 0);
+            const instrucciones = document.getElementById('instrucciones')?.value?.trim();
+
+            // Validaciones mejoradas
+            if (!nombre || nombre.length < 2) {
+                throw new Error('El nombre de la receta es requerido y debe tener al menos 2 caracteres');
             }
 
-            if (!document.getElementById('id_galleta').value) {
-                throw new Error('Debe seleccionar una galleta');
+            if (!idGalleta || idGalleta === '') {
+                throw new Error('Debe seleccionar una galleta válida');
             }
 
-            if (!document.getElementById('cantidad_producida').value ||
-                document.getElementById('cantidad_producida').value < 1) {
-                throw new Error('La cantidad producida debe ser al menos 1');
+            if (isNaN(cantidadProducida) || cantidadProducida < 1) {
+                throw new Error('La cantidad producida debe ser un número mayor a 0');
+            }
+
+            if (isNaN(galletTipo) || galletTipo < 0) {
+                throw new Error('El tipo de galleta debe ser un número no negativo');
+            }
+
+            if (!instrucciones || instrucciones.length < 10) {
+                throw new Error('Las instrucciones son requeridas y deben ser descriptivas (mínimo 10 caracteres)');
             }
 
             // Crear FormData para enviar archivos
@@ -240,15 +259,21 @@
                 }
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Respuesta inesperada del servidor: ${text.substring(0, 100)}`);
             }
 
-            // Mostrar mensaje de éxito
-            Swal.close();
-            Swal.fire({
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `Error al ${esEdicion ? 'actualizar' : 'crear'} receta`);
+            }
+
+            // Mostrar mensaje de éxito y actualizar
+            await Swal.fire({
                 position: 'center',
                 icon: 'success',
                 title: result.mensaje || (esEdicion ? 'Receta actualizada' : 'Receta creada'),
@@ -256,16 +281,37 @@
                 timer: 1500
             });
 
-            // Cerrar modal y actualizar tabla
+            // Cerrar modal y limpiar formulario
             cerrarModalReceta();
             limpiarFormularioReceta();
-            actualizarTablaRecetas();
+
+            // Actualizar la tabla de recetas
+            await actualizarTablaRecetas();
+
+            document.querySelectorAll('#recetasContainer .card-img-top').forEach(img => {
+                const src = img.src;
+                img.src = '';
+                img.src = src.split('?')[0] + '?t=' + Date.now();
+            });
+
+            // Actualizar imagen en el modal si es una edición
+            if (esEdicion && result.receta && result.receta.imagen_url) {
+                const preview = document.getElementById('imagenPreview');
+                preview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = result.receta.imagen_url + '?t=' + new Date().getTime();
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '150px';
+                img.className = 'img-thumbnail';
+                preview.appendChild(img);
+            }
+
         } catch (error) {
             console.error('Error:', error);
-            Swal.fire({
+            await Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message || 'Error desconocido'
+                text: error.message || 'Error desconocido al procesar la receta'
             });
         }
     }
@@ -276,18 +322,42 @@
      */
     async function editarReceta(id) {
         try {
-            const response = await fetch(`/admin/recetas/obtener/${id}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            // Mostrar loader mientras se carga
+            Swal.fire({
+                title: 'Cargando receta...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const response = await fetch(`/admin/recetas/obtener/${id}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Respuesta inesperada: ${text.substring(0, 100)}`);
             }
 
             const result = await response.json();
+
+            if (!response.ok || !result.receta) {
+                throw new Error(result.error || 'Receta no encontrada');
+            }
+
+            // Usamos directamente el diccionario recibido
             const receta = result.receta;
 
+            // Limpiar y llenar formulario
             limpiarFormularioReceta();
-
-            // Llenar formulario con datos de la receta
             document.getElementById("idReceta").value = receta.id;
             document.getElementById("nombre").value = receta.nombre;
             document.getElementById("id_galleta").value = receta.id_galleta;
@@ -295,12 +365,12 @@
             document.getElementById("galletTipo").value = receta.galletTipo;
             document.getElementById("instrucciones").value = receta.instrucciones;
 
-            // Mostrar imagen actual si existe
+            // Mostrar imagen actual
             const preview = document.getElementById('imagenPreview');
             preview.innerHTML = '';
             if (receta.imagen_url) {
                 const img = document.createElement('img');
-                img.src = receta.imagen_url;
+                img.src = receta.imagen_url + '?t=' + new Date().getTime();
                 img.style.maxWidth = '100%';
                 img.style.maxHeight = '150px';
                 img.className = 'img-thumbnail';
@@ -308,6 +378,7 @@
             }
 
             document.querySelector('#modalReceta .modal-title').textContent = 'Editar Receta';
+            Swal.close();
         } catch (error) {
             console.error('Error:', error);
             Swal.fire({
@@ -324,6 +395,7 @@
      * @param {string} nombre - Nombre de la receta a eliminar
      */
     async function eliminarReceta(id, nombre) {
+        // Confirmación antes de eliminar
         const { isConfirmed } = await Swal.fire({
             title: '¿Estás seguro?',
             text: `¿Quieres eliminar la receta "${nombre}"? Esta acción no se puede deshacer.`,
@@ -338,7 +410,14 @@
         if (!isConfirmed) return;
 
         try {
-            const response = await fetch(`/admin/recetas/eliminar/${id}`, {
+            // Mostrar loader durante la eliminación
+            Swal.fire({
+                title: 'Eliminando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const response = await fetch(`/admin/recetas/${id}/eliminar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -346,18 +425,38 @@
                 }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`El servidor devolvió una respuesta inesperada: ${text.substring(0, 100)}`);
             }
 
             const result = await response.json();
 
-            Swal.fire('Eliminada', result.mensaje || 'Receta eliminada', 'success');
-            actualizarTablaRecetas();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            // Mostrar mensaje de éxito y actualizar
+            await Swal.fire({
+                icon: 'success',
+                title: 'Eliminada',
+                text: result.mensaje || 'Receta eliminada correctamente',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            // Actualizar la tabla de recetas
+            await actualizarTablaRecetas();
+
         } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', error.message || 'Error al eliminar receta', 'error');
+            console.error('Error al eliminar receta:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Error al eliminar receta'
+            });
         }
     }
 
@@ -372,68 +471,98 @@
         });
     }
 
-    /**
-     * Actualiza la tabla de recetas mediante AJAX
-     */
     async function actualizarTablaRecetas() {
         try {
-            const response = await fetch('/admin/recetas/listar');
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-            }
-
-            const recetas = await response.json();
+            // Mostrar loader mientras carga
             const container = document.querySelector('#recetasContainer');
-            container.innerHTML = '';
+            container.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Actualizando recetas...</p>
+            </div>
+        `;
 
-            if (recetas.length === 0) {
-                container.innerHTML = '<div class="col-12"><div class="alert alert-info">No hay recetas registradas aún.</div></div>';
+            const response = await fetch('/admin/recetas/listar', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-store'
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
                 return;
             }
 
-            let row = document.createElement('div');
+            const recetas = await response.json();
+
+            // Limpiar completamente el contenedor
+            container.innerHTML = '';
+
+            if (!recetas || recetas.length === 0) {
+                container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No hay recetas registradas aún.
+                    </div>
+                </div>
+            `;
+                return;
+            }
+
+            // Crear una sola fila contenedora
+            const row = document.createElement('div');
             row.className = 'row';
             container.appendChild(row);
 
-            recetas.forEach((receta, index) => {
-                if (index > 0 && index % 4 === 0) {
-                    row = document.createElement('div');
-                    row.className = 'row';
-                    container.appendChild(row);
-                }
-
+            // Agregar todas las tarjetas
+            recetas.forEach(receta => {
                 const col = document.createElement('div');
                 col.className = 'col-md-3 mb-4';
+
                 col.innerHTML = `
-                    <div class="card h-100">
-                        <img src="${receta.imagen_url || '../../static/img/receta.jpg'}" 
-                             class= "card-img-top" 
-                             alt = "${receta.nombre}"
-                             onerror = "this.src='../../static/img/receta.jpg'" >
-                        <div class="card-body">
-                            <h5 class="card-title">${receta.nombre}</h5>
-                            <p class="card-text">Galleta: ${receta.galleta.nombre}</p>
-                            <p class="card-text"><small class="text-muted">Rinde: ${receta.cantidad_producida} galletas</small></p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a href="/admin/recetas/${receta.id}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye"></i> Ver Detalles
-                            </a>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
-                                data-bs-target="#modalReceta" onclick="editarReceta('${receta.id}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="eliminarReceta('${receta.id}', '${receta.nombre}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div >
-                `;
+                <div class="card h-100">
+                    <img src="${receta.imagen_url || '/static/img/receta.jpg'}?t=${Date.now()}" 
+                        class="card-img-top" 
+                        alt="${receta.nombre}"
+                        onerror="this.onerror=null; this.src='/static/img/receta.jpg?t=${Date.now()}'">
+                    <div class="card-body">
+                        <h5 class="card-title">${receta.nombre}</h5>
+                        <p class="card-text">Galleta: ${receta.galleta?.nombre || 'N/A'}</p>
+                        <p class="card-text"><small class="text-muted">Rinde: ${receta.cantidad_producida} galletas</small></p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="/admin/recetas/${receta.id}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> Ver Detalles
+                        </a>
+                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" 
+                            data-bs-target="#modalReceta" onclick="editarReceta('${receta.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarReceta('${receta.id}', '${receta.nombre}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
                 row.appendChild(col);
             });
+
         } catch (error) {
             console.error('Error al actualizar recetas:', error);
+            document.querySelector('#recetasContainer').innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    Error al cargar recetas: ${error.message}
+                    <button onclick="actualizarTablaRecetas()" class="btn btn-sm btn-warning float-end">
+                        <i class="fas fa-sync-alt"></i> Reintentar
+                    </button>
+                </div>
+            </div>
+        `;
         }
     }
 
@@ -466,5 +595,50 @@
 
     // Event listeners
     document.getElementById('buscarReceta').addEventListener('keyup', filtrarRecetas);
+
+    // Función para cargar notificaciones
+    async function cargarNotificaciones() {
+        try {
+            const response = await fetch('/admin/notificaciones');
+            if (!response.ok) throw new Error('Error al cargar notificaciones');
+
+            const notificaciones = await response.json();
+            const lista = document.getElementById('listaNotificaciones');
+            const contador = document.getElementById('contadorNotificaciones');
+
+            lista.innerHTML = '';
+            contador.textContent = notificaciones.length;
+
+            if (notificaciones.length === 0) {
+                lista.innerHTML = '<li><div class="dropdown-item text-muted">No hay notificaciones nuevas</div></li>';
+                return;
+            }
+
+            notificaciones.forEach(notif => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                <a class="dropdown-item" href="#">
+                    <strong>${notif.tipo}</strong><br>
+                    <small>${notif.mensaje}</small>
+                    <div class="text-end"><small class="text-muted">${new Date(notif.fecha).toLocaleString()}</small></div>
+                </a>
+            `;
+                lista.appendChild(item);
+            });
+
+            lista.innerHTML += `
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">Ver todas las notificaciones</a></li>
+        `;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar notificaciones al inicio y cada 30 segundos
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarNotificaciones();
+        setInterval(cargarNotificaciones, 30000);
+    });
 </script>
 {% endblock %}
