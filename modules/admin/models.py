@@ -119,7 +119,10 @@ class Merma(db.Model):
 
 class Notificacion(db.Model):
     __tablename__ = 'notificaciones'
+    __table_args__ = {'extend_existing': True}  # ? Permite sobrescribir la tabla si ya existe
     
+
+
     id = db.Column('idNotificaciónes', db.Integer, primary_key=True)
     tipo = db.Column('tipoNotificacion', db.Enum(
         'Caducidad Insumo', 

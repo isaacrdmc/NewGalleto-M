@@ -251,6 +251,10 @@ class DetalleCompraInsumo(db.Model):
 
 class Notificacion(db.Model):
     __tablename__ = 'notificaciones'
+    __table_args__ = {'extend_existing': True}  # ? Permite sobrescribir la tabla si ya existe
+
+
+
     id = db.Column('idNotificaciónes', db.Integer, primary_key=True)
     tipo_notificacion = db.Column('tipoNotificacion', db.Enum(
         'Caducidad Insumo', 
@@ -263,11 +267,12 @@ class Notificacion(db.Model):
     fecha_visto = db.Column('fechaVisto', db.DateTime)
     estatus = db.Column(db.Enum('Nueva', 'Vista', 'Resuelto'), nullable=False, default='Nueva')
     
+
     # Relaciones
-    receta = db.relationship('Receta', backref='solicitudes')
-    solicitante = db.relationship('User', foreign_keys=[idSolicitante], backref='solicitudes_enviadas')
-    aprobador = db.relationship('User', foreign_keys=[idAprobador], backref='solicitudes_aprobadas')
-    horneado = db.relationship('Horneado', backref='solicitud')
+    # receta = db.relationship('Receta', backref='solicitudes')
+    # solicitante = db.relationship('User', foreign_keys=[idSolicitante], backref='solicitudes_enviadas')
+    # aprobador = db.relationship('User', foreign_keys=[idAprobador], backref='solicitudes_aprobadas')
+    # horneado = db.relationship('Horneado', backref='solicitud')
 
 
     

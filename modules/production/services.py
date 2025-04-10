@@ -1,9 +1,10 @@
 from flask_login import current_user
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-from .models import Galleta, Insumo, Receta,Horneado, SolicitudHorneado, db, TransaccionCompra, DetalleCompraInsumo, Notificacion, Merma
+# from .models import Galleta, Insumo, Produccion, Receta,Horneado, SolicitudHorneado, db, TransaccionCompra, DetalleCompraInsumo, Notificacion, Merma
+from .models import Galleta, Insumo, Produccion, Receta,Horneado, SolicitudHorneado, db, Notificacion
 from modules.admin.models import Proveedores as Proveedor
-from modules.shared.models import Rol as Role
+from modules.shared.models import Rol as Role, User
 from modules.shared.models import User as Usuario
 from datetime import datetime, timedelta
 from sqlalchemy import text
@@ -85,10 +86,10 @@ class ProveedorService(BaseService):
         return self.add(proveedor)
 
     def get_proveedor(self, id_proveedor):
-        return self.get(Proveedores, id_proveedor)
+        return self.get(Proveedor, id_proveedor)
 
     def get_all_proveedores(self):
-        return self.get_all(Proveedores)
+        return self.get_all(Proveedor)
 
 class GalletaService(BaseService):
     def __init__(self, db_session):
@@ -277,13 +278,13 @@ class UserService(BaseService):
         return self.get(User, id_user)
     
     def get_all_users(self):
-        return self.db_session.query(User).join(Rol).filter(
-            Rol.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
+        return self.db_session.query(User).join(Role).filter(
+            Role.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
         ).order_by(User.idUser.desc()).all()
     
     def get_roles(self):
-        return self.db_session.query(Rol).filter(
-            Rol.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
+        return self.db_session.query(Role).filter(
+            Role.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
         ).all()
         
 ############################

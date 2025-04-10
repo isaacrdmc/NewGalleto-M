@@ -8,7 +8,8 @@ import os
 
 
 from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from .services import FACTORES_CONVERSION, UNIDADES_COMPATIBLES, ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
+# from .services import FACTORES_CONVERSION, UNIDADES_COMPATIBLES, ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
+from .services import FACTORES_CONVERSION, UNIDADES_COMPATIBLES, ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService, SolicitudHorneadoService
 from .models import Receta, SolicitudHorneado, db, Horneado, Insumo, DetalleCompraInsumo, Merma, TransaccionCompra
 from modules.admin.models import Proveedores as Proveedor
 from sqlalchemy import desc, func, text
@@ -34,7 +35,7 @@ receta_service = RecetaService(db.session)
 horneado_service = HorneadoService(db.session)
 produccion_service = ProduccionService(db.session)
 # user_service = UserService(db.session)solicitud_horneado_service = SolicitudHorneadoService(db.session)
-compra_service = CompraService(db.session)
+compra_service = compra_service(db.session)
 solicitud_horneado_service = SolicitudHorneadoService(db.session)
 
 # Rutas para Proveedor
