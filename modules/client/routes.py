@@ -32,53 +32,68 @@ def pedidos_cliente():
     print(f"Usuario autenticado: {current_user.is_authenticated}")
     print(f"Rol del usuario: {current_user.rol.nombreRol}")
     
-    if len(current_user.rol.nombreRol) > 0:
-        print(f"Hay usuario")
-    
     if current_user.rol.nombreRol != 'Cliente':
         flash('Acceso no autorizado', 'danger')
         return redirect(url_for('shared.index'))
     
-    print('intentando hacer query')
-    
-    # Usar `text()` para envolver el query SQL de los pedidos
-    query = text("""
-        SELECT p.*, dp.*, g.nombreGalleta 
-        FROM pedidos p
-        JOIN detallePedido dp ON p.idPedidos = dp.idPedido
-        JOIN galletas g ON dp.idGalleta = g.idGalleta
-        WHERE p.idCliente = :user_id
-        ORDER BY p.fechaPedido DESC
-    """)
-    
     try:
-        print('Intentando recuperar datos')
-        print(f'User id: {current_user.idUser}')
-        # Ejecutar el query de los pedidos con el parámetro user_id
-        pedidos_data = db.session.execute(query, {'user_id': current_user.idUser}).fetchall()
+        # 1. Obtener pedidos del usuario usando SQL nativo
+        pedidos_query = text("""
+            SELECT idPedidos, estadoPedido, costoPedido, fechaPedido
+            FROM pedidos
+            WHERE idCliente = :user_id
+            ORDER BY fechaPedido DESC
+        """)
+        pedidos_data = db.session.execute(pedidos_query, {'user_id': current_user.idUser}).fetchall()
         
-        # Verifica los datos obtenidos
-        print(f"Pedidos recuperados: {pedidos_data}")
-        
-        # Procesamiento manual de resultados de los pedidos
+        # Procesar los pedidos para el template
         pedidos = []
-        for pedido_data in pedidos_data:
-            pedido = {
-                'id': pedido_data[0],
-                'fecha': pedido_data[3],
-                'estado': pedido_data[1],
-                'total': pedido_data[2],
-                'detalles': []
-            }
-            pedidos.append(pedido)
+        for pedido in pedidos_data:
+            pedidos.append({
+                'id': pedido[0],
+                'estado': pedido[1],
+                'total': float(pedido[2]),
+                'fecha': pedido[3].strftime('%Y-%m-%d')  # Formatear fecha como string
+            })
         
-        # Usar `text()` para envolver la consulta de vista_detalles_galletas
-        detalles_galletas_query = text("SELECT * FROM vista_detalles_galletas")
+        # 2. Obtener detalles usando tu vista SQL personalizada
+        detalles_query = text("""
+            SELECT 
+                v.idUsuario AS 'ID Usuario',
+                u.username AS 'Nombre Usuario',
+                g.nombreGalleta AS 'Galleta',
+                CASE 
+                    WHEN dv.formaVenta = 'Por pieza' THEN 'Piezas'
+                    WHEN dv.formaVenta = 'Por precio' THEN 'Gramos'
+                    WHEN dv.formaVenta = 'Por paquete/caja' THEN 
+                        CASE 
+                            WHEN g.gramajeGalleta >= 700 THEN 'Caja 1kg'
+                            ELSE 'Caja 700g'
+                        END
+                END AS 'Forma de Venta',
+                CASE 
+                    WHEN dv.formaVenta = 'Por pieza' THEN CONCAT(dv.cantidadGalletas, ' pz')
+                    WHEN dv.formaVenta = 'Por precio' THEN CONCAT(dv.pesoGramos, ' gr')
+                    WHEN dv.formaVenta = 'Por paquete/caja' THEN CONCAT(dv.cantidadGalletas, ' ', 
+                        CASE 
+                            WHEN g.gramajeGalleta >= 700 THEN 'cajas 1kg'
+                            ELSE 'cajas 700g'
+                        END)
+                END AS 'Cantidad'
+            FROM 
+                detallesVentas dv
+            JOIN 
+                galletas g ON dv.idGalleta = g.idGalleta
+            JOIN
+                ventas v ON dv.idDetalleVenta = v.idDetalleVenta
+            JOIN
+                usuarios u ON v.idUsuario = u.idUser
+            WHERE v.idUsuario = :user_id
+        """)
         
-        # Ejecutar el query de detalles de galletas
-        detalles_galletas = db.session.execute(detalles_galletas_query).fetchall()
+        detalles_galletas = db.session.execute(detalles_query, {'user_id': current_user.idUser}).fetchall()
         
-        # Imprimir los detalles de galletas para depuración
+        print(f"Pedidos recuperados: {pedidos}")
         print(f"Detalles de galletas: {detalles_galletas}")
         
         return render_template('client/pedidos_cliente.html',
@@ -87,5 +102,5 @@ def pedidos_cliente():
     
     except Exception as e:
         flash(f'Error al cargar pedidos: {str(e)}', 'danger')
-        print(f"No jalo el query: {str(e)}")
+        print(f"Error en la consulta: {str(e)}")
         return redirect(url_for('cliente.portal_cliente'))
