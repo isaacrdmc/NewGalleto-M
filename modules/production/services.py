@@ -10,6 +10,18 @@ from sqlalchemy import text
 from sqlalchemy import func, and_, desc
 from sqlalchemy.orm import joinedload
 
+# En services.py, al inicio del archivo
+UNIDADES_COMPATIBLES = {
+    'Gr': ['Gr', 'Kg'],       # Gramos puede comprarse en gramos o kilogramos
+    'mL': ['mL', 'L'],        # Mililitros puede comprarse en ml o litros
+    'Pz': ['Pz', 'Dz']        # Piezas puede comprarse en piezas o docenas
+}
+
+FACTORES_CONVERSION = {
+    ('Kg', 'Gr'): 1000,      # 1 Kg = 1000 Gr
+    ('L', 'mL'): 1000,       # 1 L = 1000 mL
+    ('Dz', 'Pz'): 12         # 1 Dz = 12 Pz
+}
 
 # Creamos una clase base de servicio
 class BaseService:
@@ -664,7 +676,7 @@ class SolicitudHorneadoService:
             return {'success': False, 'message': 'Error al rechazar la solicitud'}
     
     def completar_solicitud(self, id_solicitud, datos_horneado):
-        """Completa una solicitud aprobada registrando el horneado"""
+        """Completa una solicitud aprobada registrando el horneado a través del procedimiento almacenado"""
         try:
             solicitud = self.db_session.query(SolicitudHorneado).get(id_solicitud)
             
@@ -674,15 +686,17 @@ class SolicitudHorneadoService:
             if solicitud.estado != 'Aprobada':
                 return {'success': False, 'message': 'La solicitud no está aprobada'}
             
-            # Registrar el horneado
+            # Usamos el nuevo servicio de horneado con el stored procedure
             horneado_service = HorneadoService(self.db_session)
+            cantidad_producida = solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction
+            
             resultado = horneado_service.registrar_horneado(
                 datos_horneado['temperatura'],
                 datos_horneado['tiempo'],
-                solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction,
+                cantidad_producida,
                 datos_horneado['observaciones'],
                 solicitud.id_receta,
-                current_user.idUser  # Registra al usuario de producción que ejecutó el horneado
+                current_user.idUser
             )
             
             if not resultado:
@@ -698,8 +712,6 @@ class SolicitudHorneadoService:
             solicitud.estado = 'Completada'
             solicitud.id_horneado = horneado.id
             solicitud.fecha_completado = datetime.now()
-            
-            self.db_session.commit()
             
             # Notificar al solicitante
             notificacion = Notificacion(

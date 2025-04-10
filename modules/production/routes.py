@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from flask import abort, json, render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from .services import ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
+from .services import FACTORES_CONVERSION, UNIDADES_COMPATIBLES, ProveedorService, GalletaService, InsumoService, RecetaService,HorneadoService,CompraService, SolicitudHorneadoService
 from .models import Receta, SolicitudHorneado, db, Horneado, Insumo, DetalleCompraInsumo, Merma, TransaccionCompra
 from modules.admin.models import Proveedores as Proveedor
 from sqlalchemy import desc, func, text
@@ -10,6 +10,7 @@ from flask_login import login_required, current_user
 from . import bp_production
 from database.conexion import db
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload  # Añade este import al inicio del archivo
 
 # Servicios
 proveedor_service = ProveedorService(db.session)
@@ -382,55 +383,61 @@ def detalle_insumo_por_nombre(nombre_insumo):
 @login_required
 def registrar_compra_insumo():
     try:
-        # Log para depuración
-        print("==== Iniciando registro de compra de insumo ====")
-        print(f"Datos del formulario: {request.form}")
-        
         # Obtener datos del formulario
         id_insumo = request.form.get('id_insumo', type=int)
-        id_proveedor_str = request.form.get('id_proveedor')  # Primero obtén como string
+        id_proveedor_str = request.form.get('id_proveedor')
+        unidad_compra = request.form.get('unidad_compra')
         cant_cajas = request.form.get('cant_cajas', type=int)
         cant_unidades_caja = request.form.get('cant_unidades_caja', type=int)
         costo_caja = request.form.get('costo_caja', type=float)
         fecha_caducidad = request.form.get('fecha_caducidad')
         
-        # Validar que id_proveedor tenga un valor
+        # Validaciones básicas
         if not id_proveedor_str:
             flash('Debe seleccionar un proveedor', 'danger')
             return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
         
-        # Convertir id_proveedor a entero después de validar que no esté vacío
+        if not unidad_compra:
+            flash('Debe seleccionar una unidad de compra', 'danger')
+            return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
+            
         id_proveedor = int(id_proveedor_str)
         
-        # Resto de tu validación
         if not all([id_insumo, id_proveedor, cant_cajas, cant_unidades_caja, costo_caja, fecha_caducidad]):
             flash('Todos los campos son obligatorios', 'danger')
             return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
         
-        # Obtener el insumo para conocer su unidad de medida
+        # Obtener el insumo
         insumo = insumo_service.get_insumo(id_insumo)
         if not insumo:
             flash('Insumo no encontrado', 'danger')
             return redirect(url_for('production.inventario'))
         
-        # Depuración - mostrar valor de la unidad
-        print(f"Unidad del insumo: {insumo.unidad}, tipo: {type(insumo.unidad)}")
+        unidad_base = insumo.unidad  # gr, ml o pz
         
-        # Crear o obtener una transacción de compra
-        print(f"Llamando a registrar_compra con proveedor ID: {id_proveedor}")
+        # Validar compatibilidad de unidades
+        if unidad_compra not in UNIDADES_COMPATIBLES.get(unidad_base, []):
+            unidades_permitidas = ", ".join(UNIDADES_COMPATIBLES[unidad_base])
+            flash(f'Unidad de compra no compatible. Para {unidad_base} las unidades permitidas son: {unidades_permitidas}', 'danger')
+            return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
+        
+        # Convertir unidades si es necesario
+        conversion = 1.0
+        if unidad_compra != unidad_base:
+            conversion = FACTORES_CONVERSION.get((unidad_compra, unidad_base), 1.0)
+            cant_unidades_caja = int(cant_unidades_caja * conversion)
+        
+        # Registrar la compra (resto del código igual)
         id_transaccion = compra_service.registrar_compra(id_proveedor)
-        print(f"ID de transacción obtenido: {id_transaccion}")
         
         if not id_transaccion:
             flash('Error al registrar la transacción de compra', 'danger')
             return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
         
         # Registrar el detalle de la compra
-        cant_merma_unidad = 0  # Asumimos un 0% de merma por unidad inicialmente
+        cant_merma_unidad = 0
         fecha_registro = datetime.now().date()
         
-        print(f"Llamando a agregar_detalle_compra con ID transacción: {id_transaccion}")
-        # IMPORTANTE: Corregir la forma en que pasas los parámetros
         resultado = compra_service.agregar_detalle_compra(
             id_transaccion,
             id_insumo,
@@ -438,25 +445,19 @@ def registrar_compra_insumo():
             cant_unidades_caja,
             cant_merma_unidad,
             costo_caja,
-            insumo.unidad,  # Sin comentario aquí
+            insumo.unidad,
             fecha_registro,
             datetime.strptime(fecha_caducidad, '%Y-%m-%d').date()
         )
         
-        print(f"Resultado de agregar_detalle_compra: {resultado}")
-        
-        # Confirmación de éxito o error
         if resultado:
             flash('Compra registrada exitosamente', 'success')
         else:
             flash('Error al registrar el detalle de la compra', 'danger')
-            print("Error al registrar el detalle de la compra.")  # Depuración
         
         return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
-
+        
     except Exception as e:
-        # Capturar cualquier error inesperado
-        print(f"Excepción capturada: {str(e)}")  # Debug
         flash(f'Error inesperado: {str(e)}', 'danger')
         return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo if 'id_insumo' in locals() else 0))
 
@@ -658,16 +659,14 @@ def completar_solicitud(id_solicitud):
             
             if resultado['success']:
                 flash('Horneado registrado exitosamente', 'success')
-                return redirect(url_for('production.ver_mis_solicitudes'))
+                return redirect(url_for('production.proceso_horneadas'))
             else:
-                flash('Error al registrar el horneado', 'danger')
+                flash(resultado['message'], 'danger')
         
         except Exception as e:
             flash(f'Error: {str(e)}', 'danger')
     
     return render_template('produccion/completar_solicitud.html', solicitud=solicitud)
-
-from sqlalchemy.orm import joinedload  # Añade este import al inicio del archivo
 
 @bp_production.route('/solicitud/detalle/<int:id_solicitud>', methods=['GET'])
 @login_required
@@ -741,6 +740,7 @@ def proceso_horneadas():
 @bp_production.route('/detalle_horneado/<int:id_horneado>', methods=['GET'])
 def detalle_horneado(id_horneado):
     # Obtener el horneado por ID
+    origen = request.args.get('origen', 'historial')  # Por defecto, vuelve a historial
     horneado = horneado_service.get_horneado(id_horneado)
     
     if not horneado:
@@ -748,4 +748,4 @@ def detalle_horneado(id_horneado):
         return redirect(url_for('production.historial'))
     
     # Renderizar template con los detalles
-    return render_template('produccion/detalle_horneado.html', horneado=horneado)
+    return render_template('produccion/detalle_horneado.html', horneado=horneado, origen=origen)

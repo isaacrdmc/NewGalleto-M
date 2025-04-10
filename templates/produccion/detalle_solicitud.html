@@ -55,9 +55,6 @@
                                     <div class="alert alert-info mt-3">
                                         <h5 class="alert-heading">Horneado Completado</h5>
                                         <p>Fecha: {{ solicitud.fecha_completado.strftime('%d/%m/%Y %H:%M') }}</p>
-                                        <a href="{{ url_for('production.detalle_horneado', id_horneado=solicitud.id_horneado) }}" class="btn btn-sm btn-info">
-                                            Ver Detalles del Horneado
-                                        </a>
                                     </div>
                                     {% endif %}
                                 </div>

@@ -2,33 +2,27 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="my-4 text-center fw-bold">Módulo de Producción</h1>
+    <h1 class="my-4 text-center fw-bold">Producción</h1>
 
     <!-- Sección de Estadísticas -->
-    <div class="row mb-4 text-center">
+    <div class="row mb-4">
         <!-- Cambiar esta parte del dashboard -->
-        <div class="col-md-3">
+        <div class="col-md-4">
             <a href="{{ url_for('production.proceso_horneadas') }}" class="btn btn-warning w-100 py-3 shadow-lg">
-                <i class="fa-regular fa-oven"></i> Proceso de horneadas
+                <i class="fa-regula"></i> Proceso de horneadas
             </a>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <a href="{{ url_for('production.inventario') }}" class="btn btn-warning w-100 py-3 shadow-lg">
-                <i class="fa-regular fa-magnifying-glass"></i> Consultar inventario
+                <i class="fa-regular"></i> Consultar inventario
             </a>
         </div>        
-        <div class="col-md-3">
-            <a href="{{ url_for('production.historial') }}" class="btn btn-danger w-100 py-3 shadow-lg">
-                <i class="fa-regular fa-clipboard"></i> Historial de horneadas
-            </a>
-        </div>
-        <div class="col-md-3">
-            <a href="{{ url_for('production.solicitar_horneado') }}" class="btn btn-danger w-100 py-3 shadow-lg">
-                <i class="fa-regular fa-clipboard"></i> solicitar de horneadas
+        <div class="col-md-4">
+            <a href="{{ url_for('production.historial') }}" class="btn btn-warning w-100 py-3 shadow-lg">
+                <i class="fa-regular"></i> Historial de horneadas
             </a>
         </div>
     </div>
-    <!-- Sección de Estadísticas Dinámicas -->
     <!-- Sección de Estadísticas Dinámicas -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -89,17 +83,11 @@
                             <td>{{ prod.receta }}</td>
                             <td>{{ "{:,}".format(prod.cantidad) }}</td>
                             <td>
-                                {% if prod.estado == 'Completado' %}
                                     <span class="badge bg-success">Completado</span>
-                                {% elif prod.estado == 'Aprobada' %}
-                                    <span class="badge bg-warning">En proceso</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Pendiente</span>
-                                {% endif %}
                             </td>
                             <td>{{ prod.fecha }}</td>
                             <td>
-                                <a href="{{ url_for('production.detalle_horneado', id_horneado=prod.id) }}" 
+                                <a href="{{ url_for('production.detalle_horneado', id_horneado=prod.id, origen='dashboard') }}"
                                    class="btn btn-sm btn-info" title="Ver detalles">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -115,16 +103,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Gráfica de Producción Semanal -->
-    <div class="card border-0 shadow-lg rounded-4 mb-5" style="background-color: #e8d8a7;">
-        <div class="card-body">
-            <h4 class="card-title text-center mb-3">📊 Producción Semanal</h4>
-            <canvas id="productionChart" height="120"></canvas>
-        </div>
-    </div>
-</div>
-
 <!-- Scripts para la Gráfica -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

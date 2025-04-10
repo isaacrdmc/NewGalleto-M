@@ -50,9 +50,15 @@
             </div>
 
             <div class="mt-4">
-                <a href="{{ url_for('production.historial') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver al Historial
-                </a>
+                {% if origen == 'dashboard' %}
+                    <a href="{{ url_for('production.dashboard_produccion') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('production.historial') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Historial
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
