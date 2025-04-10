@@ -1,10 +1,13 @@
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import login_required, current_user
+
+from modules.client.models import Pedido
+from modules.production.models import Galleta
 from . import bp_ventas
 from modules.ventas.services import obtener_historial_ventas
 from modules.ventas.models import Venta
 from modules.ventas.services import obtener_pedidos_clientes
-from modules.ventas.models import Pedido
+
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
 
@@ -12,7 +15,7 @@ from modules.ventas.models import Pedido
 
 # Ruta para el dashboard de ventas
 @bp_ventas.route('/prod_ventas')
-def prod_ventas():
+def ventas():
     if current_user.rol.nombreRol not in ['Ventas']:
         return redirect(url_for('shared.login'))
     return render_template('ventas/prod_term.html')
@@ -50,10 +53,10 @@ def obtener_detalles_venta(id_venta):
             cantidad_formateada = str(d.cantGalletasVendidas)
 
         detalles.append({
-            "producto": d.galleta.nombreGalleta if d.galleta else "Producto desconocido",
+            "producto": d.galleta.nombre if d.galleta else "Producto desconocido",
             "cantidad": d.cantGalletasVendidas,  # Mantener el valor numérico para cálculos
             "cantidad_formateada": cantidad_formateada,  # Nueva propiedad con formato
-            "precio_unitario": float(d.galleta.precioUnitario),
+            "precio_unitario": float(d.galleta.precio_unitario),
             "forma_venta": d.formaVenta,
             "subtotal": float(d.precioUnitario)
         })
@@ -88,15 +91,13 @@ def obtener_detalles_pedido(id_pedido):
 
 @bp_ventas.route('/galletas_disponibles')
 def galletas_disponibles():
-    from modules.ventas.models import Galleta
-
-    galletas = Galleta.query.with_entities(Galleta.idGalleta, Galleta.nombreGalleta).all()
-    lista = [{"id": g.idGalleta, "nombre": g.nombreGalleta} for g in galletas]
+    
+    galletas = Galleta.query.with_entities(Galleta.id, Galleta.nombre).all()
+    lista = [{"id": g.id, "nombre": g.nombre} for g in galletas]
     return jsonify(lista)
 
 @bp_ventas.route('/galleta/<int:id_galleta>')
 def obtener_info_galleta(id_galleta):
-    from modules.ventas.models import Galleta
 
     galleta = Galleta.query.get(id_galleta)
     if not galleta:
@@ -104,7 +105,7 @@ def obtener_info_galleta(id_galleta):
 
     return jsonify({
         "success": True,
-        "cantidadDisponible": galleta.cantidadDisponible,
-        "gramaje": float(galleta.gramajeGalleta),
-        "precio": float(galleta.precioUnitario)
+        "cantidadDisponible": galleta.cantidad_disponible,
+        "gramaje": float(galleta.gramaje),
+        "precio": float(galleta.precio_unitario)
     })

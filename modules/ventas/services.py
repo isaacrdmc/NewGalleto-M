@@ -1,6 +1,6 @@
+from modules.client.models import Pedido
 from modules.ventas.models import Venta
 from database.conexion import db
-from modules.ventas.models import Pedido
 
 def obtener_historial_ventas():
     ventas = Venta.query.join(Venta.usuario).all()

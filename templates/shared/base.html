@@ -50,10 +50,17 @@
                         {% endif %}
 
                         {% if current_user.rol.nombreRol == 'Ventas' %}
-                        <a class="btn btn-icon-circle btn-icon-circle-sm d-flex align-items-center justify-content-center p-0"
-                            href="{{ url_for('ventas.prod_ventas') }}"
-                            style="background-color: #ffd47ed5 !important;">
-                            <img src="{{ url_for('static', filename='img/portapapeles.png') }}" alt="Galletas">
+                        <!-- New button 1 -->
+                        <a class="btn btn-icon-circle btn-icon-circle-sm ms-2 d-flex align-items-center justify-content-center p-0"
+                            href="{{ url_for('ventas.historial_ventas') }}"
+                            style="background-color:rgba(41, 94, 185, 0.83) !important;">
+                            <img src="{{ url_for('static', filename='img/history_icon.png') }}" alt="Pedidos">
+                        </a>
+                        <!-- New button 2 -->
+                        <a class="btn btn-icon-circle btn-icon-circle-sm ms-2 d-flex align-items-center justify-content-center p-0"
+                            href="{{ url_for('ventas.pedidos_clientes') }}"
+                            style="background-color:rgba(27, 176, 119, 0.83) !important;">
+                            <img src="{{ url_for('static', filename='img/order.png') }}" alt="Reportes">
                         </a>
                         {% endif %}
                         <a class="ms-2 px-3" href="{{ url_for('shared.logout') }}">
@@ -205,4 +212,5 @@
         });
     </script>
 </body>
+
 </html>
