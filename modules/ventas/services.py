@@ -11,7 +11,7 @@ def obtener_historial_ventas():
 
         resultado.append({
             "id": venta.idVenta,
-            "responsable": f"{venta.usuario.nombre} {venta.usuario.apellP}",
+            "responsable": venta.usuario.username,
             "fecha": venta.fechaVentaGalleta.strftime('%d/%m/%y'),
             "detalles": cantidad,
             "total": float(venta.totalVenta)
@@ -26,7 +26,7 @@ def obtener_pedidos_clientes():
     for pedido in pedidos:
         resultado.append({
             "id": pedido.idPedidos,
-            "cliente": f"{pedido.cliente.nombre} {pedido.cliente.apellP}",
+            "cliente": pedido.cliente.username,
             "fecha_pedido": pedido.fechaPedido.strftime('%d/%m/%y'),
             "estado": pedido.estadoPedido,
             "total": float(pedido.costoPedido)

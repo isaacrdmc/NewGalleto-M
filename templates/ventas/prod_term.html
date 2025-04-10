@@ -120,7 +120,7 @@
             </div>
             <div class="col-auto" id="gramosContainer">
                 <label for="gramos" class="col-form-label">Gramos:</label>
-                <input type="text" id="gramos" class="form-control input-sm" value="50gr">
+                <input type="text" id="gramos" class="form-control input-sm" placeholder="Ingrese gramos">
             </div>
             <div class="col-auto">
                 <label for="subtotal" class="col-form-label">Subtotal:</label>
@@ -176,6 +176,8 @@
         let detallesVenta = []; // Almacena los items agregados a la venta
         let totalVenta = 0; // Almacena el total de la venta
 
+        let inventarioTemporal = {};
+
         // Función para actualizar la visibilidad de campos según el método de venta
         function actualizarCamposVisibles() {
             const metodo = metodoVenta.value;
@@ -194,57 +196,39 @@
             const metodo = metodoVenta.value;
             
             if (metodo === 'Por unidad' && galletaActual && cantidadSelect.value) {
-                // Obtener cantidad seleccionada (como número)
                 const cantidad = parseInt(cantidadSelect.value, 10);
-                
-                // Multiplicar precio unitario por cantidad
                 const precioUnitario = parseFloat(galletaActual.precioUnitario);
                 const subtotal = precioUnitario * cantidad;
-                
-                // Mostrar el subtotal formateado
                 subtotalInput.value = '$' + subtotal.toFixed(2);
                 return subtotal;
             }
-            else if (metodo === 'Por gramo' && galletaActual && gramosInput.value) {
-                // Extraer valor numérico de la entrada de gramos
-                const gramos = parseInt(gramosInput.value, 10);
-                
-                if (!isNaN(gramos)) {
-                    // Calcular el precio por los gramos
-                    // Asumimos que precioUnitario es por gramo, o calculamos en base al gramaje
-                    const precioUnitario = parseFloat(galletaActual.precioUnitario);
-                    const gramajePorUnidad = parseFloat(galletaActual.gramajeGalleta);
-                    const precioPorGramo = precioUnitario / gramajePorUnidad;
-                    const subtotal = precioPorGramo * gramos;
-                    
-                    // Mostrar el subtotal formateado
-                    subtotalInput.value = '$' + subtotal.toFixed(2);
-                    return subtotal;
-                }
-            }
             else if (metodo === 'Empacado' && galletaActual && cantidadSelect.value) {
-                // Obtener el tipo de caja seleccionada
-                const tipoCaja = cantidadSelect.value;
-                
-                // Definir precios según el tipo de caja
-                let subtotal = 0;
+                const seleccion = cantidadSelect.value;
+                const [cantidadCajas, tipo] = seleccion.split(' Caja ');
                 const precioUnitario = parseFloat(galletaActual.precioUnitario);
                 
-                if (tipoCaja === 'Caja 700gr') {
-                    // Calculamos el precio de la caja basado en el precio unitario
-                    subtotal = precioUnitario * 7; // Asumimos que la caja contiene aprox. 7 unidades
-                } else if (tipoCaja === 'Caja 1kg') {
-                    subtotal = precioUnitario * 10; // Asumimos que la caja contiene aprox. 10 unidades
-                }
+                // Obtener las unidades por caja que calculamos antes
+                const unidadesPorCaja = tipo === '700gr' ? 
+                    galletaActual.unidadesPorCaja['700gr'] : 
+                    galletaActual.unidadesPorCaja['1kg'];
                 
-                // Mostrar el subtotal formateado
+                // Calcular subtotal correctamente
+                const subtotal = (precioUnitario * unidadesPorCaja) * parseInt(cantidadCajas);
+                
                 subtotalInput.value = '$' + subtotal.toFixed(2);
                 return subtotal;
             }
             
-            // Si no se puede calcular, limpiar el campo
             subtotalInput.value = '';
             return 0;
+        }
+
+        // Agrega esta función auxiliar en tu script:
+        function redondearAGalletasCompletas(gramos, gramajePorUnidad) {
+            if (gramajePorUnidad <= 0) return gramos;
+            const galletasDecimales = gramos / gramajePorUnidad;
+            const galletasCompletas = Math.floor(galletasDecimales);
+            return galletasCompletas * gramajePorUnidad;
         }
         
         // Función para agregar un item a la tabla de ventas
@@ -255,49 +239,287 @@
                 alert('Por favor, selecciona una galleta.');
                 return;
             }
+
+            if (inventarioTemporal[galletaActual.idGalleta] <= 0) {
+                alert('No hay suficiente inventario disponible para esta galleta.');
+                return;
+            }            
             
-            const metodo = metodoVenta.value;
-            let cantidad, subtotal;
+            const metodoSeleccionado = metodoVenta.value;
+            const precioUnitario = parseFloat(galletaActual.precioUnitario);
+            const gramajePorUnidad = parseFloat(galletaActual.gramajeGalleta);
             
-            if (metodo === 'Por gramo') {
-                cantidad = gramosInput.value + 'gr';
-                subtotal = calcularSubtotal();
-                if (subtotal === 0) {
+            if (metodoSeleccionado === 'Por gramo') {
+                const gramos = parseInt(gramosInput.value, 10) || 0;
+                if (gramos <= 0) {
                     alert('Por favor, ingresa una cantidad válida en gramos.');
                     return;
                 }
-            } else if (metodo === 'Por unidad' || metodo === 'Empacado') {
+
+                // Calcular gramos válidos (solo galletas completas)
+                const gramosAjustados = redondearAGalletasCompletas(gramos, gramajePorUnidad);
+
+                // Calcular cajas posibles (AGREGAR ESTAS 2 LÍNEAS)
+                const unidadesPorCaja700 = Math.floor(700 / gramajePorUnidad);
+                const unidadesPorCaja1kg = Math.floor(1000 / gramajePorUnidad);
+                let cajas1kg = 0, cajas700 = 0, gramosSueltos = gramosAjustados;
+
+                // Calcular cajas de 1kg
+                if (unidadesPorCaja1kg > 0) {
+                    cajas1kg = Math.floor(gramosSueltos / 1000);
+                    gramosSueltos = gramosSueltos % 1000;
+                }
+
+                // Calcular cajas de 700gr con lo que sobra
+                if (unidadesPorCaja700 > 0) {
+                    cajas700 = Math.floor(gramosSueltos / 700);
+                    gramosSueltos = gramosSueltos % 700;
+                }
+
+                // Validar gramos sobrantes finales
+                const galletasSueltas = gramosSueltos / gramajePorUnidad;
+                if (galletasSueltas > 0 && galletasSueltas < 1) {
+                    // Descartar gramos insuficientes
+                    gramosSueltos = 0;
+                }
+
+                // Después de calcular los gramosSueltos
+                if (gramosSueltos > 0 && (gramosSueltos % gramajePorUnidad !== 0)) {
+                    const descartados = gramosSueltos % gramajePorUnidad;
+                    gramosSueltos = gramosSueltos - descartados;
+                    if (gramosSueltos > 0) {
+                        alert(`Se descartaron ${descartados}gr que no completaban una galleta.`);
+                    }
+                }
+
+                if (gramosAjustados <= 0) {
+                    alert('Los gramos ingresados no alcanzan para una galleta completa.');
+                    return;
+                }
+
+                const unidadesEquivalentes = gramosAjustados / gramajePorUnidad;
+
+                if (unidadesEquivalentes > inventarioTemporal[galletaActual.idGalleta]) {
+                    alert('No hay suficiente inventario disponible para esta cantidad.');
+                    return;
+                }
+                
+                // Agregar items por separado
+                if (cajas1kg > 0) {
+                    const detalle = {
+                        metodoVenta: 'Empacado',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${cajas1kg} Caja${cajas1kg > 1 ? 's' : ''} 1kg`,
+                        subtotal: (precioUnitario * unidadesPorCaja1kg) * cajas1kg,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja                    
+                    };
+                    detallesVenta.push(detalle);
+                }
+                
+                if (cajas700 > 0) {
+                    const detalle = {
+                        metodoVenta: 'Empacado',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${cajas700} Caja${cajas700 > 1 ? 's' : ''} 700gr`,
+                        subtotal: (precioUnitario * unidadesPorCaja700) * cajas700,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja                    
+                    };
+                    detallesVenta.push(detalle);
+                }
+                
+                if (gramosSueltos > 0) {
+                    const detalle = {
+                        metodoVenta: 'Por gramo',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${gramosSueltos}gr`,
+                        subtotal: (precioUnitario / gramajePorUnidad) * gramosSueltos,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja                    
+                    };
+                    detallesVenta.push(detalle);
+                }
+
+                // Sumar unidades de todos los subdetalles agregados
+                let totalUnidadesUsadas = 0;
+                if (cajas1kg > 0) totalUnidadesUsadas += cajas1kg * unidadesPorCaja1kg;
+                if (cajas700 > 0) totalUnidadesUsadas += cajas700 * unidadesPorCaja700;
+                if (gramosSueltos > 0) totalUnidadesUsadas += Math.floor(gramosSueltos / gramajePorUnidad);
+
+                inventarioTemporal[galletaActual.idGalleta] -= totalUnidadesUsadas;
+
+                
+            } 
+            else if (metodoSeleccionado === 'Por unidad') {
                 if (!cantidadSelect.value || cantidadSelect.value === 'Selecciona cantidad') {
                     alert('Por favor, selecciona una cantidad.');
                     return;
                 }
-                cantidad = cantidadSelect.value;
-                subtotal = calcularSubtotal();
-            } else {
-                alert('Por favor, selecciona un método de venta válido.');
-                return;
+                
+                const unidades = parseInt(cantidadSelect.value, 10);
+                const unidadesPorCaja700 = Math.floor(700 / gramajePorUnidad);
+                const unidadesPorCaja1kg = Math.floor(1000 / gramajePorUnidad);
+                
+                let cajas1kg = 0, cajas700 = 0, unidadesSueltas = unidades;
+            
+                let totalUnidadesUsadas = unidades; // 💥 AÑADIR ESTO
+                
+                // Calcular cajas de 1kg
+                if (unidadesPorCaja1kg > 0) {
+                    cajas1kg = Math.floor(unidades / unidadesPorCaja1kg);
+                    unidadesSueltas = unidades % unidadesPorCaja1kg;
+                }
+                
+                // Calcular cajas de 700gr
+                if (unidadesPorCaja700 > 0) {
+                    cajas700 = Math.floor(unidadesSueltas / unidadesPorCaja700);
+                    unidadesSueltas = unidadesSueltas % unidadesPorCaja700;
+                }
+                
+                // Agregar items por separado
+                if (cajas1kg > 0) {
+                    const detalle = {
+                        metodoVenta: 'Empacado',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${cajas1kg} Caja${cajas1kg > 1 ? 's' : ''} 1kg`,
+                        subtotal: (precioUnitario * unidadesPorCaja1kg) * cajas1kg,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja                    
+                    };
+                    detallesVenta.push(detalle);
+                }
+                
+                if (cajas700 > 0) {
+                    const detalle = {
+                        metodoVenta: 'Empacado',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${cajas700} Caja${cajas700 > 1 ? 's' : ''} 700gr`,
+                        subtotal: (precioUnitario * unidadesPorCaja700) * cajas700,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja                    
+                    };
+                    detallesVenta.push(detalle);
+                }
+                
+                if (unidadesSueltas > 0) {
+                    const detalle = {
+                        metodoVenta: 'Por unidad',
+                        idGalleta: galletaActual.idGalleta,
+                        nombreGalleta: galletaActual.nombreGalleta,
+                        cantidad: `${unidadesSueltas} unidad${unidadesSueltas > 1 ? 'es' : ''}`,
+                        subtotal: precioUnitario * unidadesSueltas,
+                        gramajeGalleta: gramajePorUnidad,
+                        unidadesPorCaja: galletaActual.unidadesPorCaja
+                    };
+                    detallesVenta.push(detalle);
+                }
+            
+                inventarioTemporal[galletaActual.idGalleta] -= totalUnidadesUsadas;
+            }            
+            else if (metodoSeleccionado === 'Empacado') {
+                // Mantener lógica original para empacado
+                if (!cantidadSelect.value || cantidadSelect.value === 'Selecciona empaque') {
+                    alert('Por favor, selecciona un empaque.');
+                    return;
+                }
+                
+                const [cantidadCajas, tipo] = cantidadSelect.value.split(' Caja ');
+                const unidadesPorCaja = tipo === '700gr' ? 
+                    galletaActual.unidadesPorCaja['700gr'] : 
+                    galletaActual.unidadesPorCaja['1kg'];
+                
+                const detalle = {
+                    metodoVenta: 'Empacado',
+                    idGalleta: galletaActual.idGalleta,
+                    nombreGalleta: galletaActual.nombreGalleta,
+                    cantidad: cantidadSelect.value,
+                    subtotal: (precioUnitario * unidadesPorCaja) * parseInt(cantidadCajas)
+                };
+                detallesVenta.push(detalle);
+                inventarioTemporal[galletaActual.idGalleta] -= parseInt(cantidadCajas) * unidadesPorCaja;
             }
             
-            // Crear objeto para el detalle de venta
-            const detalleVenta = {
-                metodoVenta: metodo,
-                idGalleta: galletaActual.idGalleta,
-                nombreGalleta: galletaActual.nombreGalleta,
-                cantidad: cantidad,
-                subtotal: subtotal
-            };
-            
-            // Añadir a la lista de detalles
-            detallesVenta.push(detalleVenta);
-            
-            // Actualizar la tabla
+            // Actualizar la tabla y total
             actualizarTablaVentas();
-            
-            // Actualizar el total
             actualizarTotalVenta();
-            
-            // Limpiar el formulario
             limpiarFormularioDetalle();
+        }
+
+        gramosInput.addEventListener('input', function(e) {
+            // Solo permite números
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Limitar a un máximo razonable (ej. 5000 gramos = 5kg)
+            if (parseInt(this.value) > 5000) {
+                this.value = '5000';
+            }
+        });
+
+        function actualizarOpcionesCantidadSegunMetodo() {
+            const metodo = metodoVenta.value;
+        
+            if (!galletaActual) return;
+        
+            const id = galletaActual.idGalleta;
+        
+            if (metodo === 'Por unidad') {
+                cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
+                for (let i = 1; i <= inventarioTemporal[id]; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    cantidadSelect.appendChild(opt);
+                }
+            } else if (metodo === 'Empacado') {
+                calcularOpcionesEmpacado(inventarioTemporal[id], galletaActual.gramajeGalleta);
+            }
+        }
+        
+
+        // Función para eliminar un item de la venta
+        function eliminarItemVenta(index) {
+            const item = detallesVenta[index];
+            detallesVenta.splice(index, 1);
+            const id = item.idGalleta;
+        
+            // Extraer cantidad de unidades desde el texto del item
+            let unidadesADevolver = 0;
+        
+            if (item.metodoVenta === 'Por unidad') {
+                const match = item.cantidad.match(/(\d+)/);
+                unidadesADevolver = parseInt(match[1], 10);
+            } else if (item.metodoVenta === 'Empacado') {
+                const match = item.cantidad.match(/(\d+)\s+Caja\s+(700gr|1kg)/);
+                if (match) {
+                    const cajas = parseInt(match[1], 10);
+                    const tipo = match[2];
+                    const unidadesPorCaja = item.unidadesPorCaja?.[tipo];
+                    unidadesADevolver = cajas * unidadesPorCaja;
+                }
+            } else if (item.metodoVenta === 'Por gramo') {
+                const match = item.cantidad.match(/(\d+)gr/);
+                if (match) {
+                    const gramos = parseInt(match[1], 10);
+                    unidadesADevolver = Math.floor(gramos / item.gramajeGalleta);
+                }
+            }
+        
+            // Surtir inventario
+            inventarioTemporal[id] += unidadesADevolver;
+        
+            actualizarTablaVentas();
+            actualizarTotalVenta();
+        
+            if (galletaActual && galletaActual.idGalleta === id) {
+                actualizarOpcionesCantidadSegunMetodo();
+            }
+            
         }
         
         // Función para actualizar la tabla de ventas
@@ -327,13 +549,6 @@
             });
         }
         
-        // Función para eliminar un item de la venta
-        function eliminarItemVenta(index) {
-            detallesVenta.splice(index, 1);
-            actualizarTablaVentas();
-            actualizarTotalVenta();
-        }
-        
         // Función para actualizar el total de la venta
         function actualizarTotalVenta() {
             totalVenta = detallesVenta.reduce((total, item) => total + item.subtotal, 0);
@@ -344,13 +559,85 @@
         function limpiarFormularioDetalle() {
             galletaSelect.selectedIndex = 0;
             cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
-            gramosInput.value = '50';
+            gramosInput.value = '';
             subtotalInput.value = '';
             galletaActual = null;
         }
 
         // Ejecutar al cargar la página
         actualizarCamposVisibles();
+
+        function calcularOpcionesEmpacado(cantidadDisponible, gramajePorUnidad) {
+            // Limpiar select primero
+            cantidadSelect.innerHTML = '<option selected disabled>Selecciona empaque</option>';
+            
+            // Validar que el gramaje sea válido
+            if (gramajePorUnidad <= 0) {
+                const opt = document.createElement('option');
+                opt.value = '0';
+                opt.textContent = 'Gramaje no válido';
+                opt.disabled = true;
+                cantidadSelect.appendChild(opt);
+                return;
+            }
+        
+            // Calcular unidades por tipo de caja
+            const unidadesPorCaja700 = Math.floor(700 / gramajePorUnidad);
+            const unidadesPorCaja1kg = Math.floor(1000 / gramajePorUnidad);
+            
+            // Guardar esta información para cálculos posteriores
+            galletaActual.unidadesPorCaja = {
+                '700gr': unidadesPorCaja700,
+                '1kg': unidadesPorCaja1kg
+            };
+        
+            // Calcular máximas cajas posibles de cada tipo
+            const maxCajas700 = unidadesPorCaja700 > 0 ? 
+                Math.floor(cantidadDisponible / unidadesPorCaja700) : 0;
+            const maxCajas1kg = unidadesPorCaja1kg > 0 ? 
+                Math.floor(cantidadDisponible / unidadesPorCaja1kg) : 0;
+        
+            // Agregar opciones para cajas de 700gr
+            if (unidadesPorCaja700 > 0) {
+                for (let i = 1; i <= maxCajas700; i++) {
+                    const totalUnidades = i * unidadesPorCaja700;
+                    const opt = document.createElement('option');
+                    opt.value = `${i} Caja 700gr`;
+                    opt.textContent = `${i} Caja 700gr (${totalUnidades} unidades)`;
+                    opt.dataset.unidades = totalUnidades;
+                    cantidadSelect.appendChild(opt);
+                }
+            }
+        
+            // Agregar opciones para cajas de 1kg
+            if (unidadesPorCaja1kg > 0) {
+                for (let i = 1; i <= maxCajas1kg; i++) {
+                    const totalUnidades = i * unidadesPorCaja1kg;
+                    const opt = document.createElement('option');
+                    opt.value = `${i} Caja 1kg`;
+                    opt.textContent = `${i} Caja 1kg (${totalUnidades} unidades)`;
+                    opt.dataset.unidades = totalUnidades;
+                    cantidadSelect.appendChild(opt);
+                }
+            }
+        
+            // Mostrar mensaje si no hay opciones disponibles
+            if (maxCajas700 === 0 && maxCajas1kg === 0) {
+                const opt = document.createElement('option');
+                opt.value = '0';
+                opt.textContent = unidadesPorCaja700 === 0 && unidadesPorCaja1kg === 0 ?
+                    'Las galletas son muy grandes para los empaques estándar' :
+                    'No hay suficientes unidades para empaquetar';
+                opt.disabled = true;
+                cantidadSelect.appendChild(opt);
+            }
+        
+            // Si hay exactamente una opción, seleccionarla automáticamente
+            if ((maxCajas700 === 1 && maxCajas1kg === 0) || (maxCajas700 === 0 && maxCajas1kg === 1)) {
+                cantidadSelect.selectedIndex = 1;
+                calcularSubtotal(); // Calcular subtotal automáticamente
+            }
+        }
 
         // Cargar galletas al iniciar
         fetch('/ventas/galletas_disponibles')
@@ -368,28 +655,29 @@
         galletaSelect.addEventListener('change', () => {
             const idGalleta = galletaSelect.value;
             const metodo = metodoVenta.value;
-
-            // Limpiar subtotal cuando cambia la galleta
+        
             subtotalInput.value = '';
-
-            // Obtener datos de la galleta seleccionada
+        
             if (idGalleta) {
                 fetch(`/ventas/galleta/${idGalleta}`)
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            // Guardar datos de la galleta actual
                             galletaActual = {
                                 idGalleta: idGalleta,
                                 nombreGalleta: galletaSelect.options[galletaSelect.selectedIndex].text,
                                 cantidadDisponible: data.cantidadDisponible,
-                                gramajeGalleta: data.gramaje,  // Cambio aquí
-                                precioUnitario: data.precio    // Cambio aquí
+                                gramajeGalleta: data.gramaje,
+                                precioUnitario: data.precio
                             };
-                            
-                            // Si la venta es por unidad, actualizar opciones de cantidad
+
+                             // NUEVO: Guarda en inventario temporal si no existe
+                            if (inventarioTemporal[idGalleta] === undefined) {
+                                inventarioTemporal[idGalleta] = data.cantidadDisponible;
+                            }
+        
                             if (metodo === 'Por unidad') {
-                                const max = Math.min(data.cantidadDisponible, data.cantidadDisponible); // Limitamos a 20 o la cantidad disponible
+                                const max = inventarioTemporal[galletaActual.idGalleta];
                                 cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
                                 for (let i = 1; i <= max; i++) {
                                     const opt = document.createElement('option');
@@ -397,6 +685,9 @@
                                     opt.textContent = i;
                                     cantidadSelect.appendChild(opt);
                                 }
+                            } 
+                            else if (metodo === 'Empacado') {
+                                calcularOpcionesEmpacado(inventarioTemporal[idGalleta], data.gramaje);
                             }
                         }
                     });
@@ -413,39 +704,31 @@
         metodoVenta.addEventListener('change', () => {
             const metodo = metodoVenta.value;
             cantidadSelect.innerHTML = '<option selected disabled>Selecciona cantidad</option>';
-            
-            // Limpiar subtotal cuando cambia el método
             subtotalInput.value = '';
-
-            // Actualizar visibilidad de campos
             actualizarCamposVisibles();
-
-            if (metodo === 'Por unidad') {
-                // Si ya hay una galleta seleccionada, cargar las cantidades
-                if (galletaActual) {
-                    const max = Math.min(galletaActual.cantidadDisponible, galletaActual.cantidadDisponible);
-                    for (let i = 1; i <= max; i++) {
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.textContent = i;
-                        cantidadSelect.appendChild(opt);
-                    }
+        
+            if (metodo === 'Por unidad' && galletaActual) {
+                const max = inventarioTemporal[galletaActual.idGalleta];
+                for (let i = 1; i <= max; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    cantidadSelect.appendChild(opt);
                 }
-            } else if (metodo === 'Por gramo') {
-                gramosInput.value = '50';
-                if (galletaActual) {
-                    calcularSubtotal();
-                }
-            } else if (metodo === 'Empacado') {
+            } 
+            else if (metodo === 'Empacado' && galletaActual) {
+                calcularOpcionesEmpacado(galletaActual.cantidadDisponible, galletaActual.gramajeGalleta);
+            }
+            else if (metodo === 'Empacado') {
                 ['Caja 700gr', 'Caja 1kg'].forEach(val => {
                     const option = document.createElement('option');
                     option.value = val;
                     option.textContent = val;
+                    option.disabled = true;
                     cantidadSelect.appendChild(option);
                 });
             }
         });
-        
         // Manejar el envío del formulario de detalle
         detalleVentaForm.addEventListener('submit', agregarItemVenta);
     });
