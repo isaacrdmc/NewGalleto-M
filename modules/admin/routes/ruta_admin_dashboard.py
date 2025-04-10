@@ -50,8 +50,8 @@ def dashboard_admin():
 def obtener_datos_dashboard():
     try:
         ventas_semanales = obtener_ventas_semanales()
-        top_galletas = obtener_top_galletas() or []
-        top_presentaciones = [dict(row) for row in obtener_top_presentaciones()] if obtener_top_presentaciones() else []
+        top_galletas = obtener_top_galletas() or []  # Manejar caso None
+        top_presentaciones = obtener_top_presentaciones() or []  # Manejar caso None
         estimacion_costos = obtener_estimacion_costos()
         historial_ventas = obtener_historial_ventas_semanales()
         ventas_por_dia = obtener_ventas_por_dia()
@@ -73,8 +73,14 @@ def obtener_datos_dashboard():
 @bp_admistracion.route('/notificaciones')
 @login_required
 def obtener_notificaciones():
-    notificaciones = obtener_notificaciones_recientes(usuario_id=current_user.id)
-    return jsonify([notif.to_dict() for notif in notificaciones])
+    notificaciones = obtener_notificaciones_recientes(usuario_id=current_user.idUser)
+    return jsonify([{
+        'id': notif.id,
+        'tipo': notif.tipo,
+        'mensaje': notif.mensaje,
+        'fecha': notif.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if notif.fecha_creacion else None,
+        'estado': notif.estado
+    } for notif in notificaciones])
 
 @bp_admistracion.route('/notificaciones/marcar_vista/<int:notificacion_id>', methods=['POST'])
 @login_required

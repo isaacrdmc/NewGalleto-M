@@ -152,3 +152,18 @@ class Notificacion(db.Model):
             'id_insumo': self.id_insumo,
             'id_galleta': self.id_galleta
         }
+
+# ~ Tabla para los logs del sistema
+# ? Esta tabla se encarga de almacenar los logs del sistema, como errores, accesos y operaciones realizadas por los usuarios.    
+class LogSistema(db.Model):
+    __tablename__ = 'logsSistema'
+    
+    idLog = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tipoLog = db.Column(Enum('Error', 'Seguridad', 'Acceso', 'Operacion', name='tipo_log_enum'), nullable=False)
+    descripcionLog = db.Column(db.Text, nullable=False)
+    fechaHora = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    ipOrigen = db.Column(db.String(45))
+    idUsuario = db.Column(db.Integer, db.ForeignKey('usuarios.idUser'))
+    
+    # Relaciones
+    usuario = db.relationship('User', backref='logs')

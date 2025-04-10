@@ -2,11 +2,11 @@
 from .models import Proveedores, TransaccionCompra, DetalleCompraInsumo, Merma, Notificacion
 from ..shared.models import User, Rol 
 from ..client.models import Pedido, DetallePedido
-from ..ventas.models import Venta, DetalleVenta
+from ..ventas.models import HistorialVenta, Venta, DetalleVenta
 from ..production.models import Receta, Galleta, Insumo, Horneado, Produccion, IngredienteReceta
 from database.conexion import db
 from werkzeug.security import generate_password_hash
-from sqlalchemy import distinct, func
+from sqlalchemy import case, distinct, func
 from datetime import datetime, timedelta
 
 # ==============================================
@@ -503,7 +503,7 @@ def crear_pedido(id_cliente, detalles):
         
         for detalle in detalles:
             nuevo_detalle = DetallePedido(
-                idPedido=pedido.idPedido,
+                idPedido=pedido.idPedidos,
                 idGalleta=detalle['id_galleta'],
                 cantidad=detalle['cantidad'],
                 precioUnitario=detalle['precio_unitario'],
@@ -532,41 +532,34 @@ def obtener_pedidos_cliente(id_cliente):
 # SECCIÓN DE VENTAS (CORREGIDA)
 # ==============================================
 
-def registrar_venta(id_usuario, id_cliente, metodo_pago, requiere_factura, detalles, observaciones=None):
+def registrar_venta(fecha_venta, total_venta, id_usuario, detalles):
     """
-    Registra una nueva venta en el sistema (versión corregida)
+    Registra una nueva venta en el sistema
     """
     try:
-        # Primero crear el detalle de venta
-        detalle_venta = DetalleVenta(
-            cantGalletasVendidas=sum(d['cantidad'] for d in detalles),
-            precioUnitario=sum(d['cantidad'] * d['precio_unitario'] for d in detalles),
-            formaVenta=detalles[0]['forma_venta'],  # Tomamos la forma de venta del primer detalle
-            cantidadGalletas=detalles[0].get('cantidad_galletas'),
-            pesoGramos=detalles[0].get('peso_gramos'),
-            idGalleta=detalles[0]['id_galleta']
-        )
-        db.session.add(detalle_venta)
-        db.session.flush()  # Para obtener el ID del detalle
-        
-        # Calcular el total
-        total = sum(d['cantidad'] * d['precio_unitario'] for d in detalles)
-        
-        # Crear la venta
+        # Crear la venta principal
         venta = Venta(
-            fechaVentaGalleta=datetime.now().date(),
-            totalVenta=total,
-            idUsuario=id_usuario,
-            idCliente=id_cliente,
-            idDetalleVenta=detalle_venta.idDetalleVenta,
-            metodoPago=metodo_pago,
-            requiereFactura=requiere_factura,
-            observaciones=observaciones
+            fechaVentaGalleta=fecha_venta,
+            totalVenta=total_venta,
+            idUsuario=id_usuario
         )
         db.session.add(venta)
+        db.session.flush()  # Para obtener el ID de la venta
         
-        # Actualizar stock de galletas
+        # Crear los detalles de venta
         for detalle in detalles:
+            nuevo_detalle = DetalleVenta(
+                cantGalletasVendidas=detalle['cantidad'],
+                precioUnitario=detalle['precio_unitario'],
+                formaVenta=detalle['forma_venta'],
+                cantidadGalletas=detalle.get('cantidad_galletas'),
+                pesoGramos=detalle.get('peso_gramos'),
+                idGalleta=detalle['id_galleta'],
+                idVenta=venta.idVenta
+            )
+            db.session.add(nuevo_detalle)
+            
+            # Actualizar stock de galletas
             galleta = Galleta.query.get(detalle['id_galleta'])
             if galleta:
                 galleta.cantidadDisponible -= detalle['cantidad']
@@ -576,6 +569,7 @@ def registrar_venta(id_usuario, id_cliente, metodo_pago, requiere_factura, detal
     except Exception as e:
         db.session.rollback()
         raise e
+    
 
 def obtener_ventas():
     """
@@ -590,6 +584,20 @@ def obtener_ventas():
         'cliente': v.cliente.username if v.cliente else None,
         'detalle': v.detalle.to_dict() if v.detalle else None
     } for v in ventas]
+
+
+def registrar_historial_venta(accion, id_usuario, id_venta):
+    """
+    Registra un cambio en una venta en el historial
+    """
+    historial = HistorialVenta(
+        accionRelaizada=accion,
+        idUsuario=id_usuario,
+        idVenta=id_venta
+    )
+    db.session.add(historial)
+    db.session.commit()
+    return historial
 
 # ==============================================
 # CORRECCIÓN DE REPORTES
@@ -616,15 +624,13 @@ def obtener_ventas_semanales():
 
 
 def obtener_top_galletas(limit=3):
-    """
-    Obtiene las galletas más vendidas
-    """
+    # Corrección en la consulta:
     resultados = db.session.query(
         Galleta.nombre,
         func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida'),
         func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas')
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
-    ).join(Galleta, DetalleVenta.idGalleta == Galleta.id  # Corregido para usar idGalleta
+    ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
+    ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
     ).group_by(Galleta.id
     ).order_by(func.sum(DetalleVenta.cantGalletasVendidas).desc()
     ).limit(limit).all()
@@ -636,20 +642,35 @@ def obtener_top_galletas(limit=3):
     } for r in resultados]
 
 def obtener_top_presentaciones(limit=3):
-    """
-    Obtiene las presentaciones más vendidas (por pieza, gramos o paquete/caja)
-    basado en las ganancias generadas
-    """
-    return db.session.query(
-        DetalleVenta.formaVenta,
-        func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas'),
-        func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida')
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
-    ).filter(
-        Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
-    ).group_by(DetalleVenta.formaVenta
-    ).order_by(func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).desc()
-    ).limit(limit).all()
+    """Obtiene las presentaciones más vendidas (por pieza, gramos o paquete/caja)"""
+    try:
+        # Primero verifica si hay datos en las tablas
+        ventas_recientes = db.session.query(Venta).filter(
+            Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
+        ).count()
+        
+        if ventas_recientes == 0:
+            return []
+
+        resultados = db.session.query(
+            DetalleVenta.formaVenta,
+            func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total_ventas'),
+            func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad_vendida')
+        ).join(Venta, DetalleVenta.idVenta == Venta.idVenta
+        ).filter(
+            Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
+        ).group_by(DetalleVenta.formaVenta
+        ).order_by(func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).desc()
+        ).limit(limit).all()
+        
+        return [{
+            'formaVenta': r.formaVenta,
+            'total_ventas': float(r.total_ventas) if r.total_ventas else 0.0,
+            'cantidad_vendida': r.cantidad_vendida or 0
+        } for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_top_presentaciones: {str(e)}")
+        return []
 
 def obtener_estimacion_costos():
     """
@@ -744,7 +765,7 @@ def obtener_distribucion_ventas():
         func.sum(DetalleVenta.cantGalletasVendidas).label('cantidad'),
         func.sum(DetalleVenta.precioUnitario * DetalleVenta.cantGalletasVendidas).label('total')
     ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
-    ).join(Venta, Venta.idDetalleVenta == DetalleVenta.idDetalleVenta
+    ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
     ).filter(
         Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=30))
     ).group_by(Galleta.nombre
@@ -783,26 +804,62 @@ def obtener_produccion_semanal():
 
 def obtener_eficiencia_produccion():
     """Calcula la eficiencia de producción por tipo de galleta"""
-    resultados = db.session.query(
-        Galleta.nombre,
-        func.sum(Produccion.produccionTotal).label('total_producido'),
-        func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma).label('total_merma'),
-        (func.sum(Produccion.produccionTotal) / 
-         (func.sum(Produccion.produccionTotal) + 
-          func.sum(Produccion.gramosMerma + Produccion.mililitrosMerma + Produccion.piezasMerma)) * 100).label('eficiencia')
-    ).join(Produccion, Produccion.idGalleta == Galleta.id
-    ).filter(
-        Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
-    ).group_by(Galleta.nombre
-    ).order_by(func.sum(Produccion.produccionTotal).desc()
-    ).limit(5).all()
-    
-    return [{
-        'galleta': r.nombre,
-        'producido': r.total_producido,
-        'merma': r.total_merma,
-        'eficiencia': float(r.eficiencia) if r.eficiencia else 0.0
-    } for r in resultados]
+    try:
+        # Primero verifica si hay datos de producción
+        produccion_reciente = db.session.query(Produccion).filter(
+            Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
+        ).count()
+        
+        if produccion_reciente == 0:
+            return []
+
+        resultados = db.session.query(
+            Galleta.nombre,
+            func.sum(Produccion.produccionTotal).label('total_producido'),
+            func.sum(
+                case(
+                    (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                    (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                    (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                    else_=0
+                )
+            ).label('total_merma'),
+            (func.sum(Produccion.produccionTotal) / 
+             (func.sum(Produccion.produccionTotal) + 
+              func.sum(
+                  case(
+                      (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                      (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                      (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                      else_=0
+                  )
+              )) * 100).label('eficiencia')
+        ).join(Produccion, Produccion.idGalleta == Galleta.id
+        ).filter(
+            Produccion.fechaProduccion >= (datetime.now() - timedelta(days=7))
+        ).group_by(Galleta.nombre
+        ).having(
+            (func.sum(Produccion.produccionTotal) + 
+             func.sum(
+                 case(
+                     (Produccion.gramosMerma > 0, Produccion.gramosMerma),
+                     (Produccion.mililitrosMerma > 0, Produccion.mililitrosMerma),
+                     (Produccion.piezasMerma > 0, Produccion.piezasMerma),
+                     else_=0
+                 )
+             )) > 0
+        ).order_by(func.sum(Produccion.produccionTotal).desc()
+        ).limit(5).all()
+        
+        return [{
+            'galleta': r.nombre,
+            'producido': r.total_producido or 0,
+            'merma': r.total_merma or 0,
+            'eficiencia': float(r.eficiencia) if r.eficiencia is not None else 0.0
+        } for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_eficiencia_produccion: {str(e)}")
+        return []
 
 
 def obtener_notificaciones_recientes(limit=5, usuario_id=None):

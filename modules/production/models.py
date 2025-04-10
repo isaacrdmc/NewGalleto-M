@@ -2,6 +2,7 @@
 from database.conexion import db
 from datetime import datetime
 from sqlalchemy.sql import func
+from sqlalchemy import Enum
 
 # Tabla de galletas
 class Galleta(db.Model):
@@ -183,3 +184,28 @@ class IngredienteReceta(db.Model):
             'insumo': self.insumo.to_dict() if self.insumo else None
         }
         
+
+# Tabla de solicitudes de horneado
+class SolicitudHorneado(db.Model):
+    __tablename__ = 'solicitudes_horneado'
+    
+    idSolicitud = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    idReceta = db.Column(db.Integer, db.ForeignKey('recetas.idReceta'), nullable=False)
+    cantidadLotes = db.Column(db.Integer, nullable=False)
+    idSolicitante = db.Column(db.Integer, db.ForeignKey('usuarios.idUser'), nullable=False)
+    idAprobador = db.Column(db.Integer, db.ForeignKey('usuarios.idUser'))
+    estado = db.Column(Enum('Pendiente', 'Aprobada', 'Rechazada', 'Completada', name='estado_solicitud_enum'), default='Pendiente')
+    motivoRechazo = db.Column(db.String(255))
+    fechaSolicitud = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    fechaAprobacion = db.Column(db.DateTime)
+    fechaCompletado = db.Column(db.DateTime)
+    idHorneado = db.Column(db.Integer, db.ForeignKey('historialHorneado.idHorneado'))
+    
+    # Relaciones
+    receta = db.relationship('Receta', backref='solicitudes')
+    solicitante = db.relationship('User', foreign_keys=[idSolicitante], backref='solicitudes_enviadas')
+    aprobador = db.relationship('User', foreign_keys=[idAprobador], backref='solicitudes_aprobadas')
+    horneado = db.relationship('Horneado', backref='solicitud')
+
+
+    
