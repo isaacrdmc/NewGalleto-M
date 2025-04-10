@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Registros del Sistema</h2>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="tipo_log" class="mr-2">Tipo de Log:</label>
+                    <select name="tipo_log" id="tipo_log" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="ERROR" {% if request.args.get('tipo_log') == 'ERROR' %}selected{% endif %}>Errores</option>
+                        <option value="SECURITY" {% if request.args.get('tipo_log') == 'SECURITY' %}selected{% endif %}>Seguridad</option>
+                        <option value="OPERATION" {% if request.args.get('tipo_log') == 'OPERATION' %}selected{% endif %}>Operaciones</option>
+                        <option value="INFO" {% if request.args.get('tipo_log') == 'INFO' %}selected{% endif %}>Información</option>
+                    </select>
+                </div>
+                
+                <div class="form-group mr-3">
+                    <label for="usuario_id" class="mr-2">Usuario:</label>
+                    <select name="usuario_id" id="usuario_id" class="form-control">
+                        <option value="">Todos</option>
+                        {% for usuario in usuarios %}
+                            <option value="{{ usuario.id }}" {% if request.args.get('usuario_id') == usuario.id|string %}selected{% endif %}>
+                                {{ usuario.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{{ url_for('bp_admistracion.ver_logs') }}" class="btn btn-secondary ml-2">Limpiar</a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tabla de logs -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Tipo</th>
+                            <th>Usuario</th>
+                            <th>Mensaje</th>
+                            <th>IP</th>
+                            <th>Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}badge-danger
+                                    {% elif log.level == 'WARNING' or log.level == 'SECURITY' %}badge-warning
+                                    {% elif log.level == 'INFO' or log.level == 'OPERATION' %}badge-info
+                                    {% else %}badge-secondary{% endif %}">
+                                    {{ log.level }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.user %}
+                                    {{ log.user.username }}
+                                {% else %}
+                                    Sistema
+                                {% endif %}
+                            </td>
+                            <td>{{ log.message|truncate(50) }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#logDetails{{ log.id }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        
+                        <!-- Modal para detalles -->
+                        <div class="modal fade" id="logDetails{{ log.id }}" tabindex="-1" role="dialog" aria-labelledby="logDetailsLabel{{ log.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="logDetailsLabel{{ log.id }}">Detalles del Log #{{ log.id }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Fecha/Hora:</strong> {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                                <p><strong>Tipo:</strong> <span class="badge 
+                                                    {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}badge-danger
+                                                    {% elif log.level == 'WARNING' or log.level == 'SECURITY' %}badge-warning
+                                                    {% elif log.level == 'INFO' or log.level == 'OPERATION' %}badge-info
+                                                    {% else %}badge-secondary{% endif %}">
+                                                    {{ log.level }}
+                                                </span></p>
+                                                <p><strong>Usuario:</strong> {% if log.user %}{{ log.user.username }}{% else %}Sistema{% endif %}</p>
+                                                <p><strong>IP:</strong> {{ log.ip_address }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Mensaje completo:</strong></p>
+                                                <div class="alert alert-light">
+                                                    {{ log.message }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if log.extra_data %}
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <p><strong>Datos adicionales:</strong></p>
+                                                <pre>{{ log.extra_data|tojson(indent=2) }}</pre>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginación -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=logs.prev_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if logs.page == page_num %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=page_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bp_admistracion.ver_logs', page=logs.next_num, tipo_log=request.args.get('tipo_log'), usuario_id=request.args.get('usuario_id')) }}">Siguiente</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
