@@ -1,0 +1,168 @@
+{% extends "ventas/base_ventas.html" %}
+{% block content %}
+<div class="main-container">
+    <h1 class="title">Pedidos de clientes</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Fecha del pedido</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Ver Detalles</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.id }}</td>
+                <td>{{ pedido.cliente }}</td>
+                <td>{{ pedido.fecha_pedido }}</td>
+                <td>{{ pedido.estado }}</td>
+                <td>${{ pedido.total }}</td>
+                <td>
+                    <button class="details-button" onclick="verDetallesPedido({{ pedido.id }})">
+                        <img src="{{ url_for('static', filename='img/factura.png') }}" class="details-icon" alt="Ver detalles">
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>        
+    </table>
+</div>
+<!-- Fondo oscuro detrás del modal -->
+<div id="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000088; z-index:999;" onclick="cerrarModal()"></div>
+
+<!-- Modal personalizado con nuevo diseño -->
+<div id="modal-detalles-pedido" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%, 0); background:#f0d6b3; padding:0; border:none; z-index:1000; width:80%; max-width:700px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <!-- Encabezado del modal -->
+    <div style="background-color:#0f1722; color:white; padding:20px; text-align:center;">
+        <h2 style="margin:0; font-size:36px; font-weight:bold;">Detalle del Pedido</h2>
+    </div>
+    
+    <!-- Cuerpo del modal -->
+    <div style="padding:20px;">
+        <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+            <thead>
+                <tr style="background-color:#ffbe55;">
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Producto</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Cantidad</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Precio Unitario</th>
+                    <th style="padding:15px; text-align:left; font-size:18px; font-weight:bold;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="modal-tabla-detalles-pedido">
+                <!-- Los detalles se llenarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+        
+        <!-- Botón de cerrar -->
+        <div style="text-align:right; margin-top:20px;">
+            <button onclick="cerrarModal()" style="background-color:#d73e48; color:white; border:none; padding:12px 25px; font-size:16px; font-weight:bold; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        background-color: #f2d2a9;
+        padding: 20px;
+    }
+    .main-container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+    .title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+    .search-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .search-input {
+        width: 60%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .filter-button {
+        background-color: #f8b74a;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 15px;
+        cursor: pointer;
+    }
+    h1 {
+        margin-top: 100px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th {
+        background-color: #f8b74a;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+    td {
+        background-color: #f9f9f9;
+        padding: 10px;
+        text-align: center;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .details-button {
+        background-color: #f9f9f9;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+    .details-icon {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+<script>
+    function verDetallesPedido(idPedido) {
+        fetch(`/ventas/pedidos_clientes/detalles/${idPedido}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('modal-tabla-detalles-pedido');
+                    tbody.innerHTML = '';
+
+                    data.detalles.forEach(det => {
+                        const row = `
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding:15px; background-color:#f9f9f9;">${det.producto}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">${det.cantidad}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">$${det.precio_unitario}</td>
+                                <td style="padding:15px; background-color:#f9f9f9;">$${det.subtotal}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+
+                    document.getElementById('modal-detalles-pedido').style.display = 'block';
+                    document.getElementById('modal-overlay').style.display = 'block';
+                } else {
+                    alert("No se encontraron detalles.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error al obtener detalles.");
+            });
+    }
+
+    function cerrarModal() {
+        document.getElementById('modal-detalles-pedido').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+</script>
+{% endblock %}

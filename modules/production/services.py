@@ -1,10 +1,9 @@
 from flask_login import current_user
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-# from .models import Galleta, Insumo, Produccion, Receta,Horneado, SolicitudHorneado, db, TransaccionCompra, DetalleCompraInsumo, Notificacion, Merma
-from .models import Galleta, Insumo, Produccion, Receta,Horneado, SolicitudHorneado, db, Notificacion
-from modules.admin.models import Proveedores as Proveedor
-from modules.shared.models import Rol as Role, User
+from .models import Galleta, Insumo, Receta,Horneado, SolicitudHorneado, db, Merma
+from modules.admin.models import DetalleCompraInsumo, Notificacion, Proveedores as Proveedor, TransaccionCompra
+from modules.shared.models import Rol as Role
 from modules.shared.models import User as Usuario
 from datetime import datetime, timedelta
 from sqlalchemy import text
@@ -23,6 +22,8 @@ FACTORES_CONVERSION = {
     ('L', 'mL'): 1000,       # 1 L = 1000 mL
     ('Dz', 'Pz'): 12         # 1 Dz = 12 Pz
 }
+
+# Creamos una clase base de servicio
 class BaseService:
     def __init__(self, db_session):
         self.db_session = db_session
@@ -71,6 +72,7 @@ class BaseService:
             print(f"Error al eliminar: {e}")
             return False
 
+# Servicio para manejar los proveedores
 class ProveedorService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
@@ -91,19 +93,20 @@ class ProveedorService(BaseService):
     def get_all_proveedores(self):
         return self.get_all(Proveedor)
 
+# Servicio para manejar las galletas
 class GalletaService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
 
-    def add_galleta(self, nombre, precio_unitario, cantidad_disponible, gramaje, tipo_galleta, fecha_anaquel, fecha_final_anaquel):
+    def add_galleta(self, nombreGalleta, precioUnitario, cantidadDisponible, gramajeGalleta, tipoGalleta, fechaAnaquel, fechaFinalAnaquel):
         galleta = Galleta(
-            nombre=nombre,
-            precio_unitario=precio_unitario,
-            cantidad_disponible=cantidad_disponible,
-            gramaje=gramaje,
-            tipo_galleta=tipo_galleta,
-            fecha_anaquel=fecha_anaquel,
-            fecha_final_anaquel=fecha_final_anaquel
+            nombreGalleta=nombreGalleta,
+            precioUnitario=precioUnitario,
+            cantidadDisponible=cantidadDisponible,
+            gramajeGalleta=gramajeGalleta,
+            tipoGalleta=tipoGalleta,
+            fechaAnaquel=fechaAnaquel,
+            fechaFinalAnaquel=fechaFinalAnaquel
         )
         return self.add(galleta)
 
@@ -113,6 +116,7 @@ class GalletaService(BaseService):
     def get_all_galletas(self):
         return self.get_all(Galleta)
 
+# Servicio para manejar los insumos
 class InsumoService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
@@ -126,30 +130,32 @@ class InsumoService(BaseService):
         )
         return self.add(insumo)
 
-    def get_insumo(self, id_insumo):
-        return self.get(Insumo, id_insumo)
-
     def get_insumo_por_nombre(self, nombre):
         try:
             return self.db_session.query(Insumo).filter(Insumo.nombre == nombre).first()
         except SQLAlchemyError as e:
             print(f"Error al buscar insumo por nombre: {e}")
             return None
+    
+    
+    def get_insumo(self, id_insumo):
+        return self.get(Insumo, id_insumo)
 
     def get_all_insumos(self):
         return self.get_all(Insumo)
 
+# Servicio para manejar las recetas
 class RecetaService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
 
-    def add_receta(self, nombre, instrucciones, cantidad_producida, galletTipo, id_galleta):
+    def add_receta(self, nombreReceta, instruccionReceta, cantGalletasProduction, galletTipo, idGalleta):
         receta = Receta(
-            nombre=nombre,
-            instrucciones=instrucciones,
-            cantidad_producida=cantidad_producida,
+            nombreReceta=nombreReceta,
+            instruccionReceta=instruccionReceta,
+            cantGalletasProduction=cantGalletasProduction,
             galletTipo=galletTipo,
-            id_galleta=id_galleta
+            idGalleta=idGalleta
         )
         return self.add(receta)
 
@@ -157,27 +163,39 @@ class RecetaService(BaseService):
         return self.get(Receta, id_receta)
 
     def get_all_recetas(self):
-        return self.db_session.query(Receta).join(Galleta).order_by(Receta.id.desc()).all()
+        return self.get_all(Receta)
+
+
+# Añadir al archivo services.py existente
 
 class HorneadoService(BaseService):
     def __init__(self, db_session):
         super().__init__(db_session)
     
     def registrar_horneado(self, temperatura_horno, tiempo_horneado, cantidad_producida, observaciones, id_receta, id_usuario):
+        """
+        Registra un nuevo horneado utilizando el procedimiento almacenado sp_RegistrarHorneado
+        """
         try:
-            horneado = Horneado(
-                fecha_horneado=datetime.now(),
-                temperatura_horno=temperatura_horno,
-                tiempo_horneado=tiempo_horneado,
-                cantidad_producida=cantidad_producida,
-                observaciones=observaciones,
-                id_receta=id_receta,
-                id_usuario=id_usuario
+            result = self.db_session.execute(
+                text("""
+                    CALL sp_RegistrarHorneado(:temperatura, :tiempo, :cantidad, :observaciones, :id_receta, :id_usuario)
+                """),
+                {
+                    'temperatura': temperatura_horno,
+                    'tiempo': tiempo_horneado,
+                    'cantidad': cantidad_producida,
+                    'observaciones': observaciones,
+                    'id_receta': id_receta,
+                    'id_usuario': id_usuario
+                }
             )
-            return self.add(horneado)
-        except Exception as e:
+            self.db_session.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
             print(f"Error al registrar horneado: {e}")
-            return None
+            return False
     
     def get_horneado(self, id_horneado):
         return self.get(Horneado, id_horneado)
@@ -196,6 +214,7 @@ class HorneadoService(BaseService):
                 query = query.filter(Horneado.fecha_horneado >= fecha_inicio)
             
             if fecha_fin:
+                # Ajustamos fecha_fin para incluir todo el día
                 fecha_fin_completa = datetime.strptime(fecha_fin, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Horneado.fecha_horneado < fecha_fin_completa)
             
@@ -211,17 +230,23 @@ class HorneadoService(BaseService):
             return []
     
     def get_estadisticas_horneado(self, dias=30):
+        """
+        Obtiene estadísticas de horneado de los últimos X días
+        """
         try:
             fecha_limite = datetime.now() - timedelta(days=dias)
             
+            # Total de horneados en el período
             total_horneados = self.db_session.query(func.count(Horneado.id)).filter(
                 Horneado.fecha_horneado >= fecha_limite
             ).scalar()
             
+            # Total de galletas producidas en el período
             total_galletas = self.db_session.query(func.sum(Horneado.cantidad_producida)).filter(
                 Horneado.fecha_horneado >= fecha_limite
             ).scalar() or 0
             
+            # Galletas por tipo/receta
             galletas_por_receta = self.db_session.query(
                 Receta.nombre,
                 func.sum(Horneado.cantidad_producida).label('total')
@@ -229,6 +254,7 @@ class HorneadoService(BaseService):
                 Horneado.fecha_horneado >= fecha_limite
             ).group_by(Receta.nombre).all()
             
+            # Horneados por día (para gráficas)
             horneados_por_dia = self.db_session.query(
                 func.date(Horneado.fecha_horneado).label('fecha'),
                 func.sum(Horneado.cantidad_producida).label('total')
@@ -250,42 +276,224 @@ class HorneadoService(BaseService):
                 'galletas_por_receta': [],
                 'horneados_por_dia': []
             }
+            
+            
+###########################################
 
-class ProduccionService(BaseService):
+class CompraService:
     def __init__(self, db_session):
-        super().__init__(db_session)
+        self.db_session = db_session
     
-    def agregar_produccion(self, fecha_produccion, gramos_merma, mililitros_merma, piezas_merma, produccion_total, id_receta=None, id_galleta=None):
-        produccion = Produccion(
-            fechaProduccion=fecha_produccion,
-            gramosMerma=gramos_merma,
-            mililitrosMerma=mililitros_merma,
-            piezasMerma=piezas_merma,
-            produccionTotal=produccion_total,
-            idReceta=id_receta,
-            idGalleta=id_galleta
-        )
-        return self.add(produccion)
+    def get_all_proveedores(self):
+        """
+        Obtiene todos los proveedores registrados
+        """
+        try:
+            return self.db_session.query(Proveedor).order_by(Proveedor.nombre).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener proveedores: {e}")
+            return []
     
-    def get_producciones(self):
-        return self.get_all(Produccion)
+    def get_proveedor(self, id_proveedor):
+        """
+        Obtiene un proveedor por su ID
+        """
+        try:
+            return self.db_session.query(Proveedor).get(id_proveedor)
+        except SQLAlchemyError as e:
+            print(f"Error al obtener proveedor: {e}")
+            return None
+    
+    def get_all_insumos(self):
+        """
+        Obtiene todos los insumos registrados
+        """
+        try:
+            return self.db_session.query(Insumo).order_by(Insumo.nombre).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener insumos: {e}")
+            return []
+    
+    def registrar_compra(self, id_proveedor, fecha_compra=None):
+        if fecha_compra is None:
+            fecha_compra = datetime.now().date()
 
-class UserService(BaseService):
-    def __init__(self, db_session):
-        super().__init__(db_session)
+        try:
+            # Inicializar la variable de salida
+            self.db_session.execute(text("SET @id_transaccion = 0"))
+            
+            # Llamada al procedimiento almacenado
+            self.db_session.execute(
+                text("CALL RegistrarCompraInsumo(:p_idProveedor, :p_fechaCompra, @id_transaccion)"),
+                {
+                    'p_idProveedor': id_proveedor,
+                    'p_fechaCompra': fecha_compra
+                }
+            )
+
+            # Obtener el valor de la variable de salida
+            id_transaccion = self.db_session.execute(text("SELECT @id_transaccion")).scalar()
+            
+            # Verificar que se haya obtenido un ID válido
+            if not id_transaccion:
+                print("No se pudo obtener un ID de transacción válido")
+                return None
+                
+            self.db_session.commit()
+            return id_transaccion
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al registrar compra: {e}")
+            return None
+
+            
+            
+
     
-    def get_user(self, id_user):
-        return self.get(User, id_user)
+    def agregar_detalle_compra(self, id_compra, id_insumo, cant_cajas, cant_unidades_caja, 
+                      cant_merma_unidad, costo_caja, unidad_insumo, 
+                      fecha_registro=None, fecha_caducidad=None):
+        if fecha_registro is None:
+            fecha_registro = datetime.now().date()
+
+        try:
+            # Asegurarnos de que unidad_insumo sea un string
+            unidad_str = str(unidad_insumo)
+            
+            # Validar que sea uno de los valores válidos
+            if unidad_str not in ['Gr', 'mL', 'Pz']:
+                print(f"Error: Unidad de insumo inválida: {unidad_str}")
+                return False
+                
+            # Llamar al procedimiento almacenado
+            self.db_session.execute(
+                text("""CALL AgregarDetalleCompraInsumo(
+                    :p_idCompra, :p_idInsumo, :p_cantCajas, :p_cantUnidadesXcaja, 
+                    :p_cantMermaPorUnidad, :p_CostoPorCaja, :p_unidadInsumo, 
+                    :p_fechaRegistro, :p_fechaCaducidad)"""),
+                {
+                    'p_idCompra': id_compra,
+                    'p_idInsumo': id_insumo,
+                    'p_cantCajas': cant_cajas,
+                    'p_cantUnidadesXcaja': cant_unidades_caja,
+                    'p_cantMermaPorUnidad': cant_merma_unidad,
+                    'p_CostoPorCaja': costo_caja,
+                    'p_unidadInsumo': unidad_str,
+                    'p_fechaRegistro': fecha_registro,
+                    'p_fechaCaducidad': fecha_caducidad
+                }
+            )
+            self.db_session.commit()
+            print(f"Detalle de compra registrado exitosamente para insumo {id_insumo}.")
+            return True
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al agregar detalle de compra para insumo {id_insumo}: {e}")
+            return False
+
     
-    def get_all_users(self):
-        return self.db_session.query(User).join(Role).filter(
-            Role.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
-        ).order_by(User.idUser.desc()).all()
+    def get_compras(self, limit=100):
+        """
+        Obtiene las últimas compras realizadas
+        """
+        try:
+            return self.db_session.query(TransaccionCompra)\
+                .order_by(TransaccionCompra.fecha_compra.desc())\
+                .limit(limit).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener compras: {e}")
+            return []
     
-    def get_roles(self):
-        return self.db_session.query(Role).filter(
-            Role.nombreRol.in_(['Administrador', 'Produccion', 'Ventas'])
-        ).all()
+    def get_compra(self, id_compra):
+        """
+        Obtiene una compra por su ID
+        """
+        try:
+            return self.db_session.query(TransaccionCompra).get(id_compra)
+        except SQLAlchemyError as e:
+            print(f"Error al obtener compra: {e}")
+            return None
+    
+    def get_detalles_compra(self, id_compra):
+        """
+        Obtiene los detalles de una compra
+        """
+        try:
+            return self.db_session.query(DetalleCompraInsumo)\
+                .filter(DetalleCompraInsumo.id_compra == id_compra)\
+                .all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener detalles de compra: {e}")
+            return []
+    
+    def get_notificaciones(self, estatus=None, limit=10):
+        """
+        Obtiene las notificaciones del sistema
+        """
+        try:
+            query = self.db_session.query(Notificacion).order_by(Notificacion.fecha_creacion.desc())
+            
+            if estatus:
+                query = query.filter(Notificacion.estatus == estatus)
+            
+            return query.limit(limit).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener notificaciones: {e}")
+            return []
+    
+    def marcar_notificacion_vista(self, id_notificacion):
+        """
+        Marca una notificación como vista
+        """
+        try:
+            notificacion = self.db_session.query(Notificacion).get(id_notificacion)
+            if notificacion:
+                notificacion.estatus = 'Vista'
+                notificacion.fecha_visto = datetime.now()
+                self.db_session.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al marcar notificación como vista: {e}")
+            return False
+    
+    def resolver_notificacion(self, id_notificacion):
+        """
+        Marca una notificación como resuelta
+        """
+        try:
+            notificacion = self.db_session.query(Notificacion).get(id_notificacion)
+            if notificacion:
+                notificacion.estatus = 'Resuelto'
+                self.db_session.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            self.db_session.rollback()
+            print(f"Error al resolver notificación: {e}")
+            return False
+    
+    def obtener_mermas(self, tipoMerma=None, fecha_inicio=None, fecha_fin=None):
+        """
+        Obtiene las mermas registradas con filtros opcionales
+        """
+        try:
+            query = self.db_session.query(Merma).order_by(Merma.fecha_merma.desc())
+            
+            if tipoMerma:
+                query = query.filter(Merma.tipo_merma == tipoMerma)
+            
+            if fecha_inicio:
+                query = query.filter(Merma.fecha_merma >= fecha_inicio)
+            
+            if fecha_fin:
+                query = query.filter(Merma.fecha_merma <= fecha_fin)
+            
+            return query.all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener mermas: {e}")
+            return []
         
 ############################
 # Añadir al final de services.py
@@ -413,10 +621,10 @@ class SolicitudHorneadoService:
             
             # Crear notificación para el solicitante
             notificacion = Notificacion(
-                tipo_notificacion='Solicitud Produccion',
+                tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido aprobada',
                 fecha_creacion=datetime.now(),
-                estatus='Nueva',
+                estado='Nueva',
                 id_usuario=solicitud.id_solicitante
             )
             
@@ -450,7 +658,7 @@ class SolicitudHorneadoService:
             
             # Crear notificación para el solicitante
             notificacion = Notificacion(
-                tipo_notificacion='Solicitud Produccion',
+                tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido rechazada. Motivo: {motivo}',
                 fecha_creacion=datetime.now(),
                 estatus='Nueva',
@@ -507,10 +715,10 @@ class SolicitudHorneadoService:
             
             # Notificar al solicitante
             notificacion = Notificacion(
-                tipo_notificacion='Solicitud Produccion',
+                tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido completada',
                 fecha_creacion=datetime.now(),
-                estatus='Nueva',
+                estado='Nueva',
                 id_usuario=solicitud.id_solicitante
             )
             
@@ -567,21 +775,22 @@ class SolicitudHorneadoService:
         except SQLAlchemyError as e:
             print(f"Error al obtener solicitud: {e}")
             return None
-    def obtener_solicitudes_para_completar(self, id_usuario):
-        """Obtiene las solicitudes aprobadas pendientes de completar por un usuario"""
+        
+    def obtener_solicitudes_para_completar(self, id_usuario=None):
+        """Obtiene las solicitudes aprobadas pendientes de completar"""
         try:
-            return self.db_session.query(SolicitudHorneado)\
-                .filter(
-                    and_(
-                        SolicitudHorneado.estado == 'Aprobada',
-                        SolicitudHorneado.id_solicitante == id_usuario
-                    )
-                )\
-                .order_by(SolicitudHorneado.fecha_aprobacion.asc())\
-                .all()
+            query = self.db_session.query(SolicitudHorneado)\
+                .filter(SolicitudHorneado.estado == 'Aprobada')\
+                .order_by(SolicitudHorneado.fecha_aprobacion.asc())
+            
+            if id_usuario:
+                query = query.filter(SolicitudHorneado.id_solicitante == id_usuario)
+            
+            return query.all()
         except SQLAlchemyError as e:
             print(f"Error al obtener solicitudes para completar: {e}")
             return []
+        
     def verificar_insumos(self, id_receta, cantidad_lotes):
         """Verifica si hay suficientes insumos para la receta y cantidad de lotes especificados"""
         try:
