@@ -5,11 +5,10 @@
     <h1 class="title">Historial de ventas</h1>
     
     <div class="search-container">
-        <input type="text" class="search-input" placeholder="Buscar...">
-        <button class="filter-button">Filtrar por...</button>
+        <input type="text" class="search-input" placeholder="Buscar por ID, Responsable o Total..." id="inputBusqueda">
     </div>
     
-    <table>
+    <table id="tablaHistorial">
         <thead>
             <tr>
                 <th>ID</th>
@@ -175,5 +174,23 @@
         document.getElementById('modal-detalles').style.display = 'none';
         document.getElementById('modal-overlay').style.display = 'none';
     }
+
+    document.getElementById('inputBusqueda').addEventListener('input', function () {
+        const filtro = this.value.toLowerCase();
+        const filas = document.querySelectorAll('#tablaHistorial tbody tr');
+
+        filas.forEach(fila => {
+            const columnas = fila.querySelectorAll('td');
+            const id = columnas[0].textContent.toLowerCase();
+            const responsable = columnas[1].textContent.toLowerCase();
+            const total = columnas[4].textContent.toLowerCase();
+
+            if (id.includes(filtro) || responsable.includes(filtro) || total.includes(filtro)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    });
 </script>    
 {% endblock %}

@@ -106,11 +106,11 @@ def obtener_info_galleta(id_galleta):
 
     return jsonify({
         "success": True,
-        "cantidadDisponible": galleta.cantidad_disponible,
-        "gramaje": float(galleta.gramaje),
-        "precio": float(galleta.precio_unitario)
+        "cantidadDisponible": galleta.cantidadDisponible,
+        "gramaje": float(galleta.gramajeGalleta),
+        "precio": float(galleta.precioUnitario)
     })
-
+    
 @bp_ventas.route('/registrar_venta', methods=['POST'])
 def registrar_venta():
     from modules.ventas.models import Venta, DetalleVenta, Galleta
