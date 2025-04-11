@@ -104,7 +104,7 @@
                                 </button>
                                 {% endif %}
                                 
-                                {% if solicitud.estado == 'Aprobada' and solicitud.id_solicitante == current_user.idUser %}
+                                {% if solicitud.estado == 'Aprobada' and solicitud.id_solicitante == current_user.idUser  and current_user.rol.nombreRol in ['Administrador', 'Produccion']%}
                                 <a href="{{ url_for('production.completar_solicitud', id_solicitud=solicitud.id) }}" class="btn btn-success me-2">
                                     <i class="fas fa-check-circle me-2"></i> Completar Horneado
                                 </a>

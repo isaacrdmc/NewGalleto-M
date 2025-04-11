@@ -474,15 +474,15 @@ class CompraService:
             print(f"Error al resolver notificación: {e}")
             return False
     
-    def obtener_mermas(self, tipo_merma=None, fecha_inicio=None, fecha_fin=None):
+    def obtener_mermas(self, tipoMerma=None, fecha_inicio=None, fecha_fin=None):
         """
         Obtiene las mermas registradas con filtros opcionales
         """
         try:
             query = self.db_session.query(Merma).order_by(Merma.fecha_merma.desc())
             
-            if tipo_merma:
-                query = query.filter(Merma.tipo_merma == tipo_merma)
+            if tipoMerma:
+                query = query.filter(Merma.tipo_merma == tipoMerma)
             
             if fecha_inicio:
                 query = query.filter(Merma.fecha_merma >= fecha_inicio)
@@ -624,7 +624,7 @@ class SolicitudHorneadoService:
                 tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido aprobada',
                 fecha_creacion=datetime.now(),
-                estatus='Nueva',
+                estado='Nueva',
                 id_usuario=solicitud.id_solicitante
             )
             
@@ -658,7 +658,7 @@ class SolicitudHorneadoService:
             
             # Crear notificación para el solicitante
             notificacion = Notificacion(
-                tipo_notificacion='Solicitud Produccion',
+                tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido rechazada. Motivo: {motivo}',
                 fecha_creacion=datetime.now(),
                 estatus='Nueva',
@@ -715,10 +715,10 @@ class SolicitudHorneadoService:
             
             # Notificar al solicitante
             notificacion = Notificacion(
-                tipo_notificacion='Solicitud Produccion',
+                tipo='Solicitud Produccion',
                 mensaje=f'Tu solicitud de horneado para {solicitud.cantidad_lotes} lotes de {solicitud.receta.nombre} ha sido completada',
                 fecha_creacion=datetime.now(),
-                estatus='Nueva',
+                estado='Nueva',
                 id_usuario=solicitud.id_solicitante
             )
             
@@ -775,21 +775,22 @@ class SolicitudHorneadoService:
         except SQLAlchemyError as e:
             print(f"Error al obtener solicitud: {e}")
             return None
-    def obtener_solicitudes_para_completar(self, id_usuario):
-        """Obtiene las solicitudes aprobadas pendientes de completar por un usuario"""
+        
+    def obtener_solicitudes_para_completar(self, id_usuario=None):
+        """Obtiene las solicitudes aprobadas pendientes de completar"""
         try:
-            return self.db_session.query(SolicitudHorneado)\
-                .filter(
-                    and_(
-                        SolicitudHorneado.estado == 'Aprobada',
-                        SolicitudHorneado.id_solicitante == id_usuario
-                    )
-                )\
-                .order_by(SolicitudHorneado.fecha_aprobacion.asc())\
-                .all()
+            query = self.db_session.query(SolicitudHorneado)\
+                .filter(SolicitudHorneado.estado == 'Aprobada')\
+                .order_by(SolicitudHorneado.fecha_aprobacion.asc())
+            
+            if id_usuario:
+                query = query.filter(SolicitudHorneado.id_solicitante == id_usuario)
+            
+            return query.all()
         except SQLAlchemyError as e:
             print(f"Error al obtener solicitudes para completar: {e}")
             return []
+        
     def verificar_insumos(self, id_receta, cantidad_lotes):
         """Verifica si hay suficientes insumos para la receta y cantidad de lotes especificados"""
         try:

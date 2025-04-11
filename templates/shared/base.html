@@ -62,6 +62,12 @@
                             style="background-color:rgba(27, 176, 119, 0.83) !important;">
                             <img src="{{ url_for('static', filename='img/order.png') }}" alt="Reportes">
                         </a>
+                        <!-- New button 3 -->
+                        <a class="btn btn-icon-circle btn-icon-circle-sm ms-2 d-flex align-items-center justify-content-center p-0"
+                            href="{{ url_for('production.solicitar_horneado') }}"
+                            style="background-color:rgba(199, 159, 85, 0.83) !important;">
+                            <img src="{{ url_for('static', filename='img/order.png') }}" alt="Reportes">
+                        </a>
                         {% endif %}
                         <a class="ms-2 px-3" href="{{ url_for('shared.logout') }}">
                             <img src="{{ url_for('static', filename='img/exit.png') }}" alt="Cerrar Sesión" width="50">

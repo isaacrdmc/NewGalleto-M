@@ -342,18 +342,18 @@ def detalle_insumo(id_insumo):
     
     for lote, fecha_compra, proveedor_nombre in lotes:
         lote_data = {
-            'id': lote.id,
-            'cant_cajas': lote.cant_cajas,
-            'cant_unidades_caja': lote.cant_unidades_caja,
-            'cant_merma_unidad': lote.cant_merma_unidad,
-            'costo_caja': float(lote.costo_caja),
-            'costo_unidad_caja': float(lote.costo_unidad_caja),
-            'unidad_insumo': lote.unidad_insumo,
-            'fecha_registro': lote.fecha_registro.strftime('%Y-%m-%d'),
-            'fecha_caducidad': lote.fecha_caducidad.strftime('%Y-%m-%d'),
+            'id': lote.idetalleCompraInsumo,
+            'cant_cajas': lote.cantCajas,
+            'cant_unidades_caja': lote.cantUnidadesXcaja,
+            'cant_merma_unidad': lote.cantMermaPorUnidad,
+            'costo_caja': float(lote.CostoPorCaja),
+            'costo_unidad_caja': float(lote.costoUnidadXcaja),
+            'unidad_insumo': lote.unidadInsumo,
+            'fecha_registro': lote.fechaRegistro.strftime('%Y-%m-%d'),
+            'fecha_caducidad': lote.fechaCaducidad.strftime('%Y-%m-%d'),
             'fecha_compra': fecha_compra.strftime('%Y-%m-%d'),
             'proveedor_nombre': proveedor_nombre,
-            'is_expiring_soon': lote.fecha_caducidad <= fecha_limite
+            'is_expiring_soon': lote.fechaCaducidad <= fecha_limite
         }
         
         lotes_data.append(lote_data)
@@ -478,22 +478,22 @@ def registrar_merma():
         # Obtener datos del formulario
         id_insumo = request.form.get('id_insumo', type=int)
         id_lote = request.form.get('id_lote', type=int)
-        tipo_merma = request.form.get('tipo_merma')
+        tipoMerma = request.form.get('tipo_merma')
         cantidad_merma = request.form.get('cantidad_merma', type=int)
         unidad_merma = request.form.get('unidad_merma')
         
         # Validar datos
-        if not all([id_insumo, tipo_merma, cantidad_merma, unidad_merma]):
+        if not all([id_insumo, tipoMerma, cantidad_merma, unidad_merma]):
             flash('Todos los campos son obligatorios', 'danger')
             return redirect(url_for('production.detalle_insumo', id_insumo=id_insumo))
         
         # Crear un registro de merma
         merma = Merma(
-            tipo_merma=tipo_merma,
-            unidad_merma=unidad_merma,
-            cantidad_merma=cantidad_merma,
-            fecha_merma=datetime.now().date(),
-            id_insumo=id_insumo
+            tipoMerma=tipoMerma,
+            unidadMerma=unidad_merma,
+            cantidadMerma=cantidad_merma,
+            fechaMerma=datetime.now().date(),
+            idInsumo=id_insumo
         )
         
         # Agregar y guardar la merma
@@ -509,7 +509,7 @@ def registrar_merma():
                 from .models import Notificacion
                 
                 notificacion = Notificacion(
-                    tipo_notificacion='Bajo Inventario',
+                    tipo='Bajo Inventario',
                     mensaje=f'El insumo {insumo.nombre} está por debajo del nivel mínimo requerido',
                     fecha_creacion=datetime.now(),
                     estatus='Nueva',
@@ -536,7 +536,7 @@ def registrar_merma():
 def solicitar_horneado():
     # Obtener todas las recetas para el selector
     recetas = receta_service.get_all_recetas()
-    return render_template('produccion/solicitar_horneado.html', recetas=recetas)
+    return render_template('ventas/solicitar_horneado.html', recetas=recetas)
 
 @bp_production.route('/solicitar_horneado', methods=['POST'])
 @login_required
@@ -588,7 +588,7 @@ def ver_mis_solicitudes():
     print(f"Usuario actual ID: {current_user.idUser}")  # Debug
     solicitudes = solicitud_horneado_service.get_solicitudes_usuario(current_user.idUser)
     print(f"Solicitudes a enviar a template: {len(solicitudes)}")  # Debug
-    return render_template('produccion/mis_solicitudes.html', solicitudes=solicitudes)
+    return render_template('ventas/mis_solicitudes.html', solicitudes=solicitudes)
 
 @bp_production.route('/solicitud/aprobar/<int:id_solicitud>', methods=['POST'])
 @login_required
@@ -641,7 +641,8 @@ def completar_solicitud(id_solicitud):
         flash('Solicitud no encontrada', 'danger')
         return redirect(url_for('production.ver_mis_solicitudes'))
     
-    if solicitud.id_solicitante != current_user.idUser:
+    if (solicitud.id_solicitante != current_user.idUser and 
+        current_user.rol.nombreRol not in ['Administrador', 'Produccion']):
         abort(403)
     
     if solicitud.estado != 'Aprobada':
@@ -730,7 +731,14 @@ def detalle_solicitud(id_solicitud):
 @login_required
 def proceso_horneadas():
     # Obtener solicitudes aprobadas pendientes de completar
-    solicitudes_pendientes = solicitud_horneado_service.obtener_solicitudes_para_completar(current_user.idUser)
+    solicitudes_pendientes = db.session.query(SolicitudHorneado)\
+        .options(
+            joinedload(SolicitudHorneado.receta),
+            joinedload(SolicitudHorneado.solicitante)
+        )\
+        .filter(SolicitudHorneado.estado == 'Aprobada')\
+        .order_by(SolicitudHorneado.fecha_aprobacion.asc())\
+        .all()
     
     # Obtener horneados recientes del usuario (últimos 7 días)
     fecha_inicio = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
