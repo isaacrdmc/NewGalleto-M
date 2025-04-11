@@ -7,6 +7,7 @@ from . import bp_ventas
 from modules.ventas.services import obtener_historial_ventas
 from modules.ventas.models import Venta
 from modules.ventas.services import obtener_pedidos_clientes
+import database.conexion as db
 
 
 # ? Ahora vamos a definir las rutas necesarias para el bluprint
@@ -109,3 +110,69 @@ def obtener_info_galleta(id_galleta):
         "gramaje": float(galleta.gramaje),
         "precio": float(galleta.precio_unitario)
     })
+
+@bp_ventas.route('/registrar_venta', methods=['POST'])
+def registrar_venta():
+    from modules.ventas.models import Venta, DetalleVenta, Galleta
+    import datetime
+
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "No autenticado"}), 401
+
+    data = request.get_json()
+    detalles = data.get('detalles')
+    total = data.get('total')
+
+    if not detalles or total is None:
+        return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+    try:
+        nueva_venta = Venta(
+            fechaVentaGalleta=datetime.date.today(),
+            totalVenta=total,
+            idUsuario=session['user_id']  # Asegúrate que guardas el idUser en sesión
+        )
+        db.session.add(nueva_venta)
+        db.session.flush()  # Para obtener nueva_venta.idVenta
+
+        for d in detalles:
+            forma = d['metodoVenta']
+            cant = d['cantidad']
+            precio = d['subtotal']
+            idGalleta = d['idGalleta']
+
+            detalle = DetalleVenta(
+                idVenta=nueva_venta.idVenta,
+                idGalleta=idGalleta,
+                precioUnitario=precio,
+                formaVenta='Por pieza' if forma == 'Por unidad' else ('Por peso' if forma == 'Por gramo' else 'por paquete/caja'),
+            )
+
+            if forma == 'Por unidad':
+                unidades = int(cant.split(' ')[0])
+                detalle.cantGalletasVendidas = unidades
+                detalle.cantidadGalletas = unidades
+            elif forma == 'Por gramo':
+                gramos = int(cant.replace('gr', '').strip())
+                detalle.pesoGramos = gramos
+                detalle.cantGalletasVendidas = 0  # si quieres usarlo como total
+            elif forma == 'Empacado':
+                cajas, tipo = cant.split(' Caja ')
+                gramos = 1000 if '1kg' in tipo else 700
+                detalle.pesoGramos = gramos
+                detalle.cantGalletasVendidas = 0
+
+            # Descontar del inventario
+            galleta = Galleta.query.get(idGalleta)
+            if galleta:
+                galleta.cantidadDisponible -= detalle.cantGalletasVendidas or 0
+                db.session.add(galleta)
+
+            db.session.add(detalle)
+
+        db.session.commit()
+        return jsonify({"success": True})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
