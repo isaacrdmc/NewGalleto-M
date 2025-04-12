@@ -164,6 +164,30 @@ class RecetaService(BaseService):
 
     def get_all_recetas(self):
         return self.get_all(Receta)
+    
+    # Calcular el costo de la galleta:
+    def calcular_costo_galleta(self, id_receta):
+        """Calcula el costo de producción por galleta y por lote"""
+        try:
+            # Llamar al procedimiento almacenado
+            self.db_session.execute(
+                text("CALL sp_CalcularCostoGalleta(:id_receta, @costo_unitario, @costo_lote)"),
+                {'id_receta': id_receta}
+            )
+            
+            # Obtener los resultados
+            result = self.db_session.execute(
+                text("SELECT @costo_unitario, @costo_lote")
+            ).fetchone()
+            
+            return {
+                'costo_unitario': float(result[0]) if result[0] else 0,
+                'costo_lote': float(result[1]) if result[1] else 0
+            }
+        except SQLAlchemyError as e:
+            print(f"Error al calcular costo: {e}")
+            return None
+
 
 
 # Añadir al archivo services.py existente
@@ -497,7 +521,7 @@ class CompraService:
         
 ############################
 # Añadir al final de services.py
-
+ 
 class SolicitudHorneadoService:
     def __init__(self, db_session):
         self.db_session = db_session
@@ -732,6 +756,9 @@ class SolicitudHorneadoService:
             print(f"Error al completar solicitud: {e}")
             return {'success': False, 'message': 'Error al completar la solicitud'}
         
+
+
+
     def get_solicitudes_pendientes(self):
         """Obtiene todas las solicitudes pendientes de aprobación"""
         try:
