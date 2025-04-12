@@ -1,6 +1,9 @@
-from flask import render_template, jsonify, redirect, url_for
+from functools import wraps
+from flask import flash, render_template, jsonify, redirect, request, url_for
 from flask_login import login_required, current_user
 from ..services import (
+    obtener_costos_produccion,
+    obtener_recomendacion_producto,
     obtener_ventas_semanales, 
     obtener_top_galletas,
     obtener_estimacion_costos,
@@ -15,35 +18,47 @@ from ..services import (
 )
 from ...admin import bp_admistracion
 
+# Decorador personalizado para validar rol de Administrador
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Por favor inicie sesión para acceder a esta página', 'warning')
+            return redirect(url_for('shared.login', next=request.url))
+        
+        if current_user.rol.nombreRol != 'Administrador':
+            flash('No tiene permisos para acceder a esta sección', 'danger')
+            return redirect(url_for('shared.index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
 @bp_admistracion.route('/dashboard_admin')
-@login_required
+@admin_required
 def dashboard_admin():
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.index'))
-    
-    # Datos existentes
+    # Datos para el dashboard
     ventas_semanales = obtener_ventas_semanales()
     top_galletas = [dict(row) for row in obtener_top_galletas()] if obtener_top_galletas() else []
-    top_presentaciones = [dict(row) for row in obtener_top_presentaciones()] if obtener_top_presentaciones() else []
+    recomendacion_producto = obtener_recomendacion_producto()
     estimacion_costos = obtener_estimacion_costos()
     historial_ventas = obtener_historial_ventas_semanales()
     ventas_por_dia = obtener_ventas_por_dia()
     distribucion_ventas = obtener_distribucion_ventas()
-    
-    # Nuevos datos de producción
     produccion_semanal = obtener_produccion_semanal()
     eficiencia_produccion = obtener_eficiencia_produccion()
+    costos_produccion = obtener_costos_produccion()
     
     return render_template('admin/dashboard.html',
                          ventas_semanales=ventas_semanales,
                          top_galletas=top_galletas,
-                         top_presentaciones=top_presentaciones,
+                         recomendacion_producto=recomendacion_producto,
                          estimacion_costos=estimacion_costos,
                          historial_ventas=historial_ventas,
                          ventas_por_dia=ventas_por_dia,
                          distribucion_ventas=distribucion_ventas,
                          produccion_semanal=produccion_semanal,
-                         eficiencia_produccion=eficiencia_produccion)
+                         eficiencia_produccion=eficiencia_produccion,
+                         costos_produccion=costos_produccion)
 
 @bp_admistracion.route('/dashboard/datos')
 @login_required

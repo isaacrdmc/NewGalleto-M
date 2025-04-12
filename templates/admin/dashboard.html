@@ -69,34 +69,26 @@
                 </div>
             </div>
 
-            <!-- Presentaciones Más Vendidas -->
+            <!-- Recomendación -->
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Presentaciones semanales mas vendidas</h5>
-                        <div id="contenedorTopPresentaciones">
-                            {% if top_presentaciones and top_presentaciones|length > 0 %}
-                            <ol class="ps-3">
-                                {% for presentacion in top_presentaciones %}
-                                <li>
-                                    {% if presentacion.formaVenta == 'Por pieza' %}
-                                    Por Pieza
-                                    {% elif presentacion.formaVenta == 'Por peso' %}
-                                    Por Gramos
-                                    {% elif presentacion.formaVenta == 'por paquete/caja' %}
-                                    Paquete/Caja
-                                    {% else %}
-                                    {{ presentacion.formaVenta or 'Otra' }}
-                                    {% endif %}
-                                    <span class="text-success">(${{ "%.2f"|format(presentacion.total_ventas) }})</span>
-                                </li>
-                                {% endfor %}
-                            </ol>
-                            <p class="text-muted">Por ganancias totales</p>
+                        <h5 class="card-title">Recomendación de Producto a vender</h5>
+                        <div id="contenedorRecomendacion">
+                            {% if recomendacion_producto %}
+                            <div class="text-center">
+                                <h4 class="text-success">{{ recomendacion_producto.nombre }}</h4>
+                                <p class="mb-1">Margen: <span class="text-success">{{
+                                        "%.2f"|format(recomendacion_producto.margen * 100) }}%</span></p>
+                                <p class="mb-1">Inventario: {{ recomendacion_producto.inventario }} unidades</p>
+                                <p class="mb-1">Demanda semanal: {{ recomendacion_producto.demanda_semanal }} unidades
+                                </p>
+                            </div>
                             {% else %}
-                            <div class="alert alert-info">No hay datos de disponibles</div>
+                            <div class="alert alert-info">No hay datos suficientes</div>
                             {% endif %}
                         </div>
+                        <p class="text-muted">Basado en margen e inventario</p>
                     </div>
                 </div>
             </div>
@@ -179,6 +171,19 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Nueva gráfica de costos de producción -->
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Costos de Producción por Lote</h5>
+                        <div id="contenedorCostosProduccion">
+                            <canvas id="costosProduccion"></canvas>
+                            <div class="alert alert-danger mt-2 d-none" id="errorCostosProduccion"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 </div>
@@ -214,12 +219,12 @@
                 console.warn(`Datos de ${nombreDatos} no disponibles, usando valores predeterminados.`);
                 return defaultValue;
             }
-            
+
             const datos = JSON.parse(jsonString);
             return datos || defaultValue;
         } catch (error) {
             console.error(`Error al procesar datos JSON de ${nombreDatos}:`, error);
-            mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`, 
+            mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`,
                 `Error al procesar datos: ${error.message}`);
             return defaultValue;
         }
@@ -228,22 +233,22 @@
     document.addEventListener('DOMContentLoaded', function () {
         try {
             console.log("Inicializando dashboard del administrador...");
-            
+
             // Gráfico 1: Ventas semanales (barras)
             try {
                 console.log("Generando gráfico de ventas semanales...");
                 var semanas = verificarDatosJSON('{{ historial_ventas.semanas|tojson|safe }}', [], 'Semanas');
                 var datosVentas = verificarDatosJSON('{{ historial_ventas.datos|tojson|safe }}', [], 'Datos de ventas');
-                
+
                 if (semanas.length === 0 || datosVentas.length === 0) {
-                    document.getElementById('contenedorVentasSemanales').innerHTML = 
+                    document.getElementById('contenedorVentasSemanales').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas semanales</div>';
                 } else {
                     var ctxVentasSemanales = document.getElementById('ventasSemanales').getContext('2d');
                     if (!ctxVentasSemanales) {
                         throw new Error('No se pudo obtener el contexto del canvas ventasSemanales');
                     }
-                    
+
                     new Chart(ctxVentasSemanales, {
                         type: 'bar',
                         data: {
@@ -282,16 +287,16 @@
                 console.log("Generando gráfico de ventas diarias...");
                 var fechas = verificarDatosJSON('{{ ventas_por_dia.fechas|tojson|safe }}', [], 'Fechas diarias');
                 var datosDiarios = verificarDatosJSON('{{ ventas_por_dia.datos|tojson|safe }}', [], 'Datos diarios');
-                
+
                 if (fechas.length === 0 || datosDiarios.length === 0) {
-                    document.getElementById('contenedorVentasDiarias').innerHTML = 
+                    document.getElementById('contenedorVentasDiarias').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas diarias</div>';
                 } else {
                     var ctxVentasDiarias = document.getElementById('ventasDiarias').getContext('2d');
                     if (!ctxVentasDiarias) {
                         throw new Error('No se pudo obtener el contexto del canvas ventasDiarias');
                     }
-                    
+
                     new Chart(ctxVentasDiarias, {
                         type: 'line',
                         data: {
@@ -327,53 +332,64 @@
                 mostrarErrorComponente('errorVentasDiarias', `Error: ${error.message}`);
             }
 
-            // Gráfico 3: Producción semanal (barras agrupadas)
+            // Gráfico 3: Producción semanal
+            // Modificar la gráfica de producción semanal a pastel
             try {
-                console.log("Generando gráfico de producción semanal...");
+                console.log("Generando gráfico de producción semanal (pastel)...");
                 var fechasProduccion = verificarDatosJSON('{{ produccion_semanal.fechas|tojson|safe }}', [], 'Fechas producción');
                 var datosProducido = verificarDatosJSON('{{ produccion_semanal.producido|tojson|safe }}', [], 'Datos producción');
                 var datosMerma = verificarDatosJSON('{{ produccion_semanal.merma|tojson|safe }}', [], 'Datos merma');
-                
+
                 if (fechasProduccion.length === 0) {
-                    document.getElementById('contenedorProduccionSemanal').innerHTML = 
+                    document.getElementById('contenedorProduccionSemanal').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de producción</div>';
                 } else {
                     var ctxProduccion = document.getElementById('produccionSemanal').getContext('2d');
                     if (!ctxProduccion) {
                         throw new Error('No se pudo obtener el contexto del canvas produccionSemanal');
                     }
-                    
+
                     new Chart(ctxProduccion, {
-                        type: 'bar',
+                        type: 'pie',
                         data: {
-                            labels: fechasProduccion,
-                            datasets: [
-                                {
-                                    label: 'Galletas Producidas',
-                                    data: datosProducido,
-                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                    borderWidth: 1
-                                },
-                                {
-                                    label: 'Merma Total',
-                                    data: datosMerma,
-                                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                                    borderColor: 'rgba(255, 99, 132, 1)',
-                                    borderWidth: 1
-                                }
-                            ]
+                            labels: ['Producción', 'Merma'],
+                            datasets: [{
+                                data: [
+                                    datosProducido.reduce((a, b) => a + b, 0),
+                                    datosMerma.reduce((a, b) => a + b, 0)
+                                ],
+                                backgroundColor: [
+                                    'rgba(54, 162, 235, 0.7)',
+                                    'rgba(255, 99, 132, 0.7)'
+                                ],
+                                borderColor: [
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 99, 132, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
                         },
                         options: {
                             responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
                                 }
                             }
                         }
                     });
-                    console.log("Gráfico de producción semanal generado correctamente");
+                    console.log("Gráfico de producción semanal (pastel) generado correctamente");
                 }
             } catch (error) {
                 console.error("Error al generar gráfico de producción semanal:", error);
@@ -387,18 +403,18 @@
                 if (!ctxEficiencia) {
                     throw new Error('No se pudo encontrar el canvas eficienciaProduccion');
                 }
-                
+
                 var eficienciaData = verificarDatosJSON('{{ eficiencia_produccion|tojson|safe }}', [], 'Eficiencia producción');
-                
+
                 if (!eficienciaData || eficienciaData.length === 0) {
-                    document.getElementById('contenedorEficienciaProduccion').innerHTML = 
+                    document.getElementById('contenedorEficienciaProduccion').innerHTML =
                         '<div class="alert alert-warning">No hay datos disponibles para el gráfico de eficiencia</div>';
                 } else {
                     ctxEficiencia = ctxEficiencia.getContext('2d');
                     if (!ctxEficiencia) {
                         throw new Error('No se pudo obtener el contexto del canvas eficienciaProduccion');
                     }
-                    
+
                     var labels = eficienciaData.map(item => item.galleta);
                     var data = eficienciaData.map(item => item.eficiencia);
 
@@ -445,10 +461,57 @@
                 console.error("Error al generar gráfico de eficiencia de producción:", error);
                 mostrarErrorComponente('errorEficienciaProduccion', `Error: ${error.message}`);
             }
-            
+
         } catch (error) {
             console.error("Error general al inicializar el dashboard:", error);
             mostrarErrorGlobal(`Error general al cargar el dashboard: ${error.message}`);
+        }
+
+        // Nueva gráfica de costos de producción
+        try {
+            console.log("Generando gráfico de costos de producción...");
+            var costosProduccion = verificarDatosJSON('{{ costos_produccion|tojson|safe }}', [], 'Costos producción');
+
+            if (!costosProduccion || costosProduccion.length === 0) {
+                document.getElementById('contenedorCostosProduccion').innerHTML =
+                    '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de costos</div>';
+            } else {
+                var ctxCostos = document.getElementById('costosProduccion').getContext('2d');
+                if (!ctxCostos) {
+                    throw new Error('No se pudo obtener el contexto del canvas costosProduccion');
+                }
+
+                new Chart(ctxCostos, {
+                    type: 'bar',
+                    data: {
+                        labels: costosProduccion.map(item => item.nombre),
+                        datasets: [{
+                            label: 'Costo por lote ($)',
+                            data: costosProduccion.map(item => item.costo),
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("Gráfico de costos de producción generado correctamente");
+            }
+        } catch (error) {
+            console.error("Error al generar gráfico de costos de producción:", error);
+            mostrarErrorComponente('errorCostosProduccion', `Error: ${error.message}`);
         }
     });
 
@@ -461,12 +524,12 @@
     async function cargarNotificaciones() {
         const lista = document.getElementById('listaNotificaciones');
         const contador = document.getElementById('contadorNotificaciones');
-        
+
         try {
             console.log("Solicitando notificaciones al servidor...");
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
-            
+
             const response = await fetch('/admin/notificaciones', {
                 signal: controller.signal,
                 headers: {
@@ -474,16 +537,16 @@
                     'Pragma': 'no-cache'
                 }
             });
-            
+
             clearTimeout(timeoutId);
-            
+
             if (!response.ok) {
                 throw new Error(`Error en la respuesta del servidor: ${response.status} ${response.statusText}`);
             }
 
             const notificaciones = await response.json();
             console.log(`Se recibieron ${notificaciones.length} notificaciones`);
-            
+
             // Verificar que notificaciones sea un array
             if (!Array.isArray(notificaciones)) {
                 throw new Error('El formato de respuesta de notificaciones es inválido');
@@ -508,9 +571,9 @@
                     console.warn('Notificación inválida encontrada:', notif);
                     return; // Saltar esta notificación
                 }
-                
+
                 const item = document.createElement('li');
-                
+
                 // Validar fecha
                 let fechaFormateada;
                 try {
@@ -542,16 +605,16 @@
 
             // Reiniciar contador de intentos si todo salió bien
             intentosReconexion = 0;
-            
+
         } catch (error) {
             intentosReconexion++;
-            
+
             if (error.name === 'AbortError') {
                 console.error('Tiempo de espera agotado al cargar notificaciones');
             } else {
                 console.error('Error al cargar notificaciones:', error);
             }
-            
+
             // Mostrar mensaje de error en la lista de notificaciones
             if (lista) {
                 lista.innerHTML = `
@@ -568,7 +631,7 @@
                     </a>
                 </li>`;
             }
-            
+
             // Si superamos el máximo de intentos, mostrar alerta más visible
             if (intentosReconexion >= maxIntentosReconexion) {
                 const mensajeError = `No se pudieron cargar las notificaciones después de ${maxIntentosReconexion} intentos. Compruebe su conexión a internet o contacte con soporte.`;
@@ -576,7 +639,7 @@
             } else {
                 // Programar reintento con backoff exponencial
                 const tiempoEspera = tiempoReconexion * Math.pow(2, intentosReconexion - 1);
-                console.log(`Reintentando cargar notificaciones en ${tiempoEspera/1000} segundos...`);
+                console.log(`Reintentando cargar notificaciones en ${tiempoEspera / 1000} segundos...`);
                 setTimeout(cargarNotificaciones, tiempoEspera);
             }
         }
@@ -588,12 +651,12 @@
             console.error('ID de notificación inválido');
             return;
         }
-        
+
         try {
             console.log(`Marcando notificación ${id} como vista...`);
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout de 8 segundos
-            
+
             const response = await fetch(`/admin/notificaciones/marcar_vista/${id}`, {
                 method: 'POST',
                 signal: controller.signal,
@@ -602,9 +665,9 @@
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             clearTimeout(timeoutId);
-            
+
             if (!response.ok) {
                 const texto = await response.text();
                 throw new Error(`Error al marcar notificación como vista. Código: ${response.status}, Respuesta: ${texto}`);
@@ -612,10 +675,10 @@
 
             console.log(`Notificación ${id} marcada como vista correctamente`);
             cargarNotificaciones(); // Recargar notificaciones
-            
+
         } catch (error) {
             console.error('Error al marcar notificación como vista:', error);
-            
+
             if (error.name === 'AbortError') {
                 alert('La operación ha tardado demasiado tiempo. Por favor, inténtelo de nuevo.');
             } else {
@@ -629,7 +692,7 @@
         try {
             console.log("Inicializando sistema de notificaciones...");
             cargarNotificaciones();
-            
+
             // Establecer intervalo con verificación de conexión previa
             const intervaloNotificaciones = setInterval(() => {
                 if (navigator.onLine) {
@@ -638,21 +701,21 @@
                     console.warn('Sin conexión a internet, posponiendo carga de notificaciones...');
                 }
             }, 30000);
-            
+
             // Guardar referencia al intervalo para posible limpieza posterior
             window.intervaloNotificaciones = intervaloNotificaciones;
-            
+
             // Manejar eventos de conexión/desconexión
             window.addEventListener('online', () => {
                 console.log('Conexión restaurada, cargando notificaciones...');
                 cargarNotificaciones();
             });
-            
+
             window.addEventListener('offline', () => {
                 console.warn('Conexión perdida, no se cargarán notificaciones hasta restaurar conexión');
                 mostrarErrorGlobal('Conexión a internet perdida. Algunas funciones pueden no estar disponibles.');
             });
-            
+
             console.log("Sistema de notificaciones inicializado correctamente");
         } catch (error) {
             console.error("Error al inicializar sistema de notificaciones:", error);

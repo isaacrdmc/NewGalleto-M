@@ -1,5 +1,7 @@
 from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
+
+from modules.admin.routes.ruta_admin_dashboard import admin_required
 from ..services import (
     obtener_recetas, obtener_receta, agregar_receta, 
     actualizar_receta, eliminar_receta, obtener_galletas,
@@ -12,25 +14,18 @@ from ...production.models import Galleta, Receta
 from datetime import datetime
 
 @bp_admistracion.route('/recetas')
-@login_required
+@admin_required
 def recetas():
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
-    
     recetas = obtener_recetas()
     galletas = obtener_galletas()
-    timestamp = int(datetime.now().timestamp())  # Añade esto
     return render_template('admin/recetas.html', 
                          recetas=recetas, 
                          galletas=galletas,
-                         timestamp=timestamp)
+                         timestamp=int(datetime.now().timestamp()))
 
 @bp_admistracion.route('/recetas/nueva', methods=['POST'])
-@login_required
+@admin_required
 def nueva_receta():
-    if current_user.rol.nombreRol != 'Administrador':
-        return jsonify({'success': False, 'error': 'No autorizado'}), 403
-    
     try:
         data = {
             'nombre': request.form.get('nombre'),
@@ -40,7 +35,6 @@ def nueva_receta():
             'id_galleta': int(request.form.get('id_galleta'))
         }
         
-        # Validaciones básicas
         if data['cantidad_producida'] <= 0:
             return jsonify({'success': False, 'error': 'La cantidad producida debe ser mayor a 0'}), 400
         
@@ -54,7 +48,7 @@ def nueva_receta():
             'success': True,
             'mensaje': 'Receta creada exitosamente!',
             'receta': receta.to_dict(include_galleta=True),
-            'imagen_url': receta.imagen_url  # Asegúrate de devolver esto
+            'imagen_url': receta.imagen_url
         })
     except Exception as e:
         return jsonify({
@@ -64,7 +58,7 @@ def nueva_receta():
     
 
 @bp_admistracion.route('/recetas/<int:id_receta>')
-@login_required
+@admin_required
 def detalle_receta(id_receta):
     if current_user.rol.nombreRol != 'Administrador':
         return redirect(url_for('shared.login'))
@@ -80,7 +74,7 @@ def detalle_receta(id_receta):
 
 
 @bp_admistracion.route('/recetas/obtener/<int:id_receta>')
-@login_required
+@admin_required
 def obtener_receta_para_edicion(id_receta):
     try:
         receta = obtener_receta(id_receta)  # Esto ya es un diccionario
@@ -93,7 +87,7 @@ def obtener_receta_para_edicion(id_receta):
     
 
 @bp_admistracion.route('/recetas/editar/<int:id_receta>', methods=['POST'])
-@login_required
+@admin_required
 def editar_receta(id_receta):
     if current_user.rol.nombreRol != 'Administrador':
         return jsonify({'success': False, 'error': 'No autorizado'}), 403
@@ -131,7 +125,7 @@ def editar_receta(id_receta):
     
 
 @bp_admistracion.route('/recetas/<int:id_receta>/eliminar', methods=['POST'])
-@login_required
+@admin_required
 def eliminar_receta_route(id_receta):
     try:
         if current_user.rol.nombreRol != 'Administrador':
@@ -150,7 +144,7 @@ def eliminar_receta_route(id_receta):
     
 
 @bp_admistracion.route('/recetas/ingredientes/agregar', methods=['POST'])
-@login_required
+@admin_required
 def agregar_ingrediente():
     try:
         data = request.get_json()
@@ -171,7 +165,7 @@ def agregar_ingrediente():
         return jsonify({'error': str(e)}), 400
 
 @bp_admistracion.route('/recetas/ingredientes/<int:id>/eliminar', methods=['POST'])
-@login_required
+@admin_required
 def eliminar_ingrediente(id):
     try:
         eliminar_ingrediente_receta(id)
@@ -181,7 +175,7 @@ def eliminar_ingrediente(id):
     
 
 @bp_admistracion.route('/recetas/listar')
-@login_required
+@admin_required
 def listar_recetas():
     try:
         if current_user.rol.nombreRol != 'Administrador':

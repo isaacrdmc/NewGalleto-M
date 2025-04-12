@@ -1,4 +1,3 @@
-# routes.py
 from flask import render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Rol
@@ -10,6 +9,7 @@ from . import bp_shared
 from sqlalchemy.exc import SQLAlchemyError
 from flask import abort
 from urllib.parse import urlparse, urljoin
+from functools import wraps
 
 # Configuración de seguridad
 PASSWORD_REGEX = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
@@ -22,40 +22,69 @@ def is_safe_url(target):
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
+def role_required(role_name):
+    """Decorator para verificar rol específico"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Por favor inicie sesión para acceder a esta página', 'warning')
+                return redirect(url_for('shared.login'))
+            if current_user.rol.nombreRol != role_name:
+                flash('No tiene permisos para acceder a esta sección', 'danger')
+                return redirect(url_for('shared.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 @bp_shared.before_app_request
-def check_session_timeout():
-    """Verifica el tiempo de inactividad de la sesión"""
-    if current_user.is_authenticated:
-        last_activity = session.get('last_activity')
-        if last_activity and datetime.now() - datetime.fromisoformat(last_activity) > SESSION_INACTIVITY_TIMEOUT:
+def check_authentication_and_session():
+    """Verificación global antes de cada request"""
+    # Excluir endpoints públicos y archivos estáticos
+    if request.endpoint in ('shared.login', 'shared.register', 'shared.reset_password_request', 
+                          'shared.reset_password', 'static') or request.endpoint is None:
+        return
+    
+    # Verificar autenticación
+    if not current_user.is_authenticated:
+        flash('Por favor inicie sesión para continuar', 'warning')
+        return redirect(url_for('shared.login', next=request.url))
+    
+    # Verificar timeout de sesión
+    last_activity = session.get('last_activity')
+    if last_activity:
+        last_activity_dt = datetime.fromisoformat(last_activity)
+        if datetime.now() - last_activity_dt > SESSION_INACTIVITY_TIMEOUT:
             logout_user()
-            flash('Tu sesión ha expirado por inactividad', 'warning')
+            flash('Su sesión ha expirado por inactividad', 'warning')
             return redirect(url_for('shared.login'))
-        session['last_activity'] = datetime.now().isoformat()
+    
+    # Actualizar última actividad
+    session['last_activity'] = datetime.now().isoformat()
 
 @bp_shared.route('/')
 def index():
     """Redirige al usuario según su rol"""
-    if current_user.is_authenticated:
-        # Registrar actividad
-        session['last_activity'] = datetime.now().isoformat()
-        
-        # Redirigir según rol
-        role_redirects = {
-            'Administrador': 'admin.dashboard_admin',
-            'Produccion': 'production.dashboard_produccion',
-            'Ventas': 'ventas.ventas',
-            'Cliente': 'cliente.portal_cliente'
-        }
-        
-        redirect_view = role_redirects.get(current_user.rol.nombreRol)
-        if redirect_view:
-            return redirect(url_for(redirect_view))
-        
-        logout_user()  # Si el rol no es reconocido, cerrar sesión
-        flash('Rol no reconocido', 'danger')
+    if not current_user.is_authenticated:
+        return redirect(url_for('shared.login'))
     
-    # Redirigir a login si no está autenticado o rol no reconocido
+    # Registrar actividad
+    session['last_activity'] = datetime.now().isoformat()
+    
+    # Redirigir según rol
+    role_redirects = {
+        'Administrador': 'admin.dashboard_admin',
+        'Produccion': 'production.dashboard_produccion',
+        'Ventas': 'ventas.ventas',
+        'Cliente': 'cliente.portal_cliente'
+    }
+    
+    redirect_view = role_redirects.get(current_user.rol.nombreRol)
+    if redirect_view:
+        return redirect(url_for(redirect_view))
+    
+    logout_user()  # Si el rol no es reconocido, cerrar sesión
+    flash('Rol no reconocido', 'danger')
     return redirect(url_for('shared.login'))
 
 @bp_shared.route('/login', methods=['GET', 'POST'])
@@ -64,10 +93,13 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('shared.index'))
     
+    next_url = request.args.get('next')
+    if next_url and not is_safe_url(next_url):
+        return abort(400)
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        next_url = request.args.get('next')
         
         if not username or not password:
             flash('Usuario y contraseña son requeridos', 'danger')
@@ -80,7 +112,7 @@ def login():
                 flash('Usuario y/o contraseña incorrectos', 'danger')
                 return render_template('shared/login.html', page_title='Iniciar Sesión')
             
-            # Verificar bloqueo temporal primero
+            # Verificar bloqueo temporal
             if user.esta_bloqueado_temporalmente():
                 tiempo_restante = (user.bloqueoTemporal - datetime.now()).seconds
                 flash(f'Cuenta bloqueada temporalmente por seguridad. Intenta nuevamente en {tiempo_restante} segundos.', 'warning')
@@ -110,7 +142,6 @@ def login():
                 user.intentosFallidos += 1
                 
                 if user.intentosFallidos >= MAX_LOGIN_ATTEMPTS:
-                    # Bloquear temporalmente por 30 segundos
                     user.bloqueoTemporal = datetime.now() + timedelta(seconds=30)
                     flash('Demasiados intentos fallidos. Tu cuenta estará bloqueada temporalmente por 30 segundos.', 'danger')
                 else:
@@ -168,7 +199,7 @@ def register():
                 flash('El nombre de usuario ya está registrado', 'danger')
                 return redirect(url_for('shared.register'))
             
-            # Obtener o crear rol de cliente
+            # Obtener rol de cliente
             rol_cliente = Rol.query.filter_by(nombreRol='Cliente').first()
             if not rol_cliente:
                 rol_cliente = Rol(nombreRol='Cliente', descripcion='Usuario cliente de la plataforma')
@@ -213,7 +244,7 @@ def reset_password_request():
             user = User.query.filter_by(username=username).first()
             
             # Siempre mostrar el mismo mensaje por seguridad
-            flash('El usuario existe, se enviarán instrucciones', 'info')
+            flash('Si el usuario existe, se enviarán instrucciones al correo asociado', 'info')
             
             if user:
                 # Generar token de recuperación
@@ -233,7 +264,6 @@ def reset_password_request():
             flash('Error al procesar la solicitud. Intente nuevamente.', 'danger')
     
     return render_template('shared/reset_pass.html', page_title='Recuperar Contraseña')
-
 
 @bp_shared.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):

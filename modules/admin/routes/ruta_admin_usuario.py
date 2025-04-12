@@ -1,5 +1,7 @@
 from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
+
+from modules.admin.routes.ruta_admin_dashboard import admin_required
 from ..services import (
     agregar_usuario, obtener_usuarios, actualizar_usuario,
     eliminar_usuario, obtener_roles
@@ -9,12 +11,10 @@ from ...admin import bp_admistracion
 from werkzeug.security import generate_password_hash
 from ...shared.models import User, Rol
 
+
 @bp_admistracion.route('/usuarios')
-@login_required
+@admin_required
 def usuarios():
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
-    
     lista_usuarios = obtener_usuarios()
     roles = obtener_roles()
     form = UsuarioForm()
@@ -23,11 +23,19 @@ def usuarios():
     return render_template('admin/usuarios.html', usuarios=lista_usuarios, form=form)
 
 @bp_admistracion.route('/usuarios/agregar', methods=['POST'])
-@login_required
+@admin_required
 def agregar_usuario_route():
     try:
         data = request.get_json()
         
+        # Validación de datos mínimos
+        if not all(key in data for key in ['username', 'password', 'rol', 'estado']):
+            return jsonify({'error': 'Datos incompletos'}), 400
+            
+        # Validar fortaleza de contraseña
+        if len(data['password']) < 8:
+            return jsonify({'error': 'La contraseña debe tener al menos 8 caracteres'}), 400
+            
         nuevo_usuario = agregar_usuario(
             username=data['username'],
             password=data['password'],
@@ -40,12 +48,7 @@ def agregar_usuario_route():
             "usuario": {
                 "idUser": nuevo_usuario.idUser,
                 "username": nuevo_usuario.username,
-                "rol": {
-                    "idRol": nuevo_usuario.rol.idRol,
-                    "nombreRol": nuevo_usuario.rol.nombreRol
-                },
-                "fechaRegistro": nuevo_usuario.fechaRegistro.isoformat(),
-                "ultimoAcceso": nuevo_usuario.ultimoAcceso.isoformat() if nuevo_usuario.ultimoAcceso else None,
+                "rol": nuevo_usuario.rol.nombreRol,
                 "estado": nuevo_usuario.estado
             }
         }), 201
@@ -54,7 +57,7 @@ def agregar_usuario_route():
     
 
 @bp_admistracion.route('/usuarios/editar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def editar_usuario(id):
     try:
         data = request.get_json()
@@ -82,7 +85,7 @@ def editar_usuario(id):
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/usuarios/eliminar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def eliminar_usuario_route(id):
     try:
         if id == current_user.idUser:
@@ -100,7 +103,7 @@ def eliminar_usuario_route(id):
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/usuarios/obtener/<int:id>', methods=['GET'])
-@login_required
+@admin_required
 def obtener_usuario(id):
     try:
         usuario = User.query.get_or_404(id)
@@ -118,7 +121,7 @@ def obtener_usuario(id):
     
 
 @bp_admistracion.route('/usuarios/listar')
-@login_required
+@admin_required
 def listar_usuarios():
     try:
         usuarios = obtener_usuarios()

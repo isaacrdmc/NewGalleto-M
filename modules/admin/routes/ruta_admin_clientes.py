@@ -1,5 +1,7 @@
 from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
+
+from modules.admin.routes.ruta_admin_dashboard import admin_required
 from ..services import (agregar_cliente, obtener_clientes, actualizar_cliente, 
                        eliminar_cliente, obtener_pedidos_cliente)
 from ..forms.clientes import ClienteForm
@@ -12,17 +14,14 @@ from sqlalchemy import desc
 from database.conexion import db
 
 @bp_admistracion.route('/clientes')
-@login_required
+@admin_required
 def clientes():
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
-    
     lista_clientes = obtener_clientes()
     form = ClienteForm()
     return render_template('admin/clientes.html', clientes=lista_clientes, form=form)
 
 @bp_admistracion.route('/clientes/agregar', methods=['POST'])
-@login_required
+@admin_required
 def agregar_cliente_route():
     try:
         data = request.get_json()
@@ -33,13 +32,7 @@ def agregar_cliente_route():
         nuevo_cliente = agregar_cliente(
             username=data['username'],
             password=data['password']
-            # No pasar estado aquí si no es necesario
         )
-        
-        # Opcional: Actualizar el estado después si es diferente del default
-        if 'estado' in data:
-            nuevo_cliente.estado = data['estado']
-            db.session.commit()
         
         return jsonify({
             "mensaje": "Cliente agregado correctamente",
@@ -49,12 +42,11 @@ def agregar_cliente_route():
                 "estado": nuevo_cliente.estado
             }
         }), 201
-        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/editar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def editar_cliente(id):
     try:
         data = request.get_json()
@@ -81,7 +73,7 @@ def editar_cliente(id):
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/eliminar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def eliminar_cliente_route(id):
     try:
         cliente = eliminar_cliente(id)
@@ -96,7 +88,7 @@ def eliminar_cliente_route(id):
         return jsonify({"error": str(e)}), 500
 
 @bp_admistracion.route('/clientes/obtener/<int:id>')
-@login_required
+@admin_required
 def obtener_cliente(id):
     try:
         cliente = User.query.get_or_404(id)
@@ -114,11 +106,8 @@ def obtener_cliente(id):
         return jsonify({"error": str(e)}), 404
 
 @bp_admistracion.route('/clientes/pedidos/<int:id>')
-@login_required
+@admin_required
 def ver_pedidos_cliente(id):
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
-    
     pedidos = obtener_pedidos_cliente(id)
     cliente = User.query.get_or_404(id)
     
@@ -127,7 +116,7 @@ def ver_pedidos_cliente(id):
         detalles = DetallePedido.query.filter_by(idPedido=pedido.idPedidos).all()
         items = []
         for detalle in detalles:
-            galleta = Galleta.query.get(detalle.idGalleta)  # Obtener la galleta directamente
+            galleta = Galleta.query.get(detalle.idGalleta)
             items.append({
                 'galleta': galleta.nombre,
                 'cantidad': detalle.cantidad,

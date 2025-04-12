@@ -2,6 +2,7 @@ import re
 from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from modules.admin.forms.proveedores import ProveedoresForm
 from modules.admin.models import Proveedores
+from modules.admin.routes.ruta_admin_dashboard import admin_required
 from ..services import actualizar_proveedor, agregar_proveedor, eliminar_proveedor, obtener_proveedores
 from database.conexion import db
 #  ~ Importamos el archvio con el nombre del Blueprint para la sección
@@ -29,25 +30,17 @@ def agregarProv():
 # * Renderiza la página y trae los datos del arreglo
 # @bp_admistracion.route('/proveedores', methods=['GET'])
 @bp_admistracion.route('/proveedores')
-@login_required
+@admin_required
 def proveedores():
-    if current_user.rol.nombreRol != 'Administrador':
-        return redirect(url_for('shared.login'))
-    
-    # Obtener la lista de proveedores
     lista_proveedores = obtener_proveedores()
-
-    # * Instanciamos al formulario:
     form = ProveedoresForm()
-
-    # Pasar solo los proveedores al contexto de la plantilla
     return render_template('admin/proveedores.html', proveedor=lista_proveedores, form=form)
 
 
 
 # ^ Renderiza la página y trae los datos del arreglo        (R)
 @bp_admistracion.route('/proveedores/listar', methods=['GET'])
-@login_required
+@admin_required
 def listar_proveedores():
     if current_user.rol.nombreRol != 'Administrador':
         return jsonify({"error": "No autorizado"}), 403
@@ -80,33 +73,22 @@ def listar_proveedores():
 
 # ^ Agregamos un nuevo porveedor        (C)
 @bp_admistracion.route('/proveedores/agregar', methods=['POST'])
-@login_required
+@admin_required
 def agregar_proveedor():
     try:
         data = request.get_json()
 
-        # Validar los datos enviados
         if not all(key in data for key in ['empresa', 'telefono', 'correo', 'direccion', 'productos']):
             return jsonify({'error': 'Datos incompletos'}), 400
         
-        # ? Validación adicional del correo
+        # Validación de correo electrónico
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', data['correo']):
             return jsonify({'error': 'Correo electrónico no válido'}), 400
         
-        # ? Validación adicional del teléfono (solo números y algunos caracteres especiales)
+        # Validación de teléfono
         if not re.match(r'^[\d\s()+.-]+$', data['telefono']):
             return jsonify({'error': 'Teléfono no válido. Solo números y los caracteres ()+-.'}), 400
         
-        
-        # ? Sanitización básica de los campos
-        # empresa = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ.,-]', '', data['empresa'])[:30]
-        # telefono = re.sub(r'[^\d\s()+.-]', '', data['telefono'])[:16]
-        # correo = data['correo'][:60]
-        # direccion = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ#.,-]', '', data['direccion'])[:120]
-        # productos = re.sub(r'[^\w\sñÑáéíóúÁÉÍÓÚüÜ.,;-]', '', data['productos'])[:300]
-        
-
-        # Crear un nuevo proveedor
         nuevo_proveedor = Proveedores(
             nombre=data['empresa'],
             telefono=data['telefono'],
@@ -117,12 +99,8 @@ def agregar_proveedor():
         db.session.add(nuevo_proveedor)
         db.session.commit()
 
-        # ? Retornamos el nuevo proveedor en formato JSON
         return jsonify({
-            # ? Mensaje de exito (Mensaje importante del 'jsonify')
             "mensaje": "Proveedor agregado",
-
-            # & Datos del proveedor 
             "proveedor": {
                 "id": nuevo_proveedor.idProveedores,
                 "empresa": nuevo_proveedor.nombre,
@@ -132,7 +110,6 @@ def agregar_proveedor():
                 "productos": nuevo_proveedor.productosProveedor
             }
         }), 201
-
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -142,7 +119,7 @@ def agregar_proveedor():
 # ^ Edita los datos del porveedor        (U)
 # @bp_admistracion.route('/proveedores/editar/<int:id>', methods=['PUT'])
 @bp_admistracion.route('/proveedores/editar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def editar_proveedor(id):
     try:
         data = request.get_json()
@@ -181,7 +158,7 @@ def editar_proveedor(id):
 
 # ^ Eliminamos un proveedor        (D)
 @bp_admistracion.route('/proveedores/eliminar/<int:id>', methods=['POST'])
-@login_required
+@admin_required
 def eliminar_proveedor_route(id):
     try:
         # ? Usamos la función de servicio para eliminar el proveedor
@@ -208,7 +185,7 @@ def eliminar_proveedor_route(id):
 
 # ^ Buscar un proveedor dentro de la BD        (Otro)
 @bp_admistracion.route('/proveedores/buscar', methods=['GET'])
-@login_required
+@admin_required
 def buscar_proveedor_route():
     if 'username' not in session or session['role'] != 'admin':
         return jsonify({"error": "No autorizado"}), 403
@@ -251,7 +228,7 @@ def buscar_proveedor_route():
 
 # ~ Obtener un proveedor:
 @bp_admistracion.route('/proveedores/obtener/<int:id>', methods=['GET'])
-@login_required
+@admin_required
 def obtener_proveedor(id):
     try:
         proveedor = Proveedores.query.get_or_404(id)

@@ -1,35 +1,47 @@
-from flask import render_template, request, Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import login_required, current_user
+from functools import wraps
+from datetime import datetime
 
 from modules.client.models import Pedido
 from modules.production.models import Galleta
 from . import bp_ventas
 from modules.ventas.services import obtener_historial_ventas
-from modules.ventas.models import Venta
+from modules.ventas.models import Venta, DetalleVenta
 from modules.ventas.services import obtener_pedidos_clientes
-import database.conexion as db
+from database.conexion import db
 
-
-# ? Ahora vamos a definir las rutas necesarias para el bluprint
-
-# ^ Sección del vendedor
+# Decorador personalizado para validar rol de Ventas
+def ventas_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Por favor inicie sesión para acceder a esta página', 'warning')
+            return redirect(url_for('shared.login', next=request.url))
+        
+        if current_user.rol.nombreRol != 'Ventas':
+            flash('No tiene permisos para acceder a esta sección', 'danger')
+            return redirect(url_for('shared.index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Ruta para el dashboard de ventas
 @bp_ventas.route('/prod_ventas')
+@ventas_required
 def ventas():
-    if current_user.rol.nombreRol not in ['Ventas']:
-        return redirect(url_for('shared.login'))
     return render_template('ventas/prod_term.html')
 
+# Ruta para el historial de ventas
 @bp_ventas.route('/historial_ventas')
+@ventas_required
 def historial_ventas():
-    if current_user.rol.nombreRol not in ['Ventas']:
-        return redirect(url_for('shared.login'))
-
     ventas = obtener_historial_ventas()
     return render_template('ventas/historial_ventas.html', ventas=ventas)
 
+# Ruta para obtener detalles de una venta específica
 @bp_ventas.route('/detalles/<int:id_venta>')
+@ventas_required
 def obtener_detalles_venta(id_venta):
     venta = Venta.query.get(id_venta)
 
@@ -55,8 +67,8 @@ def obtener_detalles_venta(id_venta):
 
         detalles.append({
             "producto": d.galleta.nombre if d.galleta else "Producto desconocido",
-            "cantidad": d.cantGalletasVendidas,  # Mantener el valor numérico para cálculos
-            "cantidad_formateada": cantidad_formateada,  # Nueva propiedad con formato
+            "cantidad": d.cantGalletasVendidas,
+            "cantidad_formateada": cantidad_formateada,
             "precio_unitario": float(d.galleta.precio_unitario),
             "forma_venta": d.formaVenta,
             "subtotal": float(d.precioUnitario)
@@ -64,15 +76,16 @@ def obtener_detalles_venta(id_venta):
 
     return jsonify({"success": True, "detalles": detalles})
 
+# Ruta para ver pedidos de clientes
 @bp_ventas.route('/pedidos_clientes')
+@ventas_required
 def pedidos_clientes():
-    if 'username' not in session or session['role'] != 'ventas':
-        return redirect(url_for('shared.login'))
-    
     pedidos = obtener_pedidos_clientes()
     return render_template('ventas/pedidos_clientes.html', pedidos=pedidos)
 
+# Ruta para detalles de un pedido específico
 @bp_ventas.route('/pedidos_clientes/detalles/<int:id_pedido>')
+@ventas_required
 def obtener_detalles_pedido(id_pedido):
     pedido = Pedido.query.get(id_pedido)
 
@@ -90,34 +103,35 @@ def obtener_detalles_pedido(id_pedido):
 
     return jsonify({"success": True, "detalles": detalles})
 
+# Ruta para obtener galletas disponibles
 @bp_ventas.route('/galletas_disponibles')
+@ventas_required
 def galletas_disponibles():
-    
     galletas = Galleta.query.with_entities(Galleta.id, Galleta.nombre).all()
     lista = [{"id": g.id, "nombre": g.nombre} for g in galletas]
     return jsonify(lista)
 
+# Ruta para obtener información de una galleta específica
 @bp_ventas.route('/galleta/<int:id_galleta>')
+@ventas_required
 def obtener_info_galleta(id_galleta):
-
     galleta = Galleta.query.get(id_galleta)
     if not galleta:
         return jsonify({"success": False}), 404
 
     return jsonify({
         "success": True,
-        "cantidadDisponible": galleta.cantidadDisponible,
-        "gramaje": float(galleta.gramajeGalleta),
-        "precio": float(galleta.precioUnitario)
+        "cantidadDisponible": galleta.cantidad_disponible,
+        "gramaje": float(galleta.gramaje),
+        "precio": float(galleta.precio_unitario)
     })
     
+# Ruta para registrar una nueva venta
 @bp_ventas.route('/registrar_venta', methods=['POST'])
+@ventas_required
 def registrar_venta():
-    from modules.ventas.models import Venta, DetalleVenta, Galleta
+    from modules.ventas.models import Venta, DetalleVenta
     import datetime
-
-    if 'user_id' not in session:
-        return jsonify({"success": False, "message": "No autenticado"}), 401
 
     data = request.get_json()
     detalles = data.get('detalles')
@@ -130,7 +144,7 @@ def registrar_venta():
         nueva_venta = Venta(
             fechaVentaGalleta=datetime.date.today(),
             totalVenta=total,
-            idUsuario=session['user_id']  # Asegúrate que guardas el idUser en sesión
+            idUsuario=current_user.idUser  # Usamos el ID del usuario actual
         )
         db.session.add(nueva_venta)
         db.session.flush()  # Para obtener nueva_venta.idVenta
@@ -155,7 +169,7 @@ def registrar_venta():
             elif forma == 'Por gramo':
                 gramos = int(cant.replace('gr', '').strip())
                 detalle.pesoGramos = gramos
-                detalle.cantGalletasVendidas = 0  # si quieres usarlo como total
+                detalle.cantGalletasVendidas = 0
             elif forma == 'Empacado':
                 cajas, tipo = cant.split(' Caja ')
                 gramos = 1000 if '1kg' in tipo else 700
@@ -165,7 +179,7 @@ def registrar_venta():
             # Descontar del inventario
             galleta = Galleta.query.get(idGalleta)
             if galleta:
-                galleta.cantidadDisponible -= detalle.cantGalletasVendidas or 0
+                galleta.cantidad_disponible -= detalle.cantGalletasVendidas or 0
                 db.session.add(galleta)
 
             db.session.add(detalle)

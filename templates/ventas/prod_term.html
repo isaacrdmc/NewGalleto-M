@@ -1039,12 +1039,6 @@
             mostrarErrorGlobal('Error crítico al cargar la página. Por favor recarga.');
         }
 
-        // Define cerrarModal primero como función global
-        let cerrarModal = function () {
-            document.getElementById('modal-generico').style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
-
         function mostrarModal(mensaje, reload = false) {
             document.getElementById('modal-mensaje').textContent = mensaje;
             document.getElementById('modal-generico').style.display = 'block';

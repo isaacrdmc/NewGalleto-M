@@ -896,4 +896,68 @@ def marcar_notificacion_como_vista(notificacion_id):
         notificacion.fecha_visto = db.func.current_timestamp()
         db.session.commit()
     return notificacion
+
+def obtener_recomendacion_producto():
+    """Obtiene la galleta más rentable para recomendar su venta"""
+    try:
+        # Consulta para obtener galletas con mejor margen y suficiente inventario
+        resultados = db.session.query(
+            Galleta.nombre,
+            Galleta.cantidad_disponible,
+            (Galleta.precio_unitario - 
+             func.coalesce(
+                 func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
+                 Receta.cantidad_producida, 0
+             )).label('margen'),
+            func.count(DetalleVenta.idDetalleVenta).label('demanda_semanal')
+        ).join(Receta, Receta.id_galleta == Galleta.id
+        ).join(IngredienteReceta, IngredienteReceta.idReceta == Receta.id
+        ).join(DetalleCompraInsumo, DetalleCompraInsumo.idInsumo == IngredienteReceta.idInsumo
+        ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
+        ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
+        ).filter(
+            Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7)),
+            Galleta.cantidad_disponible > 0
+        ).group_by(Galleta.id
+        ).order_by(
+            (Galleta.precio_unitario - 
+             func.coalesce(
+                 func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
+                 Receta.cantidad_producida, 0
+             )).desc()
+        ).first()
+
+        if resultados:
+            return {
+                'nombre': resultados.nombre,
+                'margen': float(resultados.margen / resultados.precio_unitario) if resultados.precio_unitario else 0.0,
+                'inventario': resultados.cantidad_disponible,
+                'demanda_semanal': resultados.demanda_semanal
+            }
+        return None
+    except Exception as e:
+        print(f"Error en obtener_recomendacion_producto: {str(e)}")
+        return None
+
+def obtener_costos_produccion():
+    """Obtiene los costos de producción por lote para cada tipo de galleta"""
+    try:
+        resultados = db.session.query(
+            Galleta.nombre,
+            (func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
+             Receta.cantidad_producida).label('costo_lote')
+        ).join(Receta, Receta.id_galleta == Galleta.id
+        ).join(IngredienteReceta, IngredienteReceta.idReceta == Receta.id
+        ).join(DetalleCompraInsumo, DetalleCompraInsumo.idInsumo == IngredienteReceta.idInsumo
+        ).group_by(Galleta.id
+        ).order_by(Galleta.nombre
+        ).all()
+
+        return [{
+            'nombre': r.nombre,
+            'costo': float(r.costo_lote) if r.costo_lote else 0.0
+        } for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_costos_produccion: {str(e)}")
+        return []
     
