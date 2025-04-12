@@ -11,6 +11,7 @@ class Pedido(db.Model):
     estadoPedido = db.Column(db.Enum('Pendiente', 'Enviado', 'Entregado', 'Cancelado'), default='Pendiente')
     costoPedido = db.Column(db.Numeric(10,2), nullable=False)
     
+    cliente = db.relationship('Usuario')
     detalles = db.relationship('DetallePedido', backref='pedido', cascade='all, delete-orphan')
 
 # ~ Tabla para los detalles de los pedidos
@@ -24,6 +25,7 @@ class DetallePedido(db.Model):
     precioUnitario = db.Column(db.Numeric(10,2), nullable=False)
     subtotal = db.Column(db.Numeric(10,2), nullable=False)
     
+    pedido = db.relationship('Pedido', back_populates='detalles')
     galleta = db.relationship('Galleta')
 
 
