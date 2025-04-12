@@ -95,7 +95,7 @@ def obtener_detalles_pedido(id_pedido):
     detalles = []
     for d in pedido.detalles:
         detalles.append({
-            "producto": d.galleta.nombreGalleta if d.galleta else "Producto desconocido",
+            "producto": d.galleta.nombre if d.galleta else "Producto desconocido",
             "cantidad": d.cantidad,
             "precio_unitario": float(d.precioUnitario),
             "subtotal": float(d.subtotal)
