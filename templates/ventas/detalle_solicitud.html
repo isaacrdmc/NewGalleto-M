@@ -1,0 +1,151 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffecb4;">
+                <div class="card-body">
+                    <h2 class="text-center fw-bold">Detalle de Solicitud de Horneado</h2>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-10">
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Información General</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Solicitante:</strong> {{ solicitud.solicitante.username }}</p>
+                                            <p><strong>Fecha de Solicitud:</strong> {{ solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</p>
+                                            <p><strong>Receta:</strong> {{ solicitud.receta.nombre }}</p>
+                                            <p>
+                                                <strong>Estado:</strong> 
+                                                <span class="badge 
+                                                    {% if solicitud.estado == 'Pendiente' %}bg-warning
+                                                    {% elif solicitud.estado == 'Aprobada' %}bg-success
+                                                    {% elif solicitud.estado == 'Rechazada' %}bg-danger
+                                                    {% elif solicitud.estado == 'Completada' %}bg-info{% endif %}">
+                                                    {{ solicitud.estado }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Lotes Solicitados:</strong> {{ solicitud.cantidad_lotes }}</p>
+                                            <p><strong>Galletas Totales:</strong> {{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</p>
+                                            <p><strong>Costo por galleta:</strong> ${{ "%.2f"|format(costos.costo_unitario) }}</p>
+                                            <p><strong>Costo total por lote:</strong> ${{ "%.2f"|format(costos.costo_lote) }}</p>
+                                            <p><strong>Costo total producción:</strong> ${{ "%.2f"|format(costos.costo_lote * solicitud.cantidad_lotes) }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if solicitud.estado == 'Rechazada' and solicitud.motivo_rechazo %}
+                                    <div class="alert alert-danger mt-3">
+                                        <h5 class="alert-heading">Motivo de Rechazo</h5>
+                                        <p>{{ solicitud.motivo_rechazo }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if solicitud.estado == 'Aprobada' %}
+                                    <div class="alert alert-success mt-3">
+                                        <h5 class="alert-heading">Aprobada por: {{ solicitud.aprobador.username }}</h5>
+                                        <p>Fecha: {{ solicitud.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if solicitud.estado == 'Completada' %}
+                                    <div class="alert alert-info mt-3">
+                                        <h5 class="alert-heading">Horneado Completado</h5>
+                                        <p>Fecha: {{ solicitud.fecha_completado.strftime('%d/%m/%Y %H:%M') }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Insumos Requeridos</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Insumo</th>
+                                                    <th>Cantidad por Lote</th>
+                                                    <th>Total Requerido</th>
+                                                    <th>Disponible</th>
+                                                    <th>Unidad</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for insumo in insumos %}
+                                                <tr>
+                                                    <td>{{ insumo.nombre }}</td>
+                                                    <td>{{ "%.2f"|format(insumo.cantidad) }}</td>
+                                                    <td>{{ "%.2f"|format(insumo.total_requerido) }}</td>
+                                                    <td>{{ "%.2f"|format(insumo.cantidadDisponible) }}</td>
+                                                    <td>{{ insumo.unidadInsumo }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                {% if solicitud.estado == 'Pendiente' and current_user.rol.nombreRol in ['Administrador', 'Produccion'] %}
+                                <form action="{{ url_for('production.aprobar_solicitud', id_solicitud=solicitud.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-success me-2">
+                                        <i class="fas fa-check me-2"></i> Aprobar
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#rechazarModal">
+                                    <i class="fas fa-times me-2"></i> Rechazar
+                                </button>
+                                {% endif %}
+                                
+                                {% if solicitud.estado == 'Aprobada' and solicitud.id_solicitante == current_user.idUser  and current_user.rol.nombreRol in ['Administrador', 'Produccion']%}
+                                <a href="{{ url_for('production.completar_solicitud', id_solicitud=solicitud.id) }}" class="btn btn-success me-2">
+                                    <i class="fas fa-check-circle me-2"></i> Completar Horneado
+                                </a>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('ventas.ver_mis_solicitudes') if solicitud.id_solicitante == current_user.idUser else url_for('ventas.ver_solicitudes_pendientes') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i> Volver
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rechazar solicitud -->
+<div class="modal fade" id="rechazarModal" tabindex="-1" aria-labelledby="rechazarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rechazarModalLabel">Rechazar Solicitud</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('production.rechazar_solicitud', id_solicitud=solicitud.id) }}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo del Rechazo:</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

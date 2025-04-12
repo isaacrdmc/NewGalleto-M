@@ -1,15 +1,19 @@
-from flask import render_template, request, redirect, url_for, session, flash, jsonify
+from flask import abort, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
 
+from sqlalchemy import text
+
 from modules.client.models import Pedido
-from modules.production.models import Galleta
+from modules.production.models import Galleta, SolicitudHorneado
+
 from . import bp_ventas
-from modules.ventas.services import obtener_historial_ventas
+from modules.ventas.services import RecetaService, SolicitudHorneadoService, obtener_historial_ventas
 from modules.ventas.models import Venta, DetalleVenta
 from modules.ventas.services import obtener_pedidos_clientes
 from database.conexion import db
+from sqlalchemy.orm import joinedload
 
 # Decorador personalizado para validar rol de Ventas
 def ventas_required(f):
@@ -197,3 +201,124 @@ def registrar_venta():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
+    
+
+# Solicitar horneado
+@bp_ventas.route('/solicitar_horneado', methods=['GET'])
+@ventas_required
+def solicitar_horneado():
+    receta_service = RecetaService(db.session)  # Crear instancia pasando la sesión
+    recetas = receta_service.get_all_recetas()  # Llamar al método de instancia
+    return render_template('ventas/solicitar_horneado.html', recetas=recetas)
+
+
+# Procesar solicitud de horneado
+@bp_ventas.route('/solicitar_horneado', methods=['POST'])
+@ventas_required
+def procesar_solicitud_horneado():
+    try:
+        id_receta = request.form.get('id_receta', type=int)
+        cantidad_lotes = request.form.get('cantidad_lotes', type=int)
+        
+        if not all([id_receta, cantidad_lotes]):
+            flash('Todos los campos son obligatorios', 'danger')
+            return redirect(url_for('ventas.solicitar_horneado'))  # Corregido el endpoint
+        
+        # Crear instancia del servicio
+        horneado_service = SolicitudHorneadoService(db.session)
+        
+        # Llamar al método de instancia
+        resultado = horneado_service.crear_solicitud(
+            id_receta=id_receta,
+            cantidad_lotes=cantidad_lotes,
+            id_usuario=current_user.idUser
+        )
+        
+        if resultado['success']:
+            flash('Solicitud de horneado enviada exitosamente', 'success')
+            return redirect(url_for('ventas.ver_mis_solicitudes'))  # Corregido el endpoint
+        else:
+            if 'insumos_faltantes' in resultado:
+                flash('No hay suficientes insumos para completar la solicitud', 'danger')
+            else:
+                flash('Error al enviar la solicitud', 'danger')
+            return redirect(url_for('ventas.solicitar_horneado'))  # Corregido el endpoint
+    
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('ventas.solicitar_horneado'))  # Corregido el endpoint
+    
+
+# Ver mis solicitudes
+@bp_ventas.route('/solicitudes/mis_solicitudes', methods=['GET'])
+@ventas_required
+def ver_mis_solicitudes():
+    # Crear instancia del servicio pasando la sesión de la base de datos
+    horneado_service = SolicitudHorneadoService(db.session)
+    
+    # Llamar al método de instancia correctamente
+    solicitudes = horneado_service.get_solicitudes_usuario(current_user.idUser)
+    
+    return render_template('ventas/mis_solicitudes.html', solicitudes=solicitudes)
+
+
+# Detalle de solicitud
+@bp_ventas.route('/solicitud/detalle/<int:id_solicitud>', methods=['GET'])
+@ventas_required
+def detalle_solicitud(id_solicitud):
+    solicitud = db.session.query(SolicitudHorneado)\
+        .options(joinedload(SolicitudHorneado.receta))\
+        .get(id_solicitud)
+    
+    if not solicitud:
+        flash('Solicitud no encontrada', 'danger')
+        return redirect(url_for('ventas.ver_mis_solicitudes'))
+    
+    
+    # Calcular costos
+    receta_service = RecetaService(db.session)  # Create an instance first
+    costos = receta_service.calcular_costo_galleta(solicitud.id_receta)  # Then call the method
+    
+
+
+    # Verificar permisos (solicitante o aprobador)
+    if solicitud.id_solicitante != current_user.idUser and \
+       (solicitud.id_aprobador != current_user.idUser if solicitud.id_aprobador else True) and \
+       current_user.rol.nombreRol not in ['Ventas']:
+        abort(403)
+    
+    # Obtener detalles de insumos necesarios
+    insumos = db.session.execute(
+        text("""
+            SELECT 
+                i.idInsumo,
+                i.nombre as nombre, 
+                ir.cantidad as cantidad, 
+                i.unidadInsumo as unidadInsumo, 
+                i.cantidadDisponible as cantidadDisponible
+            FROM ingredientesReceta ir
+            JOIN insumos i ON ir.idInsumo = i.idInsumo
+            WHERE ir.idReceta = :id_receta
+        """),
+        {'id_receta': solicitud.id_receta}
+    ).fetchall()
+    
+    # Convertir resultado
+    insumos_data = [{
+        'id': i.idInsumo,
+        'nombre': i.nombre,
+        'cantidad': float(i.cantidad),
+        'unidadInsumo': i.unidadInsumo,
+        'cantidadDisponible': float(i.cantidadDisponible),
+        'total_requerido': float(i.cantidad) * solicitud.cantidad_lotes
+    } for i in insumos]
+    
+    return render_template(
+        'ventas/detalle_solicitud.html',
+        solicitud=solicitud,
+        insumos=insumos_data,
+        # cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantidad_producida
+        cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction,
+
+        costos=costos  # Pasar los costos a la plantilla
+    )

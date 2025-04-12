@@ -27,7 +27,7 @@
                                     <h5 class="mb-0">Nueva Solicitud de Horneado</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form action="{{ url_for('production.procesar_solicitud_horneado') }}" method="post">
+                                    <form action="{{ url_for('ventas.procesar_solicitud_horneado') }}" method="post">
                                         <div class="mb-3">
                                             <label for="id_receta" class="form-label">Receta:</label>
                                             <select class="form-select" id="id_receta" name="id_receta" required>
@@ -48,7 +48,7 @@
                                             <button type="submit" class="btn btn-success">
                                                 <i class="fas fa-paper-plane me-2"></i> Enviar Solicitud
                                             </button>
-                                            <a href="{{ url_for('production.ver_mis_solicitudes') }}" class="btn btn-secondary">
+                                            <a href="{{ url_for('ventas.ver_mis_solicitudes') }}" class="btn btn-secondary">
                                                 <i class="fas fa-list me-2"></i> Ver Mis Solicitudes
                                             </a>
                                         </div>
