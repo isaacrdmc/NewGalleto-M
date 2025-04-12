@@ -404,12 +404,12 @@
                     limpiarError('gramos');
 
                     if (!galletaActual) {
-                        mostrarError('galleta', 'Por favor, selecciona una galleta.');
+                        mostrarModal('Por favor, selecciona una galleta.');
                         return;
                     }
 
                     if (inventarioTemporal[galletaActual.idGalleta] <= 0) {
-                        mostrarError('galleta', 'No hay suficiente inventario disponible para esta galleta.');
+                        mostrarModal('No hay suficiente inventario disponible para esta galleta.');
                         return;
                     }
 
@@ -420,7 +420,7 @@
                     if (metodoSeleccionado === 'Por gramo') {
                         const gramos = parseInt(gramosInput.value, 10) || 0;
                         if (gramos <= 0) {
-                            mostrarError('gramos', 'Por favor, ingresa una cantidad válida en gramos.');
+                            mostrarModal('Por favor, ingresa una cantidad válida en gramos.');
                             return;
                         }
 
@@ -456,19 +456,19 @@
                             const descartados = gramosSueltos % gramajePorUnidad;
                             gramosSueltos = gramosSueltos - descartados;
                             if (gramosSueltos > 0) {
-                                alert(`Se descartaron ${descartados}gr que no completaban una galleta.`);
+                                mostrarModal(`Se descartaron ${descartados}gr que no completaban una galleta.`);
                             }
                         }
 
                         if (gramosAjustados <= 0) {
-                            mostrarError('gramos', 'Los gramos ingresados no alcanzan para una galleta completa.');
+                            mostrarModal('Los gramos ingresados no alcanzan para una galleta completa.');
                             return;
                         }
 
                         const unidadesEquivalentes = gramosAjustados / gramajePorUnidad;
 
                         if (unidadesEquivalentes > inventarioTemporal[galletaActual.idGalleta]) {
-                            mostrarError('gramos', 'No hay suficiente inventario disponible para esta cantidad.');
+                            mostrarModal('No hay suficiente inventario disponible para esta cantidad.');
                             return;
                         }
 
@@ -524,7 +524,7 @@
                     }
                     else if (metodoSeleccionado === 'Por Pieza') {
                         if (!cantidadSelect.value || cantidadSelect.value === 'Selecciona cantidad') {
-                            mostrarError('cantidad', 'Por favor, selecciona una cantidad.');
+                            mostrarModal('Por favor, selecciona una cantidad.');
                             return;
                         }
 
@@ -593,7 +593,7 @@
                     else if (metodoSeleccionado === 'Empacado') {
                         // Mantener lógica original para empacado
                         if (!cantidadSelect.value || cantidadSelect.value === 'Selecciona empaque') {
-                            mostrarError('cantidad', 'Por favor, selecciona un empaque.');
+                            mostrarModal('Por favor, selecciona un empaque.');
                             return;
                         }
 
@@ -1002,7 +1002,37 @@
             detalleVentaForm.addEventListener('submit', agregarItemVenta);
 
             // Agregar event listener al botón Aceptar
-            btnAceptar.addEventListener('click', manejarAceptarVenta);
+            const botonAceptar = document.querySelector('.btn-aceptar')
+
+            botonAceptar.addEventListener('click', () => {
+                if (detallesVenta.length === 0) {
+                    mostrarModal('Agrega al menos un detalle a la venta.');
+                    return;
+                }
+
+                fetch('/ventas/registrar_venta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        detalles: detallesVenta,
+                        total: totalVenta
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            mostrarModal("✔️ Venta registrada exitosamente", true);
+                        } else {
+                            mostrarModal('Error al registrar la venta: ' + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        mostrarModal('Error al procesar la venta.');
+                    });
+            });
 
         } catch (error) {
             console.error('Error general en la inicialización:', error);
@@ -1016,36 +1046,33 @@
         };
 
         function mostrarModal(mensaje, reload = false) {
-            const modal = document.getElementById('modal-generico');
-            const overlay = document.getElementById('modal-overlay');
-
-            if (!modal || !overlay) {
-                console.error('Elementos del modal no encontrados');
-                return;
-            }
-
             document.getElementById('modal-mensaje').textContent = mensaje;
-            modal.style.display = 'block';
-            overlay.style.display = 'block';
-
+            document.getElementById('modal-generico').style.display = 'block';
+            document.getElementById('modal-overlay').style.display = 'block';
+        
             if (reload) {
-                // Sobrescribe la función cerrarModal temporalmente
-                const originalCerrarModal = cerrarModal;
-                cerrarModal = function () {
-                    originalCerrarModal();
+                // Esperamos a que el usuario cierre para recargar
+                cerrarModal = function() {
+                    document.getElementById('modal-generico').style.display = 'none';
+                    document.getElementById('modal-overlay').style.display = 'none';
                     location.reload();
+                };
+            } else {
+                cerrarModal = function() {
+                    document.getElementById('modal-generico').style.display = 'none';
+                    document.getElementById('modal-overlay').style.display = 'none';
                 };
             }
         }
-        
+
         function mostrarTicket(detalles, total) {
             const modal = document.getElementById('ticket-modal');
             const overlay = document.getElementById('ticket-overlay');
             const contenedor = document.getElementById('ticket-detalles');
             const totalSpan = document.getElementById('ticket-total');
-
+        
             contenedor.innerHTML = '';
-
+        
             detalles.forEach((d, i) => {
                 contenedor.innerHTML += `
                     <div style="margin-bottom:8px;">
@@ -1058,9 +1085,9 @@
                     </div>
                 `;
             });
-
+        
             totalSpan.textContent = total.toFixed(2);
-
+        
             modal.style.display = 'block';
             overlay.style.display = 'block';
         }
