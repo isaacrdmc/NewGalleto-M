@@ -176,11 +176,17 @@ def registrar_venta():
                 detalle.pesoGramos = gramos
                 detalle.cantGalletasVendidas = 0  # Asegurar valor
             elif forma == 'Empacado':
-                cajas, tipo = cant.split(' Caja ')
-                gramos = 1000 if '1kg' in tipo else 700
-                detalle.pesoGramos = gramos
-                detalle.cantGalletasVendidas = 0  # Asegurar valor
-
+                try:
+                    if 'Caja' in cant:
+                        partes = cant.split('Caja')
+                        tipo = partes[1].strip() if len(partes) > 1 else ''
+                        gramos = 1000 if '1kg' in tipo else 700
+                    else:
+                        gramos = 700  # valor por defecto si no se reconoce
+                    detalle.pesoGramos = gramos
+                    detalle.cantGalletasVendidas = 0
+                except Exception as e:
+                    raise ValueError(f"No se pudo procesar el campo empacado: {cant} — Error: {e}")
             # Descontar del inventario
             galleta = Galleta.query.get(idGalleta)
             if galleta:
@@ -322,3 +328,169 @@ def detalle_solicitud(id_solicitud):
 
         costos=costos  # Pasar los costos a la plantilla
     )
+    
+# Ruta para ver el inventario de galletas
+@bp_ventas.route('/inventario-galletas')
+@login_required
+def inventario_galletas():
+    # Obtener todas las galletas con stock > 0, ordenadas por cantidad descendente
+    galletas = Galleta.query.filter(Galleta.cantidad_disponible > 0)\
+                           .order_by(Galleta.cantidad_disponible.desc())\
+                           .all()
+    
+    # Calcular días restantes para caducidad
+    for galleta in galletas:
+        dias_restantes = (galleta.fecha_final_anaquel - datetime.now().date()).days
+        galleta.dias_restantes = max(0, dias_restantes)
+    
+    return render_template('ventas/inventario_galletas.html', 
+                         galletas=galletas,
+                         page_title="Inventario de Galletas")
+
+# API para obtener galletas recién horneadas (últimas 24 horas)
+@bp_ventas.route('/api/galletas-horneadas')
+@login_required
+def obtener_galletas_horneadas():
+    # Obtener horneados de las últimas 24 horas
+    fecha_limite = datetime.now() - timedelta(hours=24)
+    
+    horneados_recientes = db.session.query(
+        Horneado.id_receta,
+        Receta.nombre.label('nombre_galleta'),
+        func.sum(Horneado.cantidad_producida).label('cantidad_producida')
+    ).join(Receta, Horneado.id_receta == Receta.id)\
+     .filter(Horneado.fecha_horneado >= fecha_limite)\
+     .group_by(Horneado.id_receta, Receta.nombre)\
+     .all()
+
+    # Formatear respuesta
+    resultado = []
+    for hr in horneados_recientes:
+        # Buscar la galleta asociada a esta receta
+        galleta = Galleta.query.filter_by(id_receta=hr.id_receta).first()
+        if galleta:
+            resultado.append({
+                'id': galleta.id,
+                'nombre': galleta.nombre,
+                'cantidad': hr.cantidad_producida,
+                'cantidad_agregada': hr.cantidad_producida  # Puedes ajustar este cálculo
+            })
+    
+    return jsonify(resultado)
+
+# Ruta para actualizar el inventario desde el horno
+@bp_ventas.route('/actualizar-inventario', methods=['POST'])
+@login_required
+def actualizar_inventario():
+    try:
+        data = request.get_json()
+        
+        # Obtener galletas horneadas recientemente (últimas 24 horas)
+        fecha_limite = datetime.now() - timedelta(hours=24)
+        horneados = Horneado.query.filter(Horneado.fecha_horneado >= fecha_limite).all()
+        
+        # Actualizar inventario para cada galleta
+        for horneado in horneados:
+            galleta = Galleta.query.filter_by(id_receta=horneado.id_receta).first()
+            if galleta:
+                galleta.cantidad_disponible += horneado.cantidad_producida
+                db.session.add(galleta)
+        
+        # Registrar acción en el historial
+        from modules.admin.models import HistorialAcciones
+        historial = HistorialAcciones(
+            accion="Actualización de inventario desde horno",
+            modulo="Ventas",
+            id_usuario=current_user.id,
+            fecha=datetime.now()
+        )
+        db.session.add(historial)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Inventario actualizado correctamente',
+            'galletas_actualizadas': len(horneados)
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error al actualizar inventario: {str(e)}'
+        }), 500
+
+# Ruta para buscar galletas (API)
+@bp_ventas.route('/api/buscar-galletas')
+@login_required
+def buscar_galletas():
+    query = request.args.get('q', '').lower()
+    tipo = request.args.get('tipo', 'all')
+    stock = request.args.get('stock', 'all')
+    
+    # Construir consulta base
+    galletas_query = Galleta.query.filter(Galleta.cantidad_disponible > 0)
+    
+    # Aplicar filtros
+    if query:
+        galletas_query = galletas_query.filter(
+            or_(
+                Galleta.nombre.ilike(f'%{query}%'),
+                Galleta.descripcion.ilike(f'%{query}%')
+            )
+        )
+    
+    if tipo != 'all':
+        galletas_query = galletas_query.filter_by(tipo_galleta=tipo)
+    
+    if stock != 'all':
+        if stock == 'low':
+            galletas_query = galletas_query.filter(Galleta.cantidad_disponible < 50)
+        elif stock == 'medium':
+            galletas_query = galletas_query.filter(
+                and_(
+                    Galleta.cantidad_disponible >= 50,
+                    Galleta.cantidad_disponible <= 100
+                )
+            )
+        elif stock == 'high':
+            galletas_query = galletas_query.filter(Galleta.cantidad_disponible > 100)
+    
+    # Ejecutar consulta y formatear resultados
+    galletas = galletas_query.all()
+    resultados = []
+    
+    for galleta in galletas:
+        resultados.append({
+            'id': galleta.id,
+            'nombre': galleta.nombre,
+            'imagen_url': galleta.imagen_url or url_for('static', filename='img/default-cookie.png'),
+            'cantidad': galleta.cantidad_disponible,
+            'precio': float(galleta.precio_unitario),
+            'gramaje': float(galleta.gramaje),
+            'tipo': galleta.tipo_galleta,
+            'caducidad': galleta.fecha_final_anaquel.strftime('%d/%m/%Y'),
+            'dias_restantes': (galleta.fecha_final_anaquel - datetime.now().date()).days
+        })
+    
+    return jsonify(resultados)
+
+# Ruta para detalles de una galleta
+@bp_ventas.route('/galleta/<int:id_galleta>')
+@login_required
+def detalle_galleta(id_galleta):
+    galleta = Galleta.query.get_or_404(id_galleta)
+    
+    # Calcular estadísticas de ventas recientes
+    ventas_recientes = db.session.query(
+        func.sum(DetalleVenta.cantGalletasVendidas).label('total_vendido')
+    ).join(Venta).filter(
+        DetalleVenta.idGalleta == id_galleta,
+        Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7))
+    ).scalar() or 0
+    
+    return render_template('ventas/detalle_galleta.html',
+                         galleta=galleta,
+                         ventas_semana=ventas_recientes,
+                         page_title=f"Detalles de {galleta.nombre}")

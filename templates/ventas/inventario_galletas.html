@@ -1,0 +1,133 @@
+{% extends "shared/base.html" %}
+{% block content %}
+
+<!-- Contenido principal -->
+<div class="container-fluid py-4">
+  <!-- Filtros -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" id="searchInput" placeholder="Buscar galletas...">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <select class="form-select" id="filterStock">
+        <option value="all">Todo el inventario</option>
+        <option value="low">Bajo stock (<50)</option>
+        <option value="medium">Stock medio (50-100)</option>
+        <option value="high">Alto stock (>100)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Cards de galletas -->
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4" id="galletasContainer">
+    {% for galleta in galletas %}
+    <div class="col">
+      <div class="card h-100 galleta-card shadow-sm border-0">
+        <div class="card-img-top position-relative">
+          <img src="{{ galleta.imagen_url or url_for('static', filename='img/galleta.png') }}" 
+               class="img-fluid rounded-top" alt="{{ galleta.nombre }}"
+               style="height: 180px; width: 100%; object-fit: cover;">
+          <span class="position-absolute top-0 end-0 bg-success text-white px-2 py-1 rounded-bl">
+            {{ galleta.cantidad_disponible }} disponibles
+          </span>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{ galleta.nombre }}</h5>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-weight-hanging me-1"></i> {{ galleta.gramaje }}g c/u
+            </span>
+            <span class="text-success fw-bold">
+              ${{ "%.2f"|format(galleta.precio_unitario) }}
+            </span>
+          </div>
+          <div class="progress mb-3" style="height: 8px;">
+            {% set porcentaje = (galleta.cantidad_disponible / 200 * 100) if galleta.cantidad_disponible < 200 else 100 %}
+            <div class="progress-bar 
+                        {% if porcentaje < 25 %}bg-danger
+                        {% elif porcentaje < 60 %}bg-warning
+                        {% else %}bg-success{% endif %}" 
+                 role="progressbar" 
+                 style="width: {{ porcentaje }}%">
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-0">
+          <small class="text-muted">
+            <i class="fas fa-hourglass-end me-1"></i> 
+            Caduca: {{ galleta.fecha_final_anaquel.strftime('%d/%m/%Y') }}
+          </small>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Mensaje cuando no hay resultados -->
+  <div class="text-center py-5 d-none" id="noResults">
+    <img src="{{ url_for('static', filename='img/empty-cookie-jar.png') }}" width="120" class="mb-3">
+    <h4 class="text-muted">No se encontraron galletas</h4>
+    <p class="text-muted">Intenta con otros filtros de búsqueda</p>
+  </div>
+</div>
+
+<style>
+  .galleta-card {
+    transition: all 0.3s ease;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+  .galleta-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+  .card-img-top {
+    background: linear-gradient(45deg, #f5f5f5, #e9e9e9);
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Filtrado de galletas
+  const searchInput = document.getElementById('searchInput');
+  const filterStock = document.getElementById('filterStock');
+  const galletasContainer = document.getElementById('galletasContainer');
+  const noResults = document.getElementById('noResults');
+  
+  function filterGalletas() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const stockFilter = filterStock.value;
+    let hasResults = false;
+    
+    document.querySelectorAll('.galleta-card').forEach(card => {
+      const title = card.querySelector('.card-title').textContent.toLowerCase();
+      const stock = parseInt(card.querySelector('.position-absolute').textContent);
+      
+      const matchesSearch = title.includes(searchTerm);
+      let matchesStock = true;
+      
+      if (stockFilter === 'low') matchesStock = stock < 50;
+      else if (stockFilter === 'medium') matchesStock = stock >= 50 && stock <= 100;
+      else if (stockFilter === 'high') matchesStock = stock > 100;
+      
+      if (matchesSearch && matchesStock) {
+        card.parentElement.style.display = '';
+        hasResults = true;
+      } else {
+        card.parentElement.style.display = 'none';
+      }
+    });
+    
+    noResults.classList.toggle('d-none', hasResults);
+    galletasContainer.classList.toggle('d-none', !hasResults);
+  }
+  
+  searchInput.addEventListener('input', filterGalletas);
+  filterStock.addEventListener('change', filterGalletas);
+});
+</script>
+
+{% endblock %}
