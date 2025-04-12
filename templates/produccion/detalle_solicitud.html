@@ -20,10 +20,6 @@
                                             <p><strong>Solicitante:</strong> {{ solicitud.solicitante.username }}</p>
                                             <p><strong>Fecha de Solicitud:</strong> {{ solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</p>
                                             <p><strong>Receta:</strong> {{ solicitud.receta.nombre }}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Lotes Solicitados:</strong> {{ solicitud.cantidad_lotes }}</p>
-                                            <p><strong>Galletas Totales:</strong> {{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</p>
                                             <p>
                                                 <strong>Estado:</strong> 
                                                 <span class="badge 
@@ -34,6 +30,13 @@
                                                     {{ solicitud.estado }}
                                                 </span>
                                             </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Lotes Solicitados:</strong> {{ solicitud.cantidad_lotes }}</p>
+                                            <p><strong>Galletas Totales:</strong> {{ solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction }}</p>
+                                            <p><strong>Costo por galleta:</strong> ${{ "%.2f"|format(costos.costo_unitario) }}</p>
+                                            <p><strong>Costo total por lote:</strong> ${{ "%.2f"|format(costos.costo_lote) }}</p>
+                                            <p><strong>Costo total producción:</strong> ${{ "%.2f"|format(costos.costo_lote * solicitud.cantidad_lotes) }}</p>
                                         </div>
                                     </div>
                                     

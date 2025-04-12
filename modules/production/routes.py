@@ -526,9 +526,16 @@ def detalle_solicitud(id_solicitud):
         flash('Solicitud no encontrada', 'danger')
         return redirect(url_for('production.ver_mis_solicitudes'))
     
-    if (solicitud.id_solicitante != current_user.idUser and 
-        (solicitud.id_aprobador != current_user.idUser if solicitud.id_aprobador else True) and 
-        current_user.rol.nombreRol not in ['Administrador', 'Produccion']):
+    
+    # Calcular costos
+    costos = receta_service.calcular_costo_galleta(solicitud.id_receta)
+    
+
+
+    # Verificar permisos (solicitante o aprobador)
+    if solicitud.id_solicitante != current_user.idUser and \
+       (solicitud.id_aprobador != current_user.idUser if solicitud.id_aprobador else True) and \
+       current_user.rol.nombreRol not in ['Administrador', 'Produccion']:
         abort(403)
     
     # Obtener detalles de insumos necesarios
@@ -562,6 +569,9 @@ def detalle_solicitud(id_solicitud):
         solicitud=solicitud,
         insumos=insumos_data,
         cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantidad_producida
+        cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction,
+
+        costos=costos  # Pasar los costos a la plantilla
     )
 
 # Proceso de horneadas
