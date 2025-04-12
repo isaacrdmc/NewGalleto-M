@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 
 def obtener_historial_ventas():
-    ventas = Venta.query.join(Venta.usuario).all()
+    ventas = Venta.query.join(Venta.usuario).order_by(Venta.fechaVentaGalleta.desc()).all()  # Ordenar por fecha descendente
 
     resultado = []
     for venta in ventas:
@@ -28,7 +28,7 @@ def obtener_historial_ventas():
     return resultado
 
 def obtener_pedidos_clientes():
-    pedidos = Pedido.query.join(Pedido.cliente).all()
+    pedidos = Pedido.query.join(Pedido.cliente).order_by(Pedido.fechaPedido.desc()).all()  # Ordenar por fecha descendente
     resultado = []
 
     for pedido in pedidos:
