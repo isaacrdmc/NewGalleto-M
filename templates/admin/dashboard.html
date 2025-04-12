@@ -79,13 +79,13 @@
                             <div class="text-center">
                                 <h4 class="text-success">{{ recomendacion_producto.nombre }}</h4>
                                 <p class="mb-1">Margen: <span class="text-success">{{
-                                        "%.2f"|format(recomendacion_producto.margen * 100) }}%</span></p>
+                                        "%.2f"|format(recomendacion_producto.margen) }}%</span></p>
                                 <p class="mb-1">Inventario: {{ recomendacion_producto.inventario }} unidades</p>
                                 <p class="mb-1">Demanda semanal: {{ recomendacion_producto.demanda_semanal }} unidades
                                 </p>
                             </div>
                             {% else %}
-                            <div class="alert alert-info">No hay datos suficientes</div>
+                            <div class="alert alert-warning">No hay datos suficientes para generar recomendación</div>
                             {% endif %}
                         </div>
                         <p class="text-muted">Basado en margen e inventario</p>
@@ -146,7 +146,7 @@
                 </div>
             </div>
 
-            <!-- Gráfico de Producción Semanal -->
+            <!-- Gráfico de Producción Semanal (ahora en pastel) -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -190,42 +190,73 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Función para mostrar errores globales
-    function mostrarErrorGlobal(mensaje) {
+    // Función mejorada para mostrar errores globales
+    function mostrarErrorGlobal(mensaje, tipo = 'danger') {
         const contenedor = document.getElementById('mensajeErrorGlobal');
         const texto = document.getElementById('textoErrorGlobal');
-        texto.textContent = mensaje;
-        contenedor.classList.remove('d-none');
-        console.error('[Error Global]:', mensaje);
-    }
 
-    // Función para mostrar errores en componentes específicos
-    function mostrarErrorComponente(idContenedor, mensaje) {
-        const contenedor = document.getElementById(idContenedor);
-        if (contenedor) {
-            contenedor.textContent = mensaje;
+        // Cambiar clase según tipo de error
+        contenedor.className = `alert alert-${tipo} mb-4`;
+        if (tipo === 'danger') {
             contenedor.classList.remove('d-none');
-            console.error(`[Error ${idContenedor}]:`, mensaje);
-        } else {
-            console.error('No se encontró el contenedor de errores:', idContenedor);
         }
+
+        texto.textContent = mensaje;
+        console.error(`[Error Global ${tipo}]:`, mensaje);
+
+        // Ocultar automáticamente después de 10 segundos
+        setTimeout(() => {
+            contenedor.classList.add('d-none');
+        }, 10000);
     }
 
-    // Función para verificar la disponibilidad y validez de datos JSON
+    // Función mejorada para mostrar errores en componentes específicos
+    function mostrarErrorComponente(idContenedor, mensaje, tipo = 'danger') {
+        const contenedor = document.getElementById(idContenedor);
+        if (!contenedor) {
+            console.error('No se encontró el contenedor de errores:', idContenedor);
+            return;
+        }
+
+        // Crear elemento de error si no existe
+        if (!contenedor.querySelector('.alert')) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = `alert alert-${tipo} mt-2`;
+            contenedor.appendChild(errorDiv);
+        }
+
+        const errorElement = contenedor.querySelector('.alert');
+        errorElement.textContent = mensaje;
+        errorElement.classList.remove('d-none');
+
+        console.error(`[Error ${idContenedor}]:`, mensaje);
+    }
+
+    // Función mejorada para verificar la disponibilidad y validez de datos JSON
     function verificarDatosJSON(jsonString, defaultValue = [], nombreDatos) {
         try {
-            // Si es null o undefined, usar valor predeterminado
-            if (!jsonString) {
-                console.warn(`Datos de ${nombreDatos} no disponibles, usando valores predeterminados.`);
+            if (!jsonString || jsonString === 'null' || jsonString === 'undefined') {
+                const msg = `Datos de ${nombreDatos} no disponibles, usando valores predeterminados.`;
+                console.warn(msg);
+                mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`, msg, 'warning');
                 return defaultValue;
             }
 
             const datos = JSON.parse(jsonString);
-            return datos || defaultValue;
+
+            if (!datos || (Array.isArray(datos) && datos.length === 0) ||
+                (typeof datos === 'object' && Object.keys(datos).length === 0)) {
+                const msg = `Datos de ${nombreDatos} están vacíos.`;
+                console.warn(msg);
+                mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`, msg, 'warning');
+                return defaultValue;
+            }
+
+            return datos;
         } catch (error) {
-            console.error(`Error al procesar datos JSON de ${nombreDatos}:`, error);
-            mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`,
-                `Error al procesar datos: ${error.message}`);
+            const msg = `Error al procesar datos JSON de ${nombreDatos}: ${error.message}`;
+            console.error(msg);
+            mostrarErrorComponente(`error${nombreDatos.replace(/\s+/g, '')}`, msg);
             return defaultValue;
         }
     }
@@ -244,7 +275,12 @@
                     document.getElementById('contenedorVentasSemanales').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas semanales</div>';
                 } else {
-                    var ctxVentasSemanales = document.getElementById('ventasSemanales').getContext('2d');
+                    var ctxVentasSemanales = document.getElementById('ventasSemanales');
+                    if (!ctxVentasSemanales) {
+                        throw new Error('No se pudo obtener el canvas ventasSemanales');
+                    }
+
+                    ctxVentasSemanales = ctxVentasSemanales.getContext('2d');
                     if (!ctxVentasSemanales) {
                         throw new Error('No se pudo obtener el contexto del canvas ventasSemanales');
                     }
@@ -292,7 +328,12 @@
                     document.getElementById('contenedorVentasDiarias').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de ventas diarias</div>';
                 } else {
-                    var ctxVentasDiarias = document.getElementById('ventasDiarias').getContext('2d');
+                    var ctxVentasDiarias = document.getElementById('ventasDiarias');
+                    if (!ctxVentasDiarias) {
+                        throw new Error('No se pudo obtener el canvas ventasDiarias');
+                    }
+
+                    ctxVentasDiarias = ctxVentasDiarias.getContext('2d');
                     if (!ctxVentasDiarias) {
                         throw new Error('No se pudo obtener el contexto del canvas ventasDiarias');
                     }
@@ -332,8 +373,7 @@
                 mostrarErrorComponente('errorVentasDiarias', `Error: ${error.message}`);
             }
 
-            // Gráfico 3: Producción semanal
-            // Modificar la gráfica de producción semanal a pastel
+            // Gráfico 3: Producción semanal (pastel)
             try {
                 console.log("Generando gráfico de producción semanal (pastel)...");
                 var fechasProduccion = verificarDatosJSON('{{ produccion_semanal.fechas|tojson|safe }}', [], 'Fechas producción');
@@ -344,20 +384,26 @@
                     document.getElementById('contenedorProduccionSemanal').innerHTML =
                         '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de producción</div>';
                 } else {
-                    var ctxProduccion = document.getElementById('produccionSemanal').getContext('2d');
+                    var ctxProduccion = document.getElementById('produccionSemanal');
+                    if (!ctxProduccion) {
+                        throw new Error('No se pudo obtener el canvas produccionSemanal');
+                    }
+
+                    ctxProduccion = ctxProduccion.getContext('2d');
                     if (!ctxProduccion) {
                         throw new Error('No se pudo obtener el contexto del canvas produccionSemanal');
                     }
+
+                    // Calcular totales para el gráfico de pastel
+                    const totalProducido = datosProducido.reduce((a, b) => a + b, 0);
+                    const totalMerma = datosMerma.reduce((a, b) => a + b, 0);
 
                     new Chart(ctxProduccion, {
                         type: 'pie',
                         data: {
                             labels: ['Producción', 'Merma'],
                             datasets: [{
-                                data: [
-                                    datosProducido.reduce((a, b) => a + b, 0),
-                                    datosMerma.reduce((a, b) => a + b, 0)
-                                ],
+                                data: [totalProducido, totalMerma],
                                 backgroundColor: [
                                     'rgba(54, 162, 235, 0.7)',
                                     'rgba(255, 99, 132, 0.7)'
@@ -462,21 +508,32 @@
                 mostrarErrorComponente('errorEficienciaProduccion', `Error: ${error.message}`);
             }
 
-        } catch (error) {
-            console.error("Error general al inicializar el dashboard:", error);
-            mostrarErrorGlobal(`Error general al cargar el dashboard: ${error.message}`);
-        }
+            // Gráfico 5: Costos de producción por lote (barras)
+            try {
+                console.log("Generando gráfico de costos de producción...");
+                var costosProduccion = verificarDatosJSON('{{ costos_produccion|tojson|safe }}', [], 'Costos producción');
 
-        // Nueva gráfica de costos de producción
-        try {
-            console.log("Generando gráfico de costos de producción...");
-            var costosProduccion = verificarDatosJSON('{{ costos_produccion|tojson|safe }}', [], 'Costos producción');
+                if (!costosProduccion || costosProduccion.length === 0) {
+                    document.getElementById('contenedorCostosProduccion').innerHTML =
+                        '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de costos de producción</div>';
+                    return;
+                }
 
-            if (!costosProduccion || costosProduccion.length === 0) {
-                document.getElementById('contenedorCostosProduccion').innerHTML =
-                    '<div class="alert alert-warning">No hay datos suficientes para generar el gráfico de costos</div>';
-            } else {
-                var ctxCostos = document.getElementById('costosProduccion').getContext('2d');
+                // Verificar estructura de datos
+                const datosValidos = costosProduccion.every(item =>
+                    item.hasOwnProperty('nombre') && item.hasOwnProperty('costo')
+                );
+
+                if (!datosValidos) {
+                    throw new Error('Estructura de datos de costos de producción inválida');
+                }
+
+                var ctxCostos = document.getElementById('costosProduccion');
+                if (!ctxCostos) {
+                    throw new Error('No se pudo encontrar el canvas costosProduccion');
+                }
+
+                ctxCostos = ctxCostos.getContext('2d');
                 if (!ctxCostos) {
                     throw new Error('No se pudo obtener el contexto del canvas costosProduccion');
                 }
@@ -498,9 +555,19 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
+                                max: 20, // Aquí establecemos el límite máximo de 40 pesos
                                 ticks: {
                                     callback: function (value) {
                                         return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: $${context.raw.toFixed(2)}`;
                                     }
                                 }
                             }
@@ -508,10 +575,21 @@
                     }
                 });
                 console.log("Gráfico de costos de producción generado correctamente");
+            } catch (error) {
+                console.error("Error al generar gráfico de costos de producción:", error);
+                mostrarErrorComponente('errorCostosProduccion', `Error: ${error.message}`);
+
+                // Mostrar mensaje más descriptivo al usuario
+                const userMessage = error.message.includes('Estructura de datos') ?
+                    'Los datos de costos no tienen el formato esperado. Contacte al administrador.' :
+                    'Error al generar gráfico de costos. Intente recargar la página.';
+
+                mostrarErrorGlobal(userMessage);
             }
+
         } catch (error) {
-            console.error("Error al generar gráfico de costos de producción:", error);
-            mostrarErrorComponente('errorCostosProduccion', `Error: ${error.message}`);
+            console.error("Error general al inicializar el dashboard:", error);
+            mostrarErrorGlobal(`Error general al cargar el dashboard: ${error.message}`);
         }
     });
 
@@ -680,9 +758,9 @@
             console.error('Error al marcar notificación como vista:', error);
 
             if (error.name === 'AbortError') {
-                alert('La operación ha tardado demasiado tiempo. Por favor, inténtelo de nuevo.');
+                mostrarErrorGlobal('La operación ha tardado demasiado tiempo. Por favor, inténtelo de nuevo.', 'warning');
             } else {
-                alert('Error al marcar la notificación como vista. Por favor, inténtelo de nuevo más tarde.');
+                mostrarErrorGlobal('Error al marcar la notificación como vista. Por favor, inténtelo de nuevo más tarde.', 'warning');
             }
         }
     }
@@ -713,7 +791,7 @@
 
             window.addEventListener('offline', () => {
                 console.warn('Conexión perdida, no se cargarán notificaciones hasta restaurar conexión');
-                mostrarErrorGlobal('Conexión a internet perdida. Algunas funciones pueden no estar disponibles.');
+                mostrarErrorGlobal('Conexión a internet perdida. Algunas funciones pueden no estar disponibles.', 'warning');
             });
 
             console.log("Sistema de notificaciones inicializado correctamente");

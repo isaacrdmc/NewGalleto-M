@@ -900,64 +900,97 @@ def marcar_notificacion_como_vista(notificacion_id):
 def obtener_recomendacion_producto():
     """Obtiene la galleta más rentable para recomendar su venta"""
     try:
-        # Consulta para obtener galletas con mejor margen y suficiente inventario
+        # Primero verificar si hay datos básicos
+        if not db.session.query(Galleta).count():
+            return None
+
+        # Consulta optimizada para obtener galletas con mejor margen
+        subquery = db.session.query(
+            IngredienteReceta.idReceta,
+            func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad).label('costo_total')
+        ).join(DetalleCompraInsumo, DetalleCompraInsumo.idInsumo == IngredienteReceta.idInsumo
+        ).group_by(IngredienteReceta.idReceta).subquery()
+
         resultados = db.session.query(
             Galleta.nombre,
             Galleta.cantidad_disponible,
-            (Galleta.precio_unitario - 
-             func.coalesce(
-                 func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
-                 Receta.cantidad_producida, 0
-             )).label('margen'),
+            Galleta.precio_unitario,
+            (Galleta.precio_unitario - func.coalesce(subquery.c.costo_total, 0) / Receta.cantidad_producida).label('margen_absoluto'),
             func.count(DetalleVenta.idDetalleVenta).label('demanda_semanal')
-        ).join(Receta, Receta.id_galleta == Galleta.id
-        ).join(IngredienteReceta, IngredienteReceta.idReceta == Receta.id
-        ).join(DetalleCompraInsumo, DetalleCompraInsumo.idInsumo == IngredienteReceta.idInsumo
-        ).join(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
-        ).join(Venta, Venta.idVenta == DetalleVenta.idVenta
+        ).outerjoin(Receta, Receta.id_galleta == Galleta.id
+        ).outerjoin(subquery, subquery.c.idReceta == Receta.id
+        ).outerjoin(DetalleVenta, DetalleVenta.idGalleta == Galleta.id
+        ).outerjoin(Venta, Venta.idVenta == DetalleVenta.idVenta
         ).filter(
             Venta.fechaVentaGalleta >= (datetime.now() - timedelta(days=7)),
             Galleta.cantidad_disponible > 0
-        ).group_by(Galleta.id
+        ).group_by(Galleta.id, Receta.cantidad_producida, subquery.c.costo_total
         ).order_by(
-            (Galleta.precio_unitario - 
-             func.coalesce(
-                 func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
-                 Receta.cantidad_producida, 0
-             )).desc()
+            (Galleta.precio_unitario - func.coalesce(subquery.c.costo_total, 0) / Receta.cantidad_producida).desc()
         ).first()
 
         if resultados:
+            margen_porcentaje = (resultados.margen_absoluto / resultados.precio_unitario) * 100 if resultados.precio_unitario else 0
             return {
                 'nombre': resultados.nombre,
-                'margen': float(resultados.margen / resultados.precio_unitario) if resultados.precio_unitario else 0.0,
+                'margen': float(margen_porcentaje),
                 'inventario': resultados.cantidad_disponible,
-                'demanda_semanal': resultados.demanda_semanal
+                'demanda_semanal': resultados.demanda_semanal or 0
             }
+        
+        # Si no hay resultados, intentar una consulta más simple
+        galleta = db.session.query(Galleta).filter(
+            Galleta.cantidad_disponible > 0
+        ).order_by(
+            Galleta.precio_unitario.desc()
+        ).first()
+        
+        if galleta:
+            return {
+                'nombre': galleta.nombre,
+                'margen': 30.0,  # Valor por defecto si no se puede calcular
+                'inventario': galleta.cantidad_disponible,
+                'demanda_semanal': 0  # Valor por defecto
+            }
+            
         return None
     except Exception as e:
         print(f"Error en obtener_recomendacion_producto: {str(e)}")
+        # Registrar el error en logs
+        crear_notificacion('Error Sistema', f'Error al calcular recomendación: {str(e)}')
         return None
+        
 
 def obtener_costos_produccion():
     """Obtiene los costos de producción por lote para cada tipo de galleta"""
     try:
+        # Verificar si hay datos suficientes
+        galletas_con_receta = db.session.query(Galleta.id).join(Receta).count()
+        if galletas_con_receta == 0:
+            return []
+
         resultados = db.session.query(
             Galleta.nombre,
-            (func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad) / 
-             Receta.cantidad_producida).label('costo_lote')
+            (func.coalesce(
+                func.sum(DetalleCompraInsumo.costoUnidadXcaja * IngredienteReceta.cantidad), 0
+            ) / Receta.cantidad_producida).label('costo_lote')
         ).join(Receta, Receta.id_galleta == Galleta.id
         ).join(IngredienteReceta, IngredienteReceta.idReceta == Receta.id
         ).join(DetalleCompraInsumo, DetalleCompraInsumo.idInsumo == IngredienteReceta.idInsumo
-        ).group_by(Galleta.id
+        ).group_by(Galleta.id, Receta.cantidad_producida
         ).order_by(Galleta.nombre
         ).all()
 
+        # Depuración: Imprimir resultados para verificar
+        print("Resultados de costos de producción:", resultados)
+        
         return [{
             'nombre': r.nombre,
             'costo': float(r.costo_lote) if r.costo_lote else 0.0
-        } for r in resultados]
+        } for r in resultados if r.costo_lote is not None]
     except Exception as e:
         print(f"Error en obtener_costos_produccion: {str(e)}")
+        # Registrar el error en logs
+        crear_notificacion('Error Sistema', f'Error al calcular costos de producción: {str(e)}')
         return []
     

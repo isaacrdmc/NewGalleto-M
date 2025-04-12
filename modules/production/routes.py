@@ -568,7 +568,7 @@ def detalle_solicitud(id_solicitud):
         'produccion/detalle_solicitud.html',
         solicitud=solicitud,
         insumos=insumos_data,
-        cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantidad_producida
+        # cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantidad_producida
         cantidad_total=solicitud.cantidad_lotes * solicitud.receta.cantGalletasProduction,
 
         costos=costos  # Pasar los costos a la plantilla

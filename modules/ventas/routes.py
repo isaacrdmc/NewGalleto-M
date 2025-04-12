@@ -144,10 +144,10 @@ def registrar_venta():
         nueva_venta = Venta(
             fechaVentaGalleta=datetime.date.today(),
             totalVenta=total,
-            idUsuario=current_user.idUser  # Usamos el ID del usuario actual
+            idUsuario=current_user.idUser
         )
         db.session.add(nueva_venta)
-        db.session.flush()  # Para obtener nueva_venta.idVenta
+        db.session.flush()
 
         for d in detalles:
             forma = d['metodoVenta']
@@ -159,27 +159,34 @@ def registrar_venta():
                 idVenta=nueva_venta.idVenta,
                 idGalleta=idGalleta,
                 precioUnitario=precio,
-                formaVenta='Por pieza' if forma == 'Por unidad' else ('Por peso' if forma == 'Por gramo' else 'por paquete/caja'),
+                formaVenta='Por pieza' if forma == 'por pieza' else ('Por peso' if forma == 'Por gramo' else 'por paquete/caja'),
+                cantGalletasVendidas=0  # Valor por defecto
             )
 
-            if forma == 'Por unidad':
+            if forma == 'por pieza':
                 unidades = int(cant.split(' ')[0])
                 detalle.cantGalletasVendidas = unidades
                 detalle.cantidadGalletas = unidades
             elif forma == 'Por gramo':
                 gramos = int(cant.replace('gr', '').strip())
                 detalle.pesoGramos = gramos
-                detalle.cantGalletasVendidas = 0
+                detalle.cantGalletasVendidas = 0  # Asegurar valor
             elif forma == 'Empacado':
                 cajas, tipo = cant.split(' Caja ')
                 gramos = 1000 if '1kg' in tipo else 700
                 detalle.pesoGramos = gramos
-                detalle.cantGalletasVendidas = 0
+                detalle.cantGalletasVendidas = 0  # Asegurar valor
 
             # Descontar del inventario
             galleta = Galleta.query.get(idGalleta)
             if galleta:
-                galleta.cantidad_disponible -= detalle.cantGalletasVendidas or 0
+                # Asegúrate de descontar las unidades correctas
+                unidades_a_descontar = detalle.cantGalletasVendidas or 0
+                if forma == 'Empacado':
+                    # Para empaques, calcula unidades basadas en gramos y gramaje
+                    gramaje = galleta.gramaje
+                    unidades_a_descontar = gramos / gramaje
+                galleta.cantidad_disponible -= unidades_a_descontar
                 db.session.add(galleta)
 
             db.session.add(detalle)
