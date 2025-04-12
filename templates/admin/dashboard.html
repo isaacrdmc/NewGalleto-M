@@ -176,7 +176,7 @@
             <div class="col-md-12 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Costos de Producción por Lote</h5>
+                        <h5 class="card-title">Costos de Producción por Galleta</h5>
                         <div id="contenedorCostosProduccion">
                             <canvas id="costosProduccion"></canvas>
                             <div class="alert alert-danger mt-2 d-none" id="errorCostosProduccion"></div>
@@ -543,7 +543,7 @@
                     data: {
                         labels: costosProduccion.map(item => item.nombre),
                         datasets: [{
-                            label: 'Costo por lote ($)',
+                            label: 'Costo por galleta ($)',
                             data: costosProduccion.map(item => item.costo),
                             backgroundColor: 'rgba(75, 192, 192, 0.7)',
                             borderColor: 'rgba(75, 192, 192, 1)',
